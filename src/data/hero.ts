@@ -1,5 +1,5 @@
 export const heroDetails = {
-    heading: 'Smart, Secure, Simple Financial Management',
-    subheading: 'From effortless budgeting to real-time investment insights, Finwise puts you in control of your money like never before',
-    centerImageSrc: '/images/hero-mockup.webp',
-}
+    heading: 'Sambut Energi Baru di SMADA RUN 2027',
+    subheading: 'Berlari bersama, menjalin silaturahmi, dan taklukkan rute terbaik tahun ini. Siapkan sepatu larimu dan jadilah bagian dari sejarah!',
+    centerImageSrc: '/images/ivan-1.jpg', 
+};

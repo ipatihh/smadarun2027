@@ -1,22 +1,20 @@
-import { BsBarChartFill, BsFillStarFill } from "react-icons/bs";
-import { PiGlobeFill } from "react-icons/pi";
-
+import { FaRunning, FaStar, FaRoute } from "react-icons/fa";
 import { IStats } from "@/types";
 
 export const stats: IStats[] = [
     {
-        title: "20M+",
-        icon: <BsBarChartFill size={34} className="text-blue-500" />,
-        description: "Transactions processed securely every day, providing real-time insights."
+        title: "1.000+",
+        icon: <FaRunning size={34} className="text-amber-500" />,
+        description: "Pelari lintas komunitas, alumni, pelajar, dan umum siap memadati rute tahun ini."
     },
     {
         title: "5.0",
-        icon: <BsFillStarFill size={34} className="text-yellow-500" />,
-        description: "Star rating, consistently maintained across app stores."
+        icon: <FaStar size={34} className="text-yellow-500" />,
+        description: "Rating kepuasan dari keseruan, kesterilan rute, dan kemeriahan event sebelumnya."
     },
     {
-        title: "200+ ",
-        icon: <PiGlobeFill size={34} className="text-green-600" />,
-        description: "Financial Institutions, seamlessly integrated, so you can manage all accounts."
+        title: "5K",
+        icon: <FaRoute size={34} className="text-emerald-500" />,
+        description: "Jalur Fun Run yang steril, penuh pemandangan seru, water station melimpah, dan cheering spot."
     }
 ];

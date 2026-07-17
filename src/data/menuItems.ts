@@ -1,16 +1,8 @@
-import { IMenuItem } from "@/types";
+import { text } from "stream/consumers";
 
-export const menuItems: IMenuItem[] = [
-    {
-        text: "Features",
-        url: "#features"
-    },
-    {
-        text: "Pricing",
-        url: "#pricing"
-    },
-    {
-        text: "Testimonials",
-        url: "#testimonials"
-    }
+export const menuItems = [
+    { text: 'Beranda', url: '#beranda' },
+    { text: 'Kategori Tiket', url: '#tiket' },
+    {text: 'Testimoni', url: '#testimonials'},
+    { text: 'FAQ', url: '#faq' },
 ];

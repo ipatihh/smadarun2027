@@ -7,31 +7,34 @@ export const footerDetails: {
     telephone: string;
     socials: ISocials;
 } = {
-    subheading: "Empowering businesses with cutting-edge financial technology solutions.",
+    // Deskripsi finansial diganti menjadi deskripsi event lari SMADA Nganjuk
+    subheading: "Rayakan semangat olahraga, kebersamaan, dan kompetisi sehat di ajang lari tahunan terbesar persembahan SMA Negeri 2 Nganjuk.",
+    
+    // Teks menu dan link tujuannya disesuaikan ke Bahasa Indonesia
     quickLinks: [
         {
-            text: "Features",
-            url: "#features"
+            text: "Beranda",
+            url: "#beranda"
         },
         {
-            text: "Pricing",
-            url: "#pricing"
+            text: "Tiket",
+            url: "#tiket"
         },
         {
-            text: "Testimonials",
+            text: "Testimoni",
             url: "#testimonials"
         }
     ],
-    email: 'address@yoursite.com',
-    telephone: '+1 (123) 456-7890',
+    
+    // Informasi kontak diperbarui
+    email: 'info@kembar.in',
+    telephone: '+62 812-3456-7890', // Silakan ganti dengan nomor HP/WhatsApp panitia jika ada
+    
+    // Sosial media (bisa kamu isi dengan link akun resmi kepanitiaan kamu)
     socials: {
-        // github: 'https://github.com',
-        // x: 'https://twitter.com/x',
-        twitter: 'https://twitter.com/Twitter',
+        twitter: 'https://twitter.com',
         facebook: 'https://facebook.com',
-        // youtube: 'https://youtube.com',
         linkedin: 'https://www.linkedin.com',
-        // threads: 'https://www.threads.net',
-        instagram: 'https://www.instagram.com',
+        instagram: 'https://www.instagram.com', // Nanti tinggal arahkan ke IG official SMADARUN
     }
 }

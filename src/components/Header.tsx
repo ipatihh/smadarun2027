@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation'; // 1. Tambahkan import untuk membaca URL aktif
 import { Transition } from '@headlessui/react';
 import { HiOutlineXMark, HiBars3 } from 'react-icons/hi2';
-import { FaFingerprint } from 'react-icons/fa';
+import { FaRunning } from 'react-icons/fa';
 
 import Container from './Container';
 import { siteDetails } from '@/data/siteDetails';
@@ -12,37 +13,51 @@ import { menuItems } from '@/data/menuItems';
 
 const Header: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const pathname = usePathname(); // 2. Ambil path URL saat ini (misal: '/' atau '/daftar')
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
     };
 
+    // 3. Fungsi pembantu untuk memodifikasi URL secara dinamis
+    const formatUrl = (url: string) => {
+        // Jika URL diawali dengan '#' (anchor scroll) dan kita sedang tidak di beranda ('/')
+        if (url.startsWith('#') && pathname !== '/') {
+            return `/${url}`; // Mengubah '#tiket' menjadi '/#tiket'
+        }
+        return url; // Tetap biarkan asli jika sudah di beranda atau bukan link anchor
+    };
+
     return (
-        <header className="bg-transparent fixed top-0 left-0 right-0 md:absolute z-50 mx-auto w-full">
+        /* 
+           PERUBAHAN UTAMA DI SINI:
+           - Di HP: tetap menggunakan 'fixed' bawaan agar aman.
+           - Di Desktop (md:): diubah menjadi 'md:fixed md:bg-white/90 md:backdrop-blur-md md:shadow-sm'.
+             Ini membuat header terkunci di atas saat di-scroll, berubah warna jadi putih transparan (efek kaca),
+             dan memberikan bayangan tipis agar terpisah dari konten di bawahnya.
+        */
+        <header className="bg-transparent fixed top-0 left-0 right-0 md:fixed md:bg-white/90 md:backdrop-blur-md md:shadow-sm z-50 mx-auto w-full transition-all duration-300">
             <Container className="!px-0">
-                <nav className="shadow-md md:shadow-none bg-white md:bg-transparent mx-auto flex justify-between items-center py-2 px-5 md:py-10">
+                {/* Menyesuaikan padding desktop (md:py-4) agar saat melayang tidak terlalu tebal */}
+                <nav className="shadow-md md:shadow-none bg-white md:bg-transparent mx-auto flex justify-between items-center py-2 px-5 md:py-4 transition-all">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
-                        <FaFingerprint className="text-foreground min-w-fit w-7 h-7" />
+                        <FaRunning className="text-foreground min-w-fit w-7 h-7" />
                         <span className="manrope text-xl font-semibold text-foreground cursor-pointer">
                             {siteDetails.siteName}
                         </span>
                     </Link>
 
                     {/* Desktop Menu */}
-                    <ul className="hidden md:flex space-x-6">
+                    <ul className="hidden md:flex space-x-6 items-center">
                         {menuItems.map(item => (
                             <li key={item.text}>
-                                <Link href={item.url} className="text-foreground hover:text-foreground-accent transition-colors">
+                                {/* 4. Terapkan fungsi formatUrl(item.url) di sini */}
+                                <Link href={formatUrl(item.url)} className="text-foreground hover:text-foreground-accent transition-colors font-medium">
                                     {item.text}
                                 </Link>
                             </li>
                         ))}
-                        <li>
-                            <Link href="#cta" className="text-black bg-primary hover:bg-primary-accent px-8 py-3 rounded-full transition-colors">
-                                Download
-                            </Link>
-                        </li>
                     </ul>
 
                     {/* Mobile Menu Button */}
@@ -79,16 +94,12 @@ const Header: React.FC = () => {
                     <ul className="flex flex-col space-y-4 pt-1 pb-6 px-6">
                         {menuItems.map(item => (
                             <li key={item.text}>
-                                <Link href={item.url} className="text-foreground hover:text-primary block" onClick={toggleMenu}>
+                                {/* 5. Terapkan juga fungsi formatUrl(item.url) untuk menu mobile */}
+                                <Link href={formatUrl(item.url)} className="text-foreground hover:text-primary block" onClick={toggleMenu}>
                                     {item.text}
                                 </Link>
                             </li>
                         ))}
-                        <li>
-                            <Link href="#cta" className="text-black bg-primary hover:bg-primary-accent px-5 py-2 rounded-full block w-fit" onClick={toggleMenu}>
-                                Get Started
-                            </Link>
-                        </li>
                     </ul>
                 </div>
             </Transition>

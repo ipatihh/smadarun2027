@@ -1,72 +1,76 @@
-import { FiBarChart2, FiBriefcase, FiDollarSign, FiLock, FiPieChart, FiShield, FiTarget, FiTrendingUp, FiUser } from "react-icons/fi";
+// PERBAIKAN IMPOR: Memasukkan FiDroplet dan FiCamera, serta menghapus FiHeart dan FiUsers yang sudah tidak terpakai
+import { FiAward, FiMapPin, FiClock, FiShield, FiMap, FiCheckCircle, FiDroplet, FiCamera } from "react-icons/fi";
+import { FaTshirt } from "react-icons/fa"; 
 
 import { IBenefit } from "@/types"
 
 export const benefits: IBenefit[] = [
     {
-        title: "Smart Budgeting",
-        description: "Take the guesswork out of managing your money. Our AI-powered budgeting tool adapts to your lifestyle and helps you stay on track.",
+        title: "Fasilitas & Race Pack Peserta",
+        description: "Setiap peserta SMADARUN akan mendapatkan paket lomba eksklusif untuk mendukung kenyamanan dan performa terbaikmu saat berlari.",
         bullets: [
             {
-                title: "Intelligent Categorization",
-                description: "Automatically sorts your transactions for crystal-clear insights.",
-                icon: <FiBarChart2 size={26} />
+                title: "Jersey Eksklusif SMADARUN 2027",
+                description: "Bahan premium yang nyaman, ringan, dan cepat kering (dry-fit).",
+                icon: <FaTshirt size={26} /> 
             },
             {
-                title: "Customizable Goals",
-                description: "Set and track financial objectives that matter to you.",
-                icon: <FiTarget size={26} />
+                title: "Medali Finisher Khusus",
+                description: "Apresiasi logam eksklusif bagi semua pelari yang berhasil menyelesaikan rute.",
+                icon: <FiAward size={26} />
             },
             {
-                title: "Predictive Analysis",
-                description: "Get ahead of your finances with spending forecasts and alerts.",
-                icon: <FiTrendingUp size={26} />
+                title: "Nomor Dada (BIB) & Refreshment",
+                description: "Nomor pelari resmi beserta paket hidrasi di rute dan garis finish.",
+                icon: <FiCheckCircle size={26} />
             }
         ],
-        imageSrc: "/images/mockup-1.webp"
+        imageSrc: "/images/pocari-1.jpg"
     },
     {
-        title: "Seamless Investing",
-        description: "Start building wealth today, no financial degree required. Finwise makes investing accessible and straightforward.",
+        title: "Rute Steril & Penuh Semangat",
+        description: "Nikmati jalur lari yang aman dengan pemandangan kota yang menyenangkan dan dukungan penuh di sepanjang jalan.",
         bullets: [
             {
-                title: "Micro-Investing",
-                description: "Begin with as little as $1 and watch your money grow.",
-                icon: <FiDollarSign size={26} />
+                title: "Water Station Terjadwal",
+                description: "Pos hidrasi berkala untuk memastikan stamina dan cairan tubuhmu terjaga.",
+                // 1. UBAH IKON WATER STATION MENJADI TETESAN AIR DI SINI
+                icon: <FiDroplet size={26} /> 
             },
             {
-                title: "Expert Portfolios",
-                description: "Choose from investment strategies tailored to your risk tolerance.",
-                icon: <FiBriefcase size={26} />
+                title: "Rute Terarah & Steril",
+                description: "Dipandu oleh marshal profesional dan penanda rute yang sangat jelas.",
+                icon: <FiMap size={26} />
             },
             {
-                title: "Real-Time Performance",
-                description: "Track your investments with easy-to-understand metrics and visuals.",
-                icon: <FiPieChart size={26} />
+                title: "Pencatatan Waktu Akurat",
+                description: "Sistem pencatatan waktu yang siap mengukur pencapaian lari terbaikmu.",
+                icon: <FiClock size={26} />
             }
         ],
-        imageSrc: "/images/mockup-2.webp"
+        imageSrc: "/images/pocari-1.jpg"
     },
     {
-        title: "Bank-Grade Security",
-        description: "Your financial data deserves the best protection. Rest easy knowing Finwise employs cutting-edge security measures.",
+        title: "Aman & Didukung Komunitas",
+        description: "Keselamatan pelari adalah prioritas utama kami. Berlari dengan tenang bersama ratusan peserta lainnya.",
         bullets: [
             {
-                title: "Military-Grade Encryption",
-                description: "Your information is safeguarded with the highest level of encryption.",
-                icon: <FiLock size={26} />
-            },
-            {
-                title: "Biometric Authentication",
-                description: "Access your account securely with fingerprint or facial recognition.",
-                icon: <FiUser size={26} />
-            },
-            {
-                title: "Real-Time Fraud Detection",
-                description: "Our system constantly monitors for suspicious activity to keep your money safe.",
+                title: "Tim Medis & Ambulans Standby",
+                description: "Tim medis bergerak cepat dan pos kesehatan siap siaga di area strategis.",
                 icon: <FiShield size={26} />
+            },
+            {
+                title: "Fotografer di Berbagai Titik",
+                description: "Abadikan momen terbaikmu saat berlari oleh tim fotografer official.",
+                // 2. UBAH IKON FOTOGRAFER MENJADI KAMERA DI SINI
+                icon: <FiCamera size={26} /> 
+            },
+            {
+                title: "Lokasi Strategis",
+                description: "Titik start dan finish yang mudah diakses dengan area parkir luas.",
+                icon: <FiMapPin size={26} />
             }
         ],
-        imageSrc: "/images/mockup-1.webp"
+        imageSrc: "/images/pocari-1.jpg"
     },
 ]

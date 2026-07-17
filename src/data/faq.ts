@@ -3,23 +3,23 @@ import { siteDetails } from "./siteDetails";
 
 export const faqs: IFAQ[] = [
     {
-        question: `Is ${siteDetails.siteName} secure?`,
-        answer: 'Absolutely. We use bank-level encryption to protect your data and never store your login information. Plus, our biometric authentication adds an extra layer of security.',
+        question: `Kapan dan di mana ${siteDetails.siteName} dilaksanakan?`,
+        answer: 'Informasi mengenai tanggal pelaksanaan resmi, lokasi pengambilan race pack, serta rute start/finish dapat Anda pantau secara berkala melalui halaman utama website ini atau akun Instagram resmi kami.',
     },
     {
-        question: `Can I use ${siteDetails.siteName} on multiple devices?`,
-        answer: 'Absolutely! Your Finwise account syncs seamlessly across all your devices - smartphone, tablet, and computer.',
+        question: 'Fasilitas apa saja yang didapatkan oleh peserta?',
+        answer: 'Setiap peserta yang terdaftar akan mendapatkan Slot Lari resmi, Jersey Eksklusif SMADARUN 2027, Nomor Dada (BIB), Konsumsi/Hidrasi di rute lomba, Proteksi Medis/Asuransi, serta Medali Finisher bagi yang berhasil mencapai garis finish sebelum batas waktu.',
     },
     {
-        question: 'Can I connect all my bank accounts?',
-        answer: `Yes! ${siteDetails.siteName} supports connections with over 10,000 financial institutions worldwide. Simply log in through our secure portal to link your accounts.`
+        question: 'Apakah ada batas waktu (Cut Off Time) untuk kategori 5K?',
+        answer: 'Ada. Batas waktu pengerjaan rute (Cut Off Time) untuk kategori 5K dirancang sangat longgar dan ramah bagi pemula, sehingga aman diikuti oleh pelari hobi, keluarga, maupun pelajar yang baru pertama kali ikut event lari.',
     },
     {
-        question: 'Do I need any financial expertise to use the investing features?',
-        answer: 'Not at all! Our expert-curated portfolios and educational resources make investing accessible to everyone, regardless of experience level.',
+        question: 'Bagaimana mekanisme pengambilan Race Pack (RPC)?',
+        answer: 'Pengambilan paket lomba (Race Pack) wajib membawa bukti email konfirmasi pendaftaran dan kartu identitas resmi (Kartu Pelajar/KTP). Jadwal dan lokasi detail pengambilan akan diumumkan menjelang hari pelaksanaan kegiatan.',
     },
     {
-        question: 'What if I need help using the app?',
-        answer: 'Our dedicated support team is available 24/7 via chat or email. Plus, we offer extensive in-app tutorials and a comprehensive knowledge base to help you make the most of Finwise.'
+        question: 'Apakah tiket yang sudah dibeli bisa dibatalkan atau dipindahtangankan?',
+        answer: 'Tiket lari yang sudah berhasil dibayar bersifat final dan tidak dapat dibatalkan, diuangkan kembali (refund), ataupun diubah datanya/dipindahtangankan kepada orang lain demi keselamatan serta kevalidan data asuransi peserta.'
     }
 ];
