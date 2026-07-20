@@ -12,26 +12,28 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 menit
 const MAX_REQUESTS_PER_WINDOW = 3;   // Maksimal 3 kali daftar per menit per IP
 const DOUBLE_SUBMIT_WINDOW = 5000;   // 5 detik pencegahan double-submit untuk NIK yang sama
 
-// Bersihkan cache lama secara berkala untuk mencegah kebocoran memori jika berjalan terus menerus
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, data] of rateLimitMap.entries()) {
-    if (now - data.lastReset > RATE_LIMIT_WINDOW) {
-      rateLimitMap.delete(ip);
+// Pembersihan cache memori berkala dilakukan secara pasif di dalam request handler untuk keselarasan dengan Serverless Environment
+function bersihkanCacheMundur(now: number) {
+  if (rateLimitMap.size > 200) {
+    for (const [ip, data] of rateLimitMap.entries()) {
+      if (now - data.lastReset > RATE_LIMIT_WINDOW) rateLimitMap.delete(ip);
     }
   }
-  for (const [nik, timestamp] of doubleSubmitMap.entries()) {
-    if (now - timestamp > DOUBLE_SUBMIT_WINDOW) {
-      doubleSubmitMap.delete(nik);
+  if (doubleSubmitMap.size > 200) {
+    for (const [nik, timestamp] of doubleSubmitMap.entries()) {
+      if (now - timestamp > DOUBLE_SUBMIT_WINDOW) doubleSubmitMap.delete(nik);
     }
   }
-}, 5 * 60 * 1000); // Bersihkan setiap 5 menit
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const now = Date.now();
+    // Jalankan pembersihan pasif
+    bersihkanCacheMundur(now);
+
     // 1. Get Client IP for Rate Limiting
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
-    const now = Date.now();
 
     // 2. Apply Rate Limiting
     const limitData = rateLimitMap.get(ip);
@@ -202,12 +204,27 @@ export async function POST(req: NextRequest) {
         console.error("Proxy error response dari Kembar.in:", errText);
         // Lepas lock NIK agar user bisa mencoba lagi
         doubleSubmitMap.delete(normalizedNik);
+
+        // Teruskan pesan eror asli dari core agar user mendapatkan info validasi yang tepat
+        let customMessage = "Sistem core Kembar.in menolak penyimpanan data atau sedang tidak dapat dijangkau.";
+        try {
+          const parsedErr = JSON.parse(errText);
+          if (parsedErr && parsedErr.message) {
+            customMessage = parsedErr.message;
+          }
+        } catch (_) {
+          // Gunakan potongan teks jika bukan format JSON
+          if (errText && errText.length < 150 && !errText.includes("<!DOCTYPE")) {
+            customMessage = errText;
+          }
+        }
+
         return NextResponse.json(
           {
             success: false,
-            message: "Sistem core Kembar.in menolak penyimpanan data atau sedang tidak dapat dijangkau. Silakan hubungi panitia jika masalah berlanjut.",
+            message: customMessage,
           },
-          { status: 502 }
+          { status: response.status }
         );
       }
 
