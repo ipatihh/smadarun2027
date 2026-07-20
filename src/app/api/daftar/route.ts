@@ -182,9 +182,9 @@ export async function POST(req: NextRequest) {
     // 6. Proxy Request ke Backend Kembar.in
     const kembarInUrl = process.env.KEMBAR_IN_API_URL || "https://kembar.in/api/participants/register";
 
-    // Set timeout request proxy 10 detik agar API route Next.js tidak hang selamanya jika server tujuan down
+    // Set timeout request proxy 25 detik (25000ms) agar API route Next.js memberikan waktu cukup untuk backend core
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     try {
       const response = await fetch(kembarInUrl, {
@@ -238,7 +238,7 @@ export async function POST(req: NextRequest) {
       
       let errorMsg = "Koneksi ke core system pendaftaran terputus atau sibuk. Data Anda belum tersimpan, silakan coba beberapa saat lagi.";
       if (fetchErr.name === "AbortError") {
-        errorMsg = "Waktu tunggu request pendaftaran habis (timeout). Silakan periksa koneksi Anda dan coba lagi.";
+        errorMsg = "Request Timeout. Waktu tunggu pendaftaran habis (25 detik). Silakan periksa koneksi Anda dan coba lagi.";
       }
 
       return NextResponse.json(

@@ -74,6 +74,19 @@ type SubmitData = FormDataState & {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (loading) return; // Proteksi instan double submit dari klik brutal di frontend
+
+    // Validasi Ukuran Berkas Client-Side (Maksimal 3 MB)
+    const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3 MB
+    if (file && file.size > MAX_FILE_SIZE) {
+      setModal({
+        show: true,
+        success: false,
+        title: "Ukuran Berkas Terlalu Besar",
+        message: "Ukuran berkas bukti transfer tidak boleh melebihi 3 MB. Silakan gunakan berkas dengan ukuran lebih kecil.",
+      });
+      return;
+    }
+
     setLoading(true);
 
     // Pemetaan data yang diselaraskan secara presisi dengan skema backend & DB Aiven
@@ -101,12 +114,11 @@ type SubmitData = FormDataState & {
           },
         });
 
-        // Guard: Pastikan server mengembalikan JSON sebelum parsing.
+        // Guard: Pastikan server mengembalikan HTTP OK dan JSON sebelum parsing.
         // Infrastruktur (Vercel/Next.js) bisa mengembalikan HTML saat error 413/502/504
         // sehingga response.json() akan crash dengan SyntaxError: Unexpected token '<'.
         const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          // Sertakan status code untuk memudahkan diagnosa di sisi panitia
+        if (!response.ok || !contentType || !contentType.includes("application/json")) {
           throw new Error(
             `Server mengembalikan respons tidak valid (HTTP ${response.status}). Silakan coba beberapa saat lagi.`
           );
