@@ -100,7 +100,18 @@ type SubmitData = FormDataState & {
             "Content-Type": "application/json",
           },
         });
-        
+
+        // Guard: Pastikan server mengembalikan JSON sebelum parsing.
+        // Infrastruktur (Vercel/Next.js) bisa mengembalikan HTML saat error 413/502/504
+        // sehingga response.json() akan crash dengan SyntaxError: Unexpected token '<'.
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          // Sertakan status code untuk memudahkan diagnosa di sisi panitia
+          throw new Error(
+            `Server mengembalikan respons tidak valid (HTTP ${response.status}). Silakan coba beberapa saat lagi.`
+          );
+        }
+
         const result = await response.json();
 
         if (response.ok && result.success) {
@@ -140,18 +151,76 @@ type SubmitData = FormDataState & {
       }
     };
 
-    if (file) {
+    // Helper untuk kompresi file gambar di sisi client untuk mencegah overload ukuran payload / timeout Vercel
+    const compressImageAndSendData = (imageFile: File, payload: SubmitData) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Data = (reader.result as string).split(",")[1];
-        
-        // 🚀 DISINKRONKAN DENGAN SKEMA CAMELCASE BACKEND KEMBAR.IN
-        outputObject["fileData"] = base64Data; 
-        outputObject["fileName"] = file.name;
-        
-        sendData(outputObject);
+      reader.readAsDataURL(imageFile);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+          
+          // Batasi resolusi maksimal untuk memperkecil ukuran file transfer
+          const MAX_WIDTH = 1200;
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Kompresi kualitas JPEG menjadi 70% (keseimbangan yang bagus antara kejelasan teks bukti dan ukuran byte)
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
+          const base64Data = compressedDataUrl.split(",")[1];
+          
+          payload["fileData"] = base64Data;
+          // Ganti ekstensi file agar sesuai dengan tipe JPEG hasil kompresi
+          const originalName = imageFile.name;
+          const lastDot = originalName.lastIndexOf(".");
+          const nameWithoutExt = lastDot !== -1 ? originalName.substring(0, lastDot) : originalName;
+          payload["fileName"] = `${nameWithoutExt}.jpg`;
+          
+          sendData(payload);
+        };
+        img.onerror = () => {
+          // Fallback kirim data asli jika pemrosesan canvas gagal
+          const base64Data = (reader.result as string).split(",")[1];
+          payload["fileData"] = base64Data;
+          payload["fileName"] = imageFile.name;
+          sendData(payload);
+        };
       };
-      reader.readAsDataURL(file);
+      reader.onerror = () => {
+        setLoading(false);
+        setModal({
+          show: true,
+          success: false,
+          title: "Gagal Membaca File",
+          message: "Tidak dapat memproses berkas bukti transfer. Silakan gunakan berkas gambar lain.",
+        });
+      };
+    };
+
+    if (file) {
+      if (file.type.startsWith("image/")) {
+        compressImageAndSendData(file, outputObject);
+      } else {
+        // Berkas non-gambar (misalnya PDF), kirim aslinya langsung
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Data = (reader.result as string).split(",")[1];
+          outputObject["fileData"] = base64Data;
+          outputObject["fileName"] = file.name;
+          sendData(outputObject);
+        };
+        reader.readAsDataURL(file);
+      }
     } else {
       sendData(outputObject);
     }
