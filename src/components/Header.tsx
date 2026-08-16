@@ -43,7 +43,7 @@ const Header: React.FC = () => {
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
                         <FaRunning className="text-foreground min-w-fit w-7 h-7" />
-                        <span className="manrope text-xl font-semibold text-foreground cursor-pointer">
+                        <span className="font-display text-xl font-semibold text-foreground cursor-pointer">
                             {siteDetails.siteName}
                         </span>
                     </Link>

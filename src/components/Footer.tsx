@@ -17,8 +17,8 @@ const Footer: React.FC = () => {
             <div className="max-w-7xl w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
                 <div>
                     <Link href="/" className="flex items-center gap-2">
-                        <FaRunning className="min-w-fit w-5 h-5 md:w-7 md:h-7 text-[#FCD34D]" />
-                        <h3 className="manrope text-xl font-semibold cursor-pointer">
+                        <FaRunning className="min-w-fit w-5 h-5 md:w-7 md:h-7 text-primary-accent" />
+                        <h3 className="font-display text-xl font-semibold cursor-pointer">
                             {siteDetails.siteName}
                         </h3>
                     </Link>
@@ -72,14 +72,14 @@ const Footer: React.FC = () => {
                         onClick={() => setModalType('privacy')} 
                         className="hover:text-foreground flex items-center gap-1.5 transition outline-none"
                     >
-                        <FaShieldAlt className="w-3.5 h-3.5 text-[#FCD34D]" /> Kebijakan Privasi
+                        <FaShieldAlt className="w-3.5 h-3.5 text-primary-accent" /> Kebijakan Privasi
                     </button>
                     <span>•</span>
                     <button 
                         onClick={() => setModalType('terms')} 
                         className="hover:text-foreground flex items-center gap-1.5 transition outline-none"
                     >
-                        <FaFileContract className="w-3.5 h-3.5 text-[#FCD34D]" /> Syarat & Ketentuan
+                        <FaFileContract className="w-3.5 h-3.5 text-primary-accent" /> Syarat & Ketentuan
                     </button>
                 </div>
 
@@ -118,7 +118,7 @@ const Footer: React.FC = () => {
                         {modalType === 'privacy' && (
                             <div>
                                 <div className="flex items-center gap-2 mb-4 text-gray-800">
-                                    <FaShieldAlt className="w-6 h-6 text-[#FCD34D]" />
+                                    <FaShieldAlt className="w-6 h-6 text-primary-accent" />
                                     <h4 className="text-xl font-black tracking-tight uppercase">Kebijakan Privasi</h4>
                                 </div>
                                 <div className="text-sm text-gray-600 space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
@@ -134,7 +134,7 @@ const Footer: React.FC = () => {
                         {modalType === 'terms' && (
                             <div>
                                 <div className="flex items-center gap-2 mb-4 text-gray-800">
-                                    <FaFileContract className="w-6 h-6 text-[#FCD34D]" />
+                                    <FaFileContract className="w-6 h-6 text-primary-accent" />
                                     <h4 className="text-xl font-black tracking-tight uppercase">Syarat & Ketentuan</h4>
                                 </div>
                                 <div className="text-sm text-gray-600 space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
@@ -148,7 +148,7 @@ const Footer: React.FC = () => {
 
                         <button 
                             onClick={() => setModalType(null)} 
-                            className="mt-6 w-full py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-sm rounded-xl transition"
+                            className="mt-6 w-full py-2.5 bg-secondary hover:bg-secondary-accent text-white font-bold text-sm rounded-full transition"
                         >
                             Saya Mengerti
                         </button>

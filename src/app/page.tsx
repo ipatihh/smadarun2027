@@ -1,7 +1,7 @@
 import Hero from "@/components/Hero";
 import Testimonials from "@/components/Testimonials";
 // 1. PERBAIKAN IMPOR: Mengarah ke folder Pricing, tapi memanggil file Tiket
-import Pricing from "@/components/Tiket/Tiket"; 
+import Pricing from "@/components/Tiket/Tiket";
 import FAQ from "@/components/FAQ";
 import Logos from "@/components/Logos";
 import Benefits from "@/components/Benefits/Benefits";
@@ -9,18 +9,21 @@ import Container from "@/components/Container";
 import Section from "@/components/Section";
 import Stats from "@/components/Stats";
 import CTA from "@/components/CTA";
+import CountdownSection from "@/components/CountdownSection";
+import Timeline from "@/components/Timeline";
 
 const HomePage: React.FC = () => {
   return (
     <>
       <Hero />
+      <CountdownSection />
       <Logos />
       <Container>
         <Benefits />
 
-        {/* 
-           2. PERBAIKAN ID SEKSYEN: 
-           Mengubah id="pricing" menjadi id="tiket" agar pas saat diklik dari menu "Kategori Tiket" di header 
+        {/*
+           2. PERBAIKAN ID SEKSYEN:
+           Mengubah id="pricing" menjadi id="tiket" agar pas saat diklik dari menu "Kategori Tiket" di header
         */}
         <Section
           id="tiket"
@@ -29,6 +32,8 @@ const HomePage: React.FC = () => {
         >
           <Pricing />
         </Section>
+
+        <Timeline />
 
         {/* Bagian Testimoni */}
         <Section

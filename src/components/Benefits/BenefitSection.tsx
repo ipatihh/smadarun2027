@@ -1,50 +1,17 @@
 "use client"
 import Image from "next/image";
 import clsx from "clsx";
-import { motion, Variants } from "framer-motion"
+import { motion } from "framer-motion"
 
 import BenefitBullet from "./BenefitBullet";
 import SectionTitle from "../SectionTitle";
 import { IBenefit } from "@/types";
+import { revealContainer, revealChild } from "@/lib/motion";
 
 interface Props {
     benefit: IBenefit;
     imageAtRight?: boolean;
 }
-
-const containerVariants: Variants = {
-    offscreen: {
-        opacity: 0,
-        y: 100
-    },
-    onscreen: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            type: "spring",
-            bounce: 0.2,
-            duration: 0.9,
-            delayChildren: 0.2,
-            staggerChildren: 0.1,
-        }
-    }
-};
-
-export const childVariants: Variants = {
-    offscreen: {
-        opacity: 0,
-        x: -50,
-    },
-    onscreen: {
-        opacity: 1,
-        x: 0,
-        transition: {
-            type: "spring",
-            bounce: 0.2,
-            duration: 1,
-        }
-    },
-};
 
 const BenefitSection: React.FC<Props> = ({ benefit, imageAtRight }: Props) => {
     const { title, description, imageSrc, bullets } = benefit;
@@ -53,7 +20,7 @@ const BenefitSection: React.FC<Props> = ({ benefit, imageAtRight }: Props) => {
         <section className="benefit-section">
             <motion.div
                 className="flex flex-wrap flex-col items-center justify-center gap-2 lg:flex-row lg:gap-20 lg:flex-nowrap mb-24"
-                variants={containerVariants}
+                variants={revealContainer}
                 initial="offscreen"
                 whileInView="onscreen"
                 viewport={{ once: true }}
@@ -65,7 +32,7 @@ const BenefitSection: React.FC<Props> = ({ benefit, imageAtRight }: Props) => {
                     <div className="w-full  text-center lg:text-left ">
                         <motion.div
                             className="flex flex-col w-full"
-                            variants={childVariants}
+                            variants={revealChild}
                         >
                             <SectionTitle>
                                 <h3 className="lg:max-w-2xl">

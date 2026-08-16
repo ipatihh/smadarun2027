@@ -1,6 +1,6 @@
 import { getLiveEventData, ResolvedTicketTier } from "@/lib/kembarinEvents";
 import { tiketMarketing } from "@/data/tiket";
-import PricingColumn from "./TiketColumn";
+import TiketGrid from "./TiketGrid";
 
 async function Tiket() {
   const live = await getLiveEventData();
@@ -31,11 +31,7 @@ async function Tiket() {
   return (
     <section id="tiket" className="py-20 px-5 bg-background">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-stretch justify-center gap-8 max-w-md mx-auto md:max-w-4xl w-full">
-          {tiers.map((tier) => (
-            <PricingColumn key={tier.categoryKey} tier={tier} />
-          ))}
-        </div>
+        <TiketGrid tiers={tiers} />
       </div>
     </section>
   );

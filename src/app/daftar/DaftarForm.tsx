@@ -2,8 +2,10 @@
 
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { tiketMarketing } from "@/data/tiket";
 import { LiveTicketType } from "@/lib/kembarinEvents";
+import { revealContainer, revealChild } from "@/lib/motion";
 
 // Biaya Layanan Platform Rp 5.000 per transaksi (spesifik ke platform smadarun2027 ini,
 // bukan bagian dari harga tiket yang diatur kembarin-v2).
@@ -226,13 +228,18 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
   return (
     <div className="min-h-screen bg-transparent flex flex-col justify-center items-center pb-12 pt-28 px-4 relative overflow-hidden">
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
-      <div className="w-full max-w-xl z-10">
-        <div className="text-center mb-8">
-          <div className="font-extrabold text-3xl italic tracking-tight uppercase text-gray-900">SMADARUN <span className="text-[#FBBF24]">2027</span></div>
-          <div className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Official Registration Portal</div>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-10 shadow-xl text-gray-900">
-          <h3 className="text-center font-black text-2xl tracking-tight text-gray-800 mb-8">FORMULIR PENDAFTARAN</h3>
+      <motion.div
+        className="w-full max-w-xl z-10"
+        variants={revealContainer}
+        initial="offscreen"
+        animate="onscreen"
+      >
+        <motion.div variants={revealChild} className="text-center mb-8">
+          <div className="font-display font-bold text-3xl uppercase text-foreground">SMADARUN <span className="text-primary-accent">2027</span></div>
+          <div className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">Official Registration Portal</div>
+        </motion.div>
+        <motion.div variants={revealChild} className="bg-card rounded-2xl border border-border p-6 md:p-10 shadow-xl text-foreground">
+          <h3 className="text-center font-bold text-2xl text-foreground mb-8">FORMULIR PENDAFTARAN</h3>
 
           {isFormClosed && (
             <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
@@ -244,16 +251,16 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
           <form onSubmit={handleSubmit} className="space-y-5">
             <fieldset disabled={isFormClosed} className="space-y-5">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Nama Lengkap</label>
-              <input type="text" name="nama" value={formData.nama} onChange={handleInputChange} placeholder="Sesuai KTP / Kartu Pelajar" className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] focus:ring-4 focus:ring-[#FCD34D]/20 outline-none transition" required />
+              <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">Nama Lengkap</label>
+              <input type="text" name="nama" value={formData.nama} onChange={handleInputChange} placeholder="Sesuai KTP / Kartu Pelajar" className="w-full p-3.5 bg-gray-50 border border-border rounded-xl text-sm focus:border-primary focus:ring-4 focus:ring-primary/20 outline-none transition" required />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Alamat Email</label>
-              <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="contoh@email.com" className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] focus:ring-4 focus:ring-[#FCD34D]/20 outline-none transition" required />
+              <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">Alamat Email</label>
+              <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="contoh@email.com" className="w-full p-3.5 bg-gray-50 border border-border rounded-xl text-sm focus:border-primary focus:ring-4 focus:ring-primary/20 outline-none transition" required />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">NIK KTP / Kartu Pelajar</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">NIK KTP / Kartu Pelajar</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -264,33 +271,33 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
                   value={formData.nik}
                   onChange={handleInputChange}
                   placeholder="16 digit angka"
-                  className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] focus:ring-4 focus:ring-[#FCD34D]/20 outline-none transition"
+                  className="w-full p-3.5 bg-gray-50 border border-border rounded-xl text-sm focus:border-primary focus:ring-4 focus:ring-primary/20 outline-none transition"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Nomor WhatsApp</label>
-                <input type="tel" name="whatsapp" value={formData.whatsapp} onChange={handleInputChange} placeholder="08xxxxx" className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] focus:ring-4 focus:ring-[#FCD34D]/20 outline-none transition" required />
+                <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">Nomor WhatsApp</label>
+                <input type="tel" name="whatsapp" value={formData.whatsapp} onChange={handleInputChange} placeholder="08xxxxx" className="w-full p-3.5 bg-gray-50 border border-border rounded-xl text-sm focus:border-primary focus:ring-4 focus:ring-primary/20 outline-none transition" required />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Jenis Kelamin</label>
-                <select name="gender" value={formData.gender} onChange={handleInputChange} className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] outline-none transition" required>
+                <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">Jenis Kelamin</label>
+                <select name="gender" value={formData.gender} onChange={handleInputChange} className="w-full p-3.5 bg-gray-50 border border-border rounded-xl text-sm focus:border-primary outline-none transition" required>
                   <option value="" disabled>Pilih Jenis Kelamin</option>
                   <option value="Laki-laki">Laki-laki</option>
                   <option value="Perempuan">Perempuan</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Kota Domisili</label>
-                <input type="text" name="kota" value={formData.kota} onChange={handleInputChange} placeholder="Contoh: Nganjuk" className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] focus:ring-4 focus:ring-[#FCD34D]/20 outline-none transition" required />
+                <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">Kota Domisili</label>
+                <input type="text" name="kota" value={formData.kota} onChange={handleInputChange} placeholder="Contoh: Nganjuk" className="w-full p-3.5 bg-gray-50 border border-border rounded-xl text-sm focus:border-primary focus:ring-4 focus:ring-primary/20 outline-none transition" required />
               </div>
             </div>
             {PENDAFTARAN_DIBUKA && (
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Kategori Lomba</label>
-                <select name="kategori" value={formData.kategori} onChange={handleKategoriChange} className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] outline-none transition" required>
+                <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">Kategori Lomba</label>
+                <select name="kategori" value={formData.kategori} onChange={handleKategoriChange} className="w-full p-3.5 bg-gray-50 border border-border rounded-xl text-sm focus:border-primary outline-none transition" required>
                   {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
                     <option key={key} value={key}>
                       {cat.label}
@@ -300,8 +307,8 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
               </div>
             )}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Ukuran Jersey (Unisex)</label>
-              <select name="size" value={formData.size} onChange={handleInputChange} className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] outline-none transition" required>
+              <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">Ukuran Jersey (Unisex)</label>
+              <select name="size" value={formData.size} onChange={handleInputChange} className="w-full p-3.5 bg-gray-50 border border-border rounded-xl text-sm focus:border-primary outline-none transition" required>
                 <option value="" disabled>Pilih Ukuran</option>
                 <option value="XS">XS</option>
                 <option value="S">S</option>
@@ -313,8 +320,8 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Panduan Ukuran</label>
-              <div className="p-2 bg-gray-100 border border-gray-200 rounded-xl overflow-hidden">
+              <label className="block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2">Panduan Ukuran</label>
+              <div className="p-2 bg-gray-100 border border-border rounded-xl overflow-hidden">
                 <Image
                   src={imageSrc}
                   alt="Size Chart"
@@ -328,43 +335,43 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
 
             {/* Rincian Biaya Pendaftaran */}
             {PENDAFTARAN_DIBUKA && (
-              <div className="bg-gray-50 border border-gray-200 p-5 rounded-xl space-y-2.5 text-sm">
-                <div className="text-xs font-black uppercase tracking-widest text-gray-500 mb-1">Rincian Biaya Pendaftaran</div>
-                <div className="flex justify-between text-gray-600 font-medium">
+              <div className="bg-gray-50 border border-border p-5 rounded-xl space-y-2.5 text-sm">
+                <div className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">Rincian Biaya Pendaftaran</div>
+                <div className="flex justify-between text-foreground-accent font-medium">
                   <span>Biaya Tiket Kategori ({formData.kategori})</span>
                   <span>Rp {subtotal.toLocaleString("id-ID")}</span>
                 </div>
-                <div className="flex justify-between text-gray-600 font-medium">
+                <div className="flex justify-between text-foreground-accent font-medium">
                   <span>Biaya Layanan Platform</span>
                   <span>Rp {PLATFORM_ADMIN_FEE.toLocaleString("id-ID")}</span>
                 </div>
-                <div className="border-t border-gray-200 pt-2.5 flex justify-between font-black text-gray-900 text-base">
+                <div className="border-t border-border pt-2.5 flex justify-between font-black text-foreground text-base">
                   <span>Total Pembayaran</span>
-                  <span className="text-amber-600">Rp {totalAmount.toLocaleString("id-ID")}</span>
+                  <span className="text-secondary">Rp {totalAmount.toLocaleString("id-ID")}</span>
                 </div>
               </div>
             )}
 
-            <div className="flex items-start gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-xl select-none">
-              <input type="checkbox" id="healthDeclaration" checked={isHealthyChecked} onChange={(e) => setIsHealthyChecked(e.target.checked)} className="mt-0.5 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500 accent-amber-500 cursor-pointer" />
-              <label htmlFor="healthDeclaration" className="text-xs text-gray-600 leading-relaxed cursor-pointer font-medium">
-                Saya menyatakan dengan sadar bahwa saya dalam kondisi <span className="font-bold text-gray-900">sehat walafiat</span>, memiliki fisik yang prima, dan <span className="font-bold text-gray-900">bertanggung jawab penuh</span> atas keselamatan diri saya sendiri selama mengikuti seluruh rangkaian kegiatan SMADARUN 2027.
+            <div className="flex items-start gap-3 p-4 bg-zinc-50 border border-border rounded-xl select-none">
+              <input type="checkbox" id="healthDeclaration" checked={isHealthyChecked} onChange={(e) => setIsHealthyChecked(e.target.checked)} className="mt-0.5 w-4 h-4 text-primary-accent border-border rounded focus:ring-primary accent-primary cursor-pointer" />
+              <label htmlFor="healthDeclaration" className="text-xs text-foreground-accent leading-relaxed cursor-pointer font-medium">
+                Saya menyatakan dengan sadar bahwa saya dalam kondisi <span className="font-bold text-foreground">sehat walafiat</span>, memiliki fisik yang prima, dan <span className="font-bold text-foreground">bertanggung jawab penuh</span> atas keselamatan diri saya sendiri selama mengikuti seluruh rangkaian kegiatan SMADARUN 2027.
               </label>
             </div>
-            <div className="flex items-start gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-xl select-none">
-              <input type="checkbox" id="privacyConsent" checked={isConsentChecked} onChange={(e) => setIsConsentChecked(e.target.checked)} className="mt-0.5 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500 accent-amber-500 cursor-pointer" />
-              <label htmlFor="privacyConsent" className="text-xs text-gray-600 leading-relaxed cursor-pointer font-medium">
-                Saya telah membaca dan menyetujui <span className="font-bold text-gray-900">Kebijakan Privasi</span>, serta memberikan persetujuan atas pengumpulan dan pemrosesan data pribadi saya (termasuk NIK, email, dan nomor WhatsApp) untuk keperluan pendaftaran dan verifikasi kepesertaan SMADARUN 2027.
+            <div className="flex items-start gap-3 p-4 bg-zinc-50 border border-border rounded-xl select-none">
+              <input type="checkbox" id="privacyConsent" checked={isConsentChecked} onChange={(e) => setIsConsentChecked(e.target.checked)} className="mt-0.5 w-4 h-4 text-primary-accent border-border rounded focus:ring-primary accent-primary cursor-pointer" />
+              <label htmlFor="privacyConsent" className="text-xs text-foreground-accent leading-relaxed cursor-pointer font-medium">
+                Saya telah membaca dan menyetujui <span className="font-bold text-foreground">Kebijakan Privasi</span>, serta memberikan persetujuan atas pengumpulan dan pemrosesan data pribadi saya (termasuk NIK, email, dan nomor WhatsApp) untuk keperluan pendaftaran dan verifikasi kepesertaan SMADARUN 2027.
               </label>
             </div>
-            <button type="submit" disabled={loading || isFormClosed || !isHealthyChecked || !isConsentChecked} className="w-full py-4 bg-[#FCD34D] hover:bg-[#FBBF24] text-black font-extrabold text-sm uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:bg-gray-200 disabled:text-gray-400 disabled:transform-none disabled:cursor-not-allowed flex justify-center items-center gap-3">
+            <button type="submit" disabled={loading || isFormClosed || !isHealthyChecked || !isConsentChecked} className="w-full py-4 bg-primary hover:bg-primary-accent text-black font-extrabold text-sm uppercase tracking-wider rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:bg-gray-200 disabled:text-gray-400 disabled:transform-none disabled:cursor-not-allowed flex justify-center items-center gap-3">
               <span>{loading ? "MEMPROSES PENDAFTARAN..." : "KONFIRMASI & BAYAR SEKARANG"}</span>
               {loading && <div className="w-5 h-5 border-3 border-black/20 border-t-black rounded-full animate-spin"></div>}
             </button>
             </fieldset>
           </form>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {isImgOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300" onClick={() => setIsImgOpen(false)}>
@@ -384,12 +391,12 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
 
       {modal.show && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-          <div className="bg-white p-8 rounded-2xl max-w-sm w-full text-center shadow-2xl border border-gray-100">
+          <div className="bg-card p-8 rounded-2xl max-w-sm w-full text-center shadow-2xl border border-border">
             <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-2xl ${modal.success ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>{modal.success ? "✓" : "✕"}</div>
-            <h4 className="text-xl font-black text-gray-900 mb-2">{modal.title}</h4>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">{modal.message}</p>
+            <h4 className="text-xl font-black text-foreground mb-2">{modal.title}</h4>
+            <p className="text-sm text-foreground-accent mb-6 leading-relaxed">{modal.message}</p>
 
-            <button onClick={() => setModal((prev) => ({ ...prev, show: false }))} className="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-sm rounded-xl w-full transition">Tutup</button>
+            <button onClick={() => setModal((prev) => ({ ...prev, show: false }))} className="px-6 py-2.5 bg-secondary hover:bg-secondary-accent text-white font-bold text-sm rounded-full w-full transition">Tutup</button>
           </div>
         </div>
       )}

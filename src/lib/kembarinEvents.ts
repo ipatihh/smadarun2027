@@ -18,6 +18,15 @@ export interface ResolvedTicketTier extends LiveTicketType {
   isAvailable: boolean;
 }
 
+export interface EventTimelineConfig {
+  rpcTanggal: string | null;
+  rpcWaktu: string | null;
+  rpcLokasi: string | null;
+  // key = kode jarak apa adanya dari event_config.timing_config.gun_starts
+  // (mis. "5K", "10K"), value = jam gun-start "HH:MM:SS".
+  gunStarts: Record<string, string>;
+}
+
 export interface LiveEventData {
   // true hanya kalau event berstatus "active" DI kembarin-v2 DAN ada minimal satu
   // kategori tiket tersedia. Ini gerbang utama buka/tutup pendaftaran di UI.
@@ -26,9 +35,16 @@ export interface LiveEventData {
   // false, supaya UI masih bisa menampilkan kategori dalam keadaan nonaktif/"Tidak
   // Tersedia" alih-alih menghilang total).
   ticketTypes: LiveTicketType[];
+  // Tanggal+jam hari-H apa adanya dari kembarin-v2 (kolom event_date), null kalau
+  // panitia belum mengisinya di dasbor. JANGAN pernah di-hardcode di sisi ini —
+  // begitu diisi di kembarin-v2, otomatis muncul di sini tanpa ubah kode.
+  eventDate: string | null;
+  // Data susunan acara apa adanya dari event_config kembarin-v2 (RPC & gun-start),
+  // null kalau event_config tidak ada/tidak bisa dibaca sama sekali.
+  timeline: EventTimelineConfig | null;
 }
 
-const CLOSED: LiveEventData = { isOpen: false, ticketTypes: [] };
+const CLOSED: LiveEventData = { isOpen: false, ticketTypes: [], eventDate: null, timeline: null };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -67,9 +83,30 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       }))
       .filter((t) => t.categoryKey.length > 0 && t.price > 0);
 
+    const eventDate = typeof event.event_date === "string" && event.event_date.trim() ? event.event_date : null;
+
+    let timeline: EventTimelineConfig | null = null;
+    if (isRecord(event.event_config)) {
+      const cfg = event.event_config;
+      const gunStarts: Record<string, string> = {};
+      if (isRecord(cfg.timing_config) && isRecord(cfg.timing_config.gun_starts)) {
+        for (const [key, value] of Object.entries(cfg.timing_config.gun_starts)) {
+          if (typeof value === "string" && value.trim()) gunStarts[key] = value;
+        }
+      }
+      timeline = {
+        rpcTanggal: typeof cfg.rpc_tanggal === "string" && cfg.rpc_tanggal.trim() ? cfg.rpc_tanggal : null,
+        rpcWaktu: typeof cfg.rpc_waktu === "string" && cfg.rpc_waktu.trim() ? cfg.rpc_waktu : null,
+        rpcLokasi: typeof cfg.rpc_lokasi === "string" && cfg.rpc_lokasi.trim() ? cfg.rpc_lokasi : null,
+        gunStarts,
+      };
+    }
+
     return {
       isOpen: event.status === "active" && ticketTypes.length > 0,
       ticketTypes,
+      eventDate,
+      timeline,
     };
   } catch (err) {
     console.error("[kembarinEvents] Gagal mengambil data event live dari kembarin-v2:", err);

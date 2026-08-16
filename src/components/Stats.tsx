@@ -1,19 +1,29 @@
+"use client";
+
+import { motion } from "framer-motion";
 import { stats } from "@/data/stats"
+import { revealContainer, revealChild } from "@/lib/motion";
 
 const Stats: React.FC = () => {
     return (
         <section id="stats" className="py-10 lg:py-20">
-            <div className="grid sm:grid-cols-3 gap-8">
+            <motion.div
+                className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border border-t border-b border-border"
+                variants={revealContainer}
+                initial="offscreen"
+                whileInView="onscreen"
+                viewport={{ once: true }}
+            >
                 {stats.map(stat => (
-                    <div key={stat.title} className="text-center sm:text-left max-w-md sm:max-w-full mx-auto">
-                        <h3 className="mb-5 flex items-center gap-2 text-3xl font-semibold justify-center sm:justify-start">
-                            {stat.icon}
+                    <motion.div key={stat.title} variants={revealChild} className="text-center py-8 sm:py-4 sm:px-8 flex flex-col items-center">
+                        <div className="mb-2">{stat.icon}</div>
+                        <div className="font-display text-5xl sm:text-6xl font-bold text-foreground leading-none">
                             {stat.title}
-                        </h3>
-                        <p className="text-foreground-accent">{stat.description}</p>
-                    </div>
+                        </div>
+                        <p className="mt-3 text-sm text-foreground-accent max-w-xs">{stat.description}</p>
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
         </section>
     )
 }
