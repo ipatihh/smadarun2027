@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     // 4. Validasi & Sanitasi Data Ketat (Mencegah SQL Injection & Manipulasi Input)
 
     // Event Code Verification
-    if (typeof eventCode !== "string" || eventCode.trim() !== "smadarun2027") {
+    if (typeof eventCode !== "string" || eventCode.trim() !== "smadarun") {
       return NextResponse.json({ success: false, message: "Kode event tidak valid." }, { status: 400 });
     }
     
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
 
     const payloadBackend = {
       ...body,
-      eventCode: "smadarun2027",
+      eventCode: "smadarun",
       nama: nama.trim(),
       email: email.trim(),
       nik: normalizedNik,

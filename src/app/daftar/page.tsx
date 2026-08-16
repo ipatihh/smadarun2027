@@ -107,7 +107,7 @@ export default function DaftarPage() {
 
     // Pemetaan data yang diselaraskan secara presisi dengan skema backend Kembarin (kembarin-v2) & DOKU Gateway
     const payload: SubmitData = { 
-      eventCode: "smadarun2027", 
+      eventCode: "smadarun",
       nama: formData.nama.trim(),
       email: formData.email.trim(),
       nik: formData.nik.trim(),
