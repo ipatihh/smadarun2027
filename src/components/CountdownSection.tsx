@@ -1,3 +1,4 @@
+import { FiMapPin } from "react-icons/fi";
 import { getLiveEventData } from "@/lib/kembarinEvents";
 import Countdown from "./Countdown";
 
@@ -14,6 +15,12 @@ async function CountdownSection() {
         <div className="relative">
           <Countdown eventDate={live.eventDate} />
         </div>
+        {live.location && (
+          <div className="relative mt-6 flex items-center justify-center gap-2 text-sm text-gray-300">
+            <FiMapPin className="w-4 h-4 text-primary shrink-0" />
+            <span>{live.location}</span>
+          </div>
+        )}
       </div>
     </section>
   );

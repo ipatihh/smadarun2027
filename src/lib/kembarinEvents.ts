@@ -39,12 +39,14 @@ export interface LiveEventData {
   // panitia belum mengisinya di dasbor. JANGAN pernah di-hardcode di sisi ini —
   // begitu diisi di kembarin-v2, otomatis muncul di sini tanpa ubah kode.
   eventDate: string | null;
+  // Lokasi hari-H apa adanya dari kembarin-v2 (kolom location), null kalau belum diisi.
+  location: string | null;
   // Data susunan acara apa adanya dari event_config kembarin-v2 (RPC & gun-start),
   // null kalau event_config tidak ada/tidak bisa dibaca sama sekali.
   timeline: EventTimelineConfig | null;
 }
 
-const CLOSED: LiveEventData = { isOpen: false, ticketTypes: [], eventDate: null, timeline: null };
+const CLOSED: LiveEventData = { isOpen: false, ticketTypes: [], eventDate: null, location: null, timeline: null };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -84,6 +86,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       .filter((t) => t.categoryKey.length > 0 && t.price > 0);
 
     const eventDate = typeof event.event_date === "string" && event.event_date.trim() ? event.event_date : null;
+    const location = typeof event.location === "string" && event.location.trim() ? event.location.trim() : null;
 
     let timeline: EventTimelineConfig | null = null;
     if (isRecord(event.event_config)) {
@@ -106,6 +109,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       isOpen: event.status === "active" && ticketTypes.length > 0,
       ticketTypes,
       eventDate,
+      location,
       timeline,
     };
   } catch (err) {
