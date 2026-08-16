@@ -247,12 +247,22 @@ export async function POST(req: NextRequest) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 25000);
 
+    // Header trusted-proxy: memberitahu core system IP pengunjung ASLI (bukan IP egress
+    // server-to-server smadarun2027), supaya rate limiter kembarin-v2 tidak salah tembak
+    // saat banyak pendaftar berbeda mendaftar bersamaan. Opt-in — kalau TRUSTED_PROXY_API_KEY
+    // belum dikonfigurasi (belum dikoordinasikan dengan tim core), header ini tidak dikirim
+    // dan perilaku proxy tetap seperti sebelumnya.
+    const proxyHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    const trustedProxyKey = process.env.TRUSTED_PROXY_API_KEY;
+    if (trustedProxyKey) {
+      proxyHeaders["X-Trusted-Proxy-Key"] = trustedProxyKey;
+      proxyHeaders["X-Forwarded-Client-Ip"] = ip;
+    }
+
     try {
       const response = await fetch(kembarInUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: proxyHeaders,
         body: JSON.stringify(payloadBackend),
         signal: controller.signal,
       });
