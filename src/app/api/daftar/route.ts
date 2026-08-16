@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { tiers } from "@/data/tiket";
 
 // Sederhana in-memory cache untuk Rate Limiting & Proteksi Double Submit
 // Catatan: Karena Vercel adalah serverless environment, in-memory cache ini berjalan per instance/container.
@@ -13,12 +14,14 @@ const DOUBLE_SUBMIT_WINDOW = 5000;   // 5 detik pencegahan double-submit untuk N
 // Biaya Layanan Platform (Platform Service Fee) Rp 5.000
 const PLATFORM_ADMIN_FEE = 5000;
 
-// Opsi Kategori Tiket & Tarif Subtotal Murni Event
-// Mudah disesuaikan ketika daftar kategori & harga resmi dari panitia Smada Run sudah FIX.
-const KATEGORI_TARIF: Record<string, number> = {
-  "5K Pelajar": 150000,
-  "5K Umum": 170000,
-};
+// Tarif Subtotal Murni Event — diturunkan dari src/data/tiket.ts (satu-satunya sumber
+// kebenaran, sama dengan kartu tiket di homepage & dropdown form /daftar). Kategori yang
+// isAvailable: false TIDAK dimasukkan ke sini sama sekali, sehingga server otomatis
+// menolak pendaftaran untuk kategori yang sedang ditutup, bahkan kalau ada yang mencoba
+// kirim request langsung ke API tanpa lewat form.
+const KATEGORI_TARIF: Record<string, number> = Object.fromEntries(
+  tiers.filter((t) => t.isAvailable !== false).map((t) => [t.categoryKey, t.price])
+);
 
 // Pembersihan cache memori berkala dilakukan secara pasif di dalam request handler
 function bersihkanCacheMundur(now: number) {

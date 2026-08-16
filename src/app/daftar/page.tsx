@@ -2,16 +2,24 @@
 
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import Image from "next/image";
+import { tiers } from "@/data/tiket";
 
 // Biaya Layanan Platform Rp 5.000 per transaksi
 const PLATFORM_ADMIN_FEE = 5000;
 
-// Opsi Kategori Tiket & Harga Subtotal Murni Event
-// Mudah disesuaikan ketika daftar kategori & harga resmi dari panitia Smada Run sudah FIX.
-const KATEGORI_TIKET: Record<string, { label: string; price: number }> = {
-  "5K Pelajar": { label: "5K Pelajar - Rp 150.000", price: 150000 },
-  "5K Umum": { label: "5K Umum - Rp 170.000", price: 170000 },
-};
+// Opsi Kategori Tiket & Harga diturunkan dari src/data/tiket.ts (satu-satunya sumber
+// kebenaran, sama dengan kartu tiket di homepage & validasi harga di server). Kategori
+// dengan isAvailable: false otomatis tidak muncul di dropdown ini sama sekali.
+const KATEGORI_TIKET: Record<string, { label: string; price: number }> = Object.fromEntries(
+  tiers
+    .filter((t) => t.isAvailable !== false)
+    .map((t) => [
+      t.categoryKey,
+      { label: `${t.name} - Rp ${t.price.toLocaleString("id-ID")}`, price: t.price },
+    ])
+);
+const KATEGORI_KEYS = Object.keys(KATEGORI_TIKET);
+const PENDAFTARAN_DIBUKA = KATEGORI_KEYS.length > 0;
 
 interface FormDataState {
   nama: string;
@@ -53,7 +61,9 @@ export default function DaftarPage() {
 
   const [isHealthyChecked, setIsHealthyChecked] = useState<boolean>(false);
   const [isConsentChecked, setIsConsentChecked] = useState<boolean>(false);
-  const isFormClosed = false;
+  // Form otomatis tertutup kalau tidak ada satu pun kategori tiket yang tersedia
+  // (semua ditandai isAvailable: false di src/data/tiket.ts) — tidak perlu diubah manual.
+  const isFormClosed = !PENDAFTARAN_DIBUKA;
   const [formData, setFormData] = useState<FormDataState>({
     nama: "",
     email: "",
@@ -61,7 +71,7 @@ export default function DaftarPage() {
     whatsapp: "",
     gender: "", // Awalnya kosong wajib dipilih
     kota: "",
-    kategori: "5K Pelajar",
+    kategori: KATEGORI_KEYS[0] || "",
     size: "",
   });
 
@@ -76,7 +86,7 @@ export default function DaftarPage() {
   });
 
   // Hitung otomatis subtotal & total amount berdasarkan pilihan kategori
-  const selectedCategory = KATEGORI_TIKET[formData.kategori] || KATEGORI_TIKET["5K Pelajar"];
+  const selectedCategory = KATEGORI_TIKET[formData.kategori] || KATEGORI_TIKET[KATEGORI_KEYS[0]] || { price: 0 };
   const subtotal = selectedCategory.price;
   const totalAmount = subtotal + PLATFORM_ADMIN_FEE;
 
@@ -185,7 +195,7 @@ export default function DaftarPage() {
           whatsapp: "",
           gender: "",
           kota: "",
-          kategori: "5K Pelajar",
+          kategori: KATEGORI_KEYS[0] || "",
           size: "",
         });
         setIsHealthyChecked(false);
@@ -215,6 +225,14 @@ export default function DaftarPage() {
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-10 shadow-xl text-gray-900">
           <h3 className="text-center font-black text-2xl tracking-tight text-gray-800 mb-8">FORMULIR PENDAFTARAN</h3>
+
+          {isFormClosed && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
+              <p className="text-sm font-bold text-amber-800">Pendaftaran Belum Dibuka</p>
+              <p className="text-xs text-amber-700 mt-1">Semua kategori tiket sedang tidak tersedia saat ini. Silakan cek kembali nanti atau pantau info resmi panitia.</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <fieldset disabled={isFormClosed} className="space-y-5">
             <div>
@@ -261,16 +279,18 @@ export default function DaftarPage() {
                 <input type="text" name="kota" value={formData.kota} onChange={handleInputChange} placeholder="Contoh: Nganjuk" className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] focus:ring-4 focus:ring-[#FCD34D]/20 outline-none transition" required />
               </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Kategori Lomba</label>
-              <select name="kategori" value={formData.kategori} onChange={handleKategoriChange} className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] outline-none transition" required>
-                {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
-                  <option key={key} value={key}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {PENDAFTARAN_DIBUKA && (
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Kategori Lomba</label>
+                <select name="kategori" value={formData.kategori} onChange={handleKategoriChange} className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] outline-none transition" required>
+                  {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
+                    <option key={key} value={key}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Ukuran Jersey (Unisex)</label>
               <select name="size" value={formData.size} onChange={handleInputChange} className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] outline-none transition" required>
@@ -299,21 +319,23 @@ export default function DaftarPage() {
             </div>
 
             {/* Rincian Biaya Pendaftaran */}
-            <div className="bg-gray-50 border border-gray-200 p-5 rounded-xl space-y-2.5 text-sm">
-              <div className="text-xs font-black uppercase tracking-widest text-gray-500 mb-1">Rincian Biaya Pendaftaran</div>
-              <div className="flex justify-between text-gray-600 font-medium">
-                <span>Biaya Tiket Kategori ({formData.kategori})</span>
-                <span>Rp {subtotal.toLocaleString("id-ID")}</span>
+            {PENDAFTARAN_DIBUKA && (
+              <div className="bg-gray-50 border border-gray-200 p-5 rounded-xl space-y-2.5 text-sm">
+                <div className="text-xs font-black uppercase tracking-widest text-gray-500 mb-1">Rincian Biaya Pendaftaran</div>
+                <div className="flex justify-between text-gray-600 font-medium">
+                  <span>Biaya Tiket Kategori ({formData.kategori})</span>
+                  <span>Rp {subtotal.toLocaleString("id-ID")}</span>
+                </div>
+                <div className="flex justify-between text-gray-600 font-medium">
+                  <span>Biaya Layanan Platform</span>
+                  <span>Rp {PLATFORM_ADMIN_FEE.toLocaleString("id-ID")}</span>
+                </div>
+                <div className="border-t border-gray-200 pt-2.5 flex justify-between font-black text-gray-900 text-base">
+                  <span>Total Pembayaran</span>
+                  <span className="text-amber-600">Rp {totalAmount.toLocaleString("id-ID")}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-gray-600 font-medium">
-                <span>Biaya Layanan Platform</span>
-                <span>Rp {PLATFORM_ADMIN_FEE.toLocaleString("id-ID")}</span>
-              </div>
-              <div className="border-t border-gray-200 pt-2.5 flex justify-between font-black text-gray-900 text-base">
-                <span>Total Pembayaran</span>
-                <span className="text-amber-600">Rp {totalAmount.toLocaleString("id-ID")}</span>
-              </div>
-            </div>
+            )}
 
             <div className="flex items-start gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-xl select-none">
               <input type="checkbox" id="healthDeclaration" checked={isHealthyChecked} onChange={(e) => setIsHealthyChecked(e.target.checked)} className="mt-0.5 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500 accent-amber-500 cursor-pointer" />
