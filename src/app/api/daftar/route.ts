@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tiers } from "@/data/tiket";
+import { getLiveEventData } from "@/lib/kembarinEvents";
 
 // Sederhana in-memory cache untuk Rate Limiting & Proteksi Double Submit
 // Catatan: Karena Vercel adalah serverless environment, in-memory cache ini berjalan per instance/container.
@@ -13,15 +13,6 @@ const DOUBLE_SUBMIT_WINDOW = 5000;   // 5 detik pencegahan double-submit untuk N
 
 // Biaya Layanan Platform (Platform Service Fee) Rp 5.000
 const PLATFORM_ADMIN_FEE = 5000;
-
-// Tarif Subtotal Murni Event — diturunkan dari src/data/tiket.ts (satu-satunya sumber
-// kebenaran, sama dengan kartu tiket di homepage & dropdown form /daftar). Kategori yang
-// isAvailable: false TIDAK dimasukkan ke sini sama sekali, sehingga server otomatis
-// menolak pendaftaran untuk kategori yang sedang ditutup, bahkan kalau ada yang mencoba
-// kirim request langsung ke API tanpa lewat form.
-const KATEGORI_TARIF: Record<string, number> = Object.fromEntries(
-  tiers.filter((t) => t.isAvailable !== false).map((t) => [t.categoryKey, t.price])
-);
 
 // Pembersihan cache memori berkala dilakukan secara pasif di dalam request handler
 function bersihkanCacheMundur(now: number) {
@@ -144,6 +135,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Kategori & Nominal Verification (Mencegah manipulasi nominal/harga tiket dari frontend)
+    // Harga & kategori diambil live dari kembarin-v2 (satu-satunya sumber kebenaran, dikontrol
+    // penuh dari dasbor Super Admin kembarin-v2) — bukan hardcode di project ini.
+    const live = await getLiveEventData();
+    if (!live.isOpen) {
+      return NextResponse.json(
+        { success: false, message: "Pendaftaran untuk event ini sedang tidak dibuka. Silakan coba beberapa saat lagi." },
+        { status: 400 }
+      );
+    }
+    const KATEGORI_TARIF: Record<string, number> = Object.fromEntries(
+      live.ticketTypes.map((t) => [t.categoryKey, t.price])
+    );
+
     if (typeof kategori !== "string" || KATEGORI_TARIF[kategori] === undefined) {
       return NextResponse.json({ success: false, message: "Kategori lomba tidak valid." }, { status: 400 });
     }

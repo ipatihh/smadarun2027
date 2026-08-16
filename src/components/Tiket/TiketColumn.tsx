@@ -1,11 +1,9 @@
 import React from "react";
 import { FiCheck } from "react-icons/fi";
-// 🟢 Import interface ICustomPricing langsung dari file tiket.ts kamu
-import { ICustomPricing } from "@/data/tiket"; 
+import { ResolvedTicketTier } from "@/lib/kembarinEvents";
 
-// 🟢 Ganti Record<string, any> dengan tipe asli bawaan data tiketmu
 interface PricingColumnProps {
-  tier: ICustomPricing;
+  tier: ResolvedTicketTier;
 }
 
 const PricingColumn: React.FC<PricingColumnProps> = ({ tier }) => {

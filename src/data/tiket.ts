@@ -1,47 +1,46 @@
-// Hapus baris import { ITiket } yang bikin eror merah, ganti langsung dengan ini:
-export interface ICustomPricing {
-    // categoryKey HARUS persis sama dengan nama kategori tiket yang dikonfigurasi
-    // di admin panel kembarin-v2 (core system) — dipakai sebagai satu-satunya sumber
-    // kebenaran untuk kartu tiket di homepage, dropdown form /daftar, DAN validasi
-    // harga di server (src/app/api/daftar/route.ts). Jangan hardcode nama kategori
-    // terpisah di tempat lain.
-    categoryKey: string;
-    name: string;
-    price: number;
-    features: string[];
-    url: string;
-    isAvailable?: boolean;
+// Metadata MARKETING SAJA per kategori tiket (nama tampilan & daftar fasilitas).
+// Harga, ketersediaan, dan status buka/tutup pendaftaran TIDAK lagi di sini —
+// semua itu diambil live dari kembarin-v2 lewat src/lib/kembarinEvents.ts, supaya
+// Super Admin di dasbor kembarin-v2 bisa atur semuanya dari satu tempat.
+//
+// categoryKey HARUS persis sama (case-insensitive) dengan category_name yang
+// dikonfigurasi admin kembarin-v2 supaya kategori ini dapat teks fasilitas yang
+// pas. Kategori yang tidak terdaftar di sini tetap otomatis muncul (pakai
+// categoryKey apa adanya sebagai nama, tanpa daftar fasilitas) — jadi kategori
+// baru yang admin tambahkan di kembarin-v2 tidak akan pernah hilang dari
+// tampilan, walau belum sempat ditulis teks marketing-nya di sini.
+export interface ITiketMarketing {
+  categoryKey: string;
+  name: string;
+  features: string[];
+  url: string;
 }
 
-export const tiers: ICustomPricing[] = [
-    {
-        categoryKey: '5K Pelajar',
-        name: '5K - Pelajar',
-        price: 150000,
-        features: [
-            'Slot Lari Kategori 5K Pelajar',
-            'Jersey Eksklusif SMADARUN 2027',
-            'Medali Finisher (Bagi yang mencapai finish)',
-            'Nomor Dada / BIB Berwarna',
-            'Refreshment / Hidrasi Lomba',
-            'Asuransi & Proteksi Medis',
-        ],
-        url: '/daftar',
-        isAvailable: false,
-    },
-    {
-        categoryKey: '5K Umum',
-        name: '5K - Umum',
-        price: 170000,
-        features: [
-            'Slot Lari Kategori 5K Umum',
-            'Jersey Eksklusif SMADARUN 2027',
-            'Medali Finisher (Bagi yang mencapai finish)',
-            'Nomor Dada / BIB Berwarna',
-            'Refreshment / Hidrasi Lomba',
-            'Asuransi & Proteksi Medis',
-        ],
-        url: '/daftar',
-        isAvailable: false,
-    },
+export const tiketMarketing: ITiketMarketing[] = [
+  {
+    categoryKey: '5K Pelajar',
+    name: '5K - Pelajar',
+    features: [
+      'Slot Lari Kategori 5K Pelajar',
+      'Jersey Eksklusif SMADARUN 2027',
+      'Medali Finisher (Bagi yang mencapai finish)',
+      'Nomor Dada / BIB Berwarna',
+      'Refreshment / Hidrasi Lomba',
+      'Asuransi & Proteksi Medis',
+    ],
+    url: '/daftar',
+  },
+  {
+    categoryKey: '5K Umum',
+    name: '5K - Umum',
+    features: [
+      'Slot Lari Kategori 5K Umum',
+      'Jersey Eksklusif SMADARUN 2027',
+      'Medali Finisher (Bagi yang mencapai finish)',
+      'Nomor Dada / BIB Berwarna',
+      'Refreshment / Hidrasi Lomba',
+      'Asuransi & Proteksi Medis',
+    ],
+    url: '/daftar',
+  },
 ];
