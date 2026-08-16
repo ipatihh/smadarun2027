@@ -1,7 +1,17 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, ChangeEvent, FormEvent } from "react";
+import Image from "next/image";
+
+// Biaya Layanan Platform Rp 5.000 per transaksi
+const PLATFORM_ADMIN_FEE = 5000;
+
+// Opsi Kategori Tiket & Harga Subtotal Murni Event
+// Mudah disesuaikan ketika daftar kategori & harga resmi dari panitia Smada Run sudah FIX.
+const KATEGORI_TIKET: Record<string, { label: string; price: number }> = {
+  "5K Pelajar": { label: "5K Pelajar - Rp 150.000", price: 150000 },
+  "5K Umum": { label: "5K Umum - Rp 170.000", price: 170000 },
+};
 
 interface FormDataState {
   nama: string;
@@ -11,26 +21,39 @@ interface FormDataState {
   gender: string;
   kota: string;
   kategori: string;
-  nominal: number;
   size: string;
 }
 
-type SubmitData = FormDataState & {
-  eventCode: string;
-  file_data?: string;
-  file_name?: string;
-  fileData?: string;  // 🚀 Tambahan penyesuaian camelCase untuk backend kembar.in
-  fileName?: string;  // 🚀 Tambahan penyesuaian camelCase untuk backend kembar.in
-  custom_fields?: Record<string, any>;
-};
+type SubmitData = FormDataState & Record<string, unknown>;
 
-  export default function DaftarPage() {
+// Hanya domain resmi gateway DOKU yang boleh dituju saat redirect otomatis ke halaman pembayaran.
+// Mencegah open-redirect/phishing seandainya respons backend core suatu saat tidak sesuai ekspektasi.
+const ALLOWED_PAYMENT_HOSTS = [
+  "doku.com",
+  "sandbox.doku.com",
+  "checkout.doku.com",
+];
+
+function isTrustedPaymentUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    if (parsed.protocol !== "https:") return false;
+    return ALLOWED_PAYMENT_HOSTS.some(
+      (host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
+export default function DaftarPage() {
   // ALUR TERPUSAT: Mengarah langsung ke API Route internal Next.js (Secure API Proxy)
   const WEBHOOK_URL = "/api/daftar"; 
   const imageSrc = "/images/ivan-1.jpg"; 
 
   const [isHealthyChecked, setIsHealthyChecked] = useState<boolean>(false);
-  const isFormClosed = false; 
+  const [isConsentChecked, setIsConsentChecked] = useState<boolean>(false);
+  const isFormClosed = false;
   const [formData, setFormData] = useState<FormDataState>({
     nama: "",
     email: "",
@@ -39,11 +62,9 @@ type SubmitData = FormDataState & {
     gender: "", // Awalnya kosong wajib dipilih
     kota: "",
     kategori: "5K Pelajar",
-    nominal: 150000,
     size: "",
   });
 
-  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [isImgOpen, setIsImgOpen] = useState<boolean>(false);
 
@@ -54,10 +75,13 @@ type SubmitData = FormDataState & {
     message: "",
   });
 
+  // Hitung otomatis subtotal & total amount berdasarkan pilihan kategori
+  const selectedCategory = KATEGORI_TIKET[formData.kategori] || KATEGORI_TIKET["5K Pelajar"];
+  const subtotal = selectedCategory.price;
+  const totalAmount = subtotal + PLATFORM_ADMIN_FEE;
+
   const handleKategoriChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const kategoriVal = e.target.value;
-    const harga = e.target.options[e.target.selectedIndex].dataset.price;
-    setFormData((prev) => ({ ...prev, kategori: kategoriVal, nominal: parseInt(harga || "0") }));
+    setFormData((prev) => ({ ...prev, kategori: e.target.value }));
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -65,176 +89,119 @@ type SubmitData = FormDataState & {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (loading) return; // Proteksi instan double submit dari klik brutal di frontend
 
-    // Validasi Ukuran Berkas Client-Side (Maksimal 3 MB)
-    const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3 MB
-    if (file && file.size > MAX_FILE_SIZE) {
-      setModal({
-        show: true,
-        success: false,
-        title: "Ukuran Berkas Terlalu Besar",
-        message: "Ukuran berkas bukti transfer tidak boleh melebihi 3 MB. Silakan gunakan berkas dengan ukuran lebih kecil.",
-      });
-      return;
-    }
-
     setLoading(true);
 
-    // Pemetaan data yang diselaraskan secara presisi dengan skema backend & DB Aiven
-    const outputObject: SubmitData = { 
+    // Pemetaan data yang diselaraskan secara presisi dengan skema backend Kembarin (kembarin-v2) & DOKU Gateway
+    const payload: SubmitData = { 
       eventCode: "smadarun2027", 
       nama: formData.nama.trim(),
       email: formData.email.trim(),
       nik: formData.nik.trim(),
       whatsapp: formData.whatsapp.trim(),
-      gender: formData.gender, // 🚀 Tersinkronisasi penuh dengan target kolom database
+      gender: formData.gender,
       kota: formData.kota.trim(),
       kategori: formData.kategori,
-      nominal: formData.nominal + 3000, 
+
+      // Tiket / Subtotal Murni
+      subtotal: subtotal,
+      ticket_price: subtotal,
+      price: subtotal,
+
+      // Biaya Layanan Platform Rp 5.000 (Semua Alias)
+      admin_fee: PLATFORM_ADMIN_FEE,
+      adminFee: PLATFORM_ADMIN_FEE,
+      platform_fee: PLATFORM_ADMIN_FEE,
+      service_fee: PLATFORM_ADMIN_FEE,
+      fee: PLATFORM_ADMIN_FEE,
+      biaya_admin: PLATFORM_ADMIN_FEE,
+      biaya_layanan: PLATFORM_ADMIN_FEE,
+
+      // Total Pembayaran (Subtotal + Rp 5.000) (Semua Alias)
+      total_amount: totalAmount,
+      totalAmount: totalAmount,
+      nominal: totalAmount,
+      amount: totalAmount,
+      total: totalAmount,
+      total_price: totalAmount,
+
+      paymentGateway: "doku",
+      payment_gateway: "doku",
       size: formData.size,
       custom_fields: {}
     };
 
-    const sendData = async (payload: SubmitData) => {
-      try {
-        const response = await fetch(WEBHOOK_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-        // Guard: Pastikan server mengembalikan HTTP OK dan JSON sebelum parsing.
-        // Infrastruktur (Vercel/Next.js) bisa mengembalikan HTML saat error 413/502/504
-        // sehingga response.json() akan crash dengan SyntaxError: Unexpected token '<'.
-        const contentType = response.headers.get("content-type");
-        if (!response.ok || !contentType || !contentType.includes("application/json")) {
-          throw new Error(
-            `Server mengembalikan respons tidak valid (HTTP ${response.status}). Silakan coba beberapa saat lagi.`
-          );
-        }
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          setModal({
-            show: true,
-            success: true,
-            title: "Pendaftaran Berhasil!",
-            message: "Data pendaftaran dan bukti transfer Anda telah aman tersimpan. Tim kami akan segera memverifikasi pembayaran Anda.",
-          });
-          
-          // Reset form secara reaktif tanpa merusak state app
-          setFormData({
-            nama: "",
-            email: "",
-            nik: "",
-            whatsapp: "",
-            gender: "",
-            kota: "",
-            kategori: "5K Pelajar",
-            nominal: 150000,
-            size: "",
-          });
-          setFile(null);
-          setIsHealthyChecked(false);
-        } else {
-          throw new Error(result.message || "Gagal menyimpan data");
-        }
-      } catch (err: any) {
-        setModal({
-          show: true,
-          success: false,
-          title: "Terjadi Kesalahan",
-          message: err.message || "Gagal mengirim data pendaftaran. Silakan periksa koneksi atau coba beberapa saat lagi.",
-        });
-      } finally {
-        setLoading(false);
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(
+          `Server mengembalikan respons tidak valid (HTTP ${response.status}). Silakan coba beberapa saat lagi.`
+        );
       }
-    };
 
-    // Helper untuk kompresi file gambar di sisi client untuk mencegah overload ukuran payload / timeout Vercel
-    const compressImageAndSendData = (imageFile: File, payload: SubmitData) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(imageFile);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          let width = img.width;
-          let height = img.height;
-          
-          // Batasi resolusi maksimal untuk memperkecil ukuran file transfer
-          const MAX_WIDTH = 1200;
-          if (width > MAX_WIDTH) {
-            height = Math.round((height * MAX_WIDTH) / width);
-            width = MAX_WIDTH;
+      const result = await response.json();
+
+      if (response.ok && result.success !== false) {
+        // Cek URL pembayaran otomatis DOKU Gateway dari Backend Kembarin
+        const paymentUrl = result.paymentUrl || result.payment_url || result.data?.paymentUrl || result.data?.payment_url;
+
+        if (paymentUrl) {
+          // Redirect hanya diizinkan ke domain resmi DOKU untuk mencegah open-redirect/phishing
+          // jika suatu saat respons dari core system tidak sesuai ekspektasi.
+          if (!isTrustedPaymentUrl(paymentUrl)) {
+            throw new Error(
+              "Tautan pembayaran yang diterima tidak berasal dari domain resmi DOKU. Pendaftaran dibatalkan demi keamanan Anda."
+            );
           }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx?.drawImage(img, 0, 0, width, height);
-          
-          // Kompresi kualitas JPEG menjadi 70% (keseimbangan yang bagus antara kejelasan teks bukti dan ukuran byte)
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
-          const base64Data = compressedDataUrl.split(",")[1];
-          
-          payload["fileData"] = base64Data;
-          // Ganti ekstensi file agar sesuai dengan tipe JPEG hasil kompresi
-          const originalName = imageFile.name;
-          const lastDot = originalName.lastIndexOf(".");
-          const nameWithoutExt = lastDot !== -1 ? originalName.substring(0, lastDot) : originalName;
-          payload["fileName"] = `${nameWithoutExt}.jpg`;
-          
-          sendData(payload);
-        };
-        img.onerror = () => {
-          // Fallback kirim data asli jika pemrosesan canvas gagal
-          const base64Data = (reader.result as string).split(",")[1];
-          payload["fileData"] = base64Data;
-          payload["fileName"] = imageFile.name;
-          sendData(payload);
-        };
-      };
-      reader.onerror = () => {
-        setLoading(false);
+          // Redirect peserta secara otomatis ke halaman pembayaran DOKU Gateway
+          window.location.href = paymentUrl;
+          return;
+        }
+
+        // Fallback jika tidak ada paymentUrl
         setModal({
           show: true,
-          success: false,
-          title: "Gagal Membaca File",
-          message: "Tidak dapat memproses berkas bukti transfer. Silakan gunakan berkas gambar lain.",
+          success: true,
+          title: "Pendaftaran Berhasil!",
+          message: result.message || "Data pendaftaran Anda telah aman tersimpan. Silakan periksa email Anda untuk rincian pembayaran.",
         });
-      };
-    };
 
-    if (file) {
-      if (file.type.startsWith("image/")) {
-        compressImageAndSendData(file, outputObject);
+        // Reset form secara reaktif
+        setFormData({
+          nama: "",
+          email: "",
+          nik: "",
+          whatsapp: "",
+          gender: "",
+          kota: "",
+          kategori: "5K Pelajar",
+          size: "",
+        });
+        setIsHealthyChecked(false);
+        setIsConsentChecked(false);
       } else {
-        // Berkas non-gambar (misalnya PDF), kirim aslinya langsung
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64Data = (reader.result as string).split(",")[1];
-          outputObject["fileData"] = base64Data;
-          outputObject["fileName"] = file.name;
-          sendData(outputObject);
-        };
-        reader.readAsDataURL(file);
+        throw new Error(result.message || result.error || "Gagal memproses pendaftaran");
       }
-    } else {
-      sendData(outputObject);
+    } catch (err: unknown) {
+      setModal({
+        show: true,
+        success: false,
+        title: "Pendaftaran Gagal",
+        message: err instanceof Error ? err.message : "Gagal mengirim data pendaftaran. Silakan periksa koneksi Anda dan coba lagi.",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -261,7 +228,19 @@ type SubmitData = FormDataState & {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">NIK KTP / Kartu Pelajar</label>
-                <input type="number" name="nik" value={formData.nik} onChange={handleInputChange} placeholder="16 digit angka" className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] focus:ring-4 focus:ring-[#FCD34D]/20 outline-none transition" required />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={16}
+                  autoComplete="off"
+                  name="nik"
+                  value={formData.nik}
+                  onChange={handleInputChange}
+                  placeholder="16 digit angka"
+                  className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] focus:ring-4 focus:ring-[#FCD34D]/20 outline-none transition"
+                  required
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Nomor WhatsApp</label>
@@ -285,8 +264,11 @@ type SubmitData = FormDataState & {
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Kategori Lomba</label>
               <select name="kategori" value={formData.kategori} onChange={handleKategoriChange} className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:border-[#FCD34D] outline-none transition" required>
-                <option value="5K Pelajar" data-price="150000">5K Pelajar - Rp 150.000</option>
-                <option value="5K Umum" data-price="170000">5K Umum - Rp 170.000</option>
+                {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
+                  <option key={key} value={key}>
+                    {cat.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -305,46 +287,48 @@ type SubmitData = FormDataState & {
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Panduan Ukuran</label>
               <div className="p-2 bg-gray-100 border border-gray-200 rounded-xl overflow-hidden">
-                <img src={imageSrc} alt="Size Chart" className="w-full h-auto rounded-lg cursor-zoom-in opacity-90 hover:opacity-100 transition duration-300" onClick={() => setIsImgOpen(true)} />
+                <Image
+                  src={imageSrc}
+                  alt="Size Chart"
+                  width={1994}
+                  height={1387}
+                  className="w-full h-auto rounded-lg cursor-zoom-in opacity-90 hover:opacity-100 transition duration-300"
+                  onClick={() => setIsImgOpen(true)}
+                />
               </div>
             </div>
+
+            {/* Rincian Biaya Pendaftaran */}
             <div className="bg-gray-50 border border-gray-200 p-5 rounded-xl space-y-2.5 text-sm">
               <div className="text-xs font-black uppercase tracking-widest text-gray-500 mb-1">Rincian Biaya Pendaftaran</div>
               <div className="flex justify-between text-gray-600 font-medium">
-                <span>Biaya Tiket ({formData.kategori})</span>
-                <span>Rp {formData.nominal.toLocaleString("id-ID")}</span>
+                <span>Biaya Tiket Kategori ({formData.kategori})</span>
+                <span>Rp {subtotal.toLocaleString("id-ID")}</span>
               </div>
               <div className="flex justify-between text-gray-600 font-medium">
-                <span>Biaya Layanan & Sistem</span>
-                <span>Rp 3.000</span>
+                <span>Biaya Layanan Platform</span>
+                <span>Rp {PLATFORM_ADMIN_FEE.toLocaleString("id-ID")}</span>
               </div>
               <div className="border-t border-gray-200 pt-2.5 flex justify-between font-black text-gray-900 text-base">
                 <span>Total Pembayaran</span>
-                <span className="text-amber-600">Rp {(formData.nominal + 3000).toLocaleString("id-ID")}</span>
+                <span className="text-amber-600">Rp {totalAmount.toLocaleString("id-ID")}</span>
               </div>
             </div>
-            <div className="bg-amber-50/60 border border-dashed border-amber-300 p-6 rounded-xl text-center">
-              <div className="text-xs font-black uppercase tracking-widest text-amber-700 mb-1">Metode Transfer Pembayaran</div>
-              <div className="text-sm font-bold text-gray-700">BANK BCA</div>
-              <div className="text-3xl font-black tracking-wider text-gray-900 my-1.5 font-mono">141XXXXXXX</div>
-              <div className="text-xs font-semibold uppercase text-gray-500">A.N SMADA RUN OFFICIAL</div>
-              <div className="mt-3 pt-3 border-t border-amber-200/60 text-xs font-bold text-gray-800">
-                WAJIB TRANSFER SEBESAR: <span className="text-sm font-black text-amber-700">Rp {(formData.nominal + 3000).toLocaleString("id-ID")}</span>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Unggah Bukti Pembayaran</label>
-              <input type="file" accept="image/*,application/pdf" onChange={handleFileChange} className="w-full text-sm text-gray-700 file:border-0 file:bg-[#FCD34D] file:px-4 file:py-2 file:rounded-xl file:text-sm file:font-semibold file:text-black bg-gray-50 border border-gray-300 rounded-xl outline-none transition" required />
-              <p className="text-xs text-gray-500 mt-2">Unggah bukti transfer untuk mempercepat verifikasi pembayaran.</p>
-            </div>
+
             <div className="flex items-start gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-xl select-none">
               <input type="checkbox" id="healthDeclaration" checked={isHealthyChecked} onChange={(e) => setIsHealthyChecked(e.target.checked)} className="mt-0.5 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500 accent-amber-500 cursor-pointer" />
               <label htmlFor="healthDeclaration" className="text-xs text-gray-600 leading-relaxed cursor-pointer font-medium">
-                Saya menyatakan dengan sadar bahwa saya dalam kondisi <span className="font-bold text-gray-900">sehat walafiat</span>, memiliki fisik yang prima, and <span className="font-bold text-gray-900">bertanggung jawab penuh</span> atas keselamatan diri saya sendiri selama mengikuti seluruh rangkaian kegiatan SMADARUN 2027.
+                Saya menyatakan dengan sadar bahwa saya dalam kondisi <span className="font-bold text-gray-900">sehat walafiat</span>, memiliki fisik yang prima, dan <span className="font-bold text-gray-900">bertanggung jawab penuh</span> atas keselamatan diri saya sendiri selama mengikuti seluruh rangkaian kegiatan SMADARUN 2027.
               </label>
             </div>
-            <button type="submit" disabled={loading || isFormClosed || !isHealthyChecked} className="w-full py-4 bg-[#FCD34D] hover:bg-[#FBBF24] text-black font-extrabold text-sm uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:bg-gray-200 disabled:text-gray-400 disabled:transform-none disabled:cursor-not-allowed flex justify-center items-center gap-3">
-              <span>{loading ? "MENGUNGGAH & MENYIMPAN..." : "KONFIRMASI PENDAFTARAN"}</span>
+            <div className="flex items-start gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-xl select-none">
+              <input type="checkbox" id="privacyConsent" checked={isConsentChecked} onChange={(e) => setIsConsentChecked(e.target.checked)} className="mt-0.5 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500 accent-amber-500 cursor-pointer" />
+              <label htmlFor="privacyConsent" className="text-xs text-gray-600 leading-relaxed cursor-pointer font-medium">
+                Saya telah membaca dan menyetujui <span className="font-bold text-gray-900">Kebijakan Privasi</span>, serta memberikan persetujuan atas pengumpulan dan pemrosesan data pribadi saya (termasuk NIK, email, dan nomor WhatsApp) untuk keperluan pendaftaran dan verifikasi kepesertaan SMADARUN 2027.
+              </label>
+            </div>
+            <button type="submit" disabled={loading || isFormClosed || !isHealthyChecked || !isConsentChecked} className="w-full py-4 bg-[#FCD34D] hover:bg-[#FBBF24] text-black font-extrabold text-sm uppercase tracking-wider rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:bg-gray-200 disabled:text-gray-400 disabled:transform-none disabled:cursor-not-allowed flex justify-center items-center gap-3">
+              <span>{loading ? "MEMPROSES PENDAFTARAN..." : "KONFIRMASI & BAYAR SEKARANG"}</span>
               {loading && <div className="w-5 h-5 border-3 border-black/20 border-t-black rounded-full animate-spin"></div>}
             </button>
             </fieldset>
@@ -356,7 +340,14 @@ type SubmitData = FormDataState & {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300" onClick={() => setIsImgOpen(false)}>
           <div className="relative max-w-2xl w-full flex flex-col items-center">
             <button onClick={() => setIsImgOpen(false)} className="absolute -top-12 right-2 text-white/80 hover:text-white text-3xl font-bold transition focus:outline-none">&times;</button>
-            <img src={imageSrc} alt="Size Chart Expanded" className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()} />
+            <Image
+              src={imageSrc}
+              alt="Size Chart Expanded"
+              width={1994}
+              height={1387}
+              className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         </div>
       )}
@@ -368,7 +359,7 @@ type SubmitData = FormDataState & {
             <h4 className="text-xl font-black text-gray-900 mb-2">{modal.title}</h4>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">{modal.message}</p>
             
-            <button onClick={() => setModal((prev) => ({ ...prev, show: false }))} className="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-sm rounded-xl w-full transition">Selesai</button>
+            <button onClick={() => setModal((prev) => ({ ...prev, show: false }))} className="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-sm rounded-xl w-full transition">Tutup</button>
           </div>
         </div>
       )}

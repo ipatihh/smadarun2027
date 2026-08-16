@@ -1,5 +1,3 @@
-import { text } from "stream/consumers";
-
 export const menuItems = [
     { text: 'Beranda', url: '#beranda' },
     { text: 'Kategori Tiket', url: '#tiket' },
