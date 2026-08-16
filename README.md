@@ -1,104 +1,91 @@
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fnexi-launch%2Ffinwise-landing-page)
+# SMADARUN 2027 — Landing Page & Portal Pendaftaran
 
-# Finwise - Next.js + Tailwind Landing Page Template
+Landing page resmi event lari SMADARUN 2027 (persembahan SMA Negeri 2 Nganjuk). Next.js App
+Router (v16) + Tailwind CSS, di-deploy mandiri di Vercel (`smadarun2027.vercel.app`), **tapi
+seluruh data event/tiket dan proses registrasi/pembayaran ditangani oleh core system
+[kembarin-v2](https://kembar.in)** — project ini murni frontend + proxy tipis ke sana.
 
-Finwise is a lightweight, easily configurable, and customizable **Next.js** and **Tailwind CSS** landing page template. It’s built to be adaptable, performant, and perfect for any product launch, portfolio, or promotional site.
+Project ini adalah contoh/referensi pertama dari pola **"Partner Site Integration"**
+kembarin-v2: sebuah landing page mandiri (domain sendiri, deploy sendiri, boleh dikelola tim
+berbeda) yang tetap memakai kembarin-v2 sebagai satu-satunya sumber kebenaran untuk harga,
+kategori tiket, status buka/tutup pendaftaran, dan pemrosesan pembayaran (DOKU).
 
-Try out the demo here: [https://finwise-omega.vercel.app](https://finwise-omega.vercel.app).
+## Arsitektur Singkat
 
-Please check out the documentation below to get started.
+```
+Browser pengunjung
+     │
+     ▼
+smadarun2027 (Next.js, project ini)
+     │
+     ├─ GET  /api/public/events/smadarun    → baca harga/kategori/status LIVE
+     │        (kembar.in, tanpa auth, dipanggil server-side, revalidate 30 detik)
+     │
+     └─ POST /api/daftar → proxy internal Next.js
+              │
+              ▼
+        POST https://kembar.in/api/participants/register  (server-to-server)
+              │
+              ▼
+        kembarin-v2 (core system): validasi ulang harga & kategori dari database-nya
+        sendiri (zero-trust — tidak pernah percaya nominal/kategori dari client manapun),
+        buat order, buat transaksi DOKU, kembalikan paymentUrl.
+```
 
----
+**Prinsip penting:** kembarin-v2 adalah sumber kebenaran mutlak untuk harga, kategori, dan
+status buka/tutup — bukan project ini. Lihat `src/lib/kembarinEvents.ts`. Mengubah pengaturan
+di dasbor Super Admin kembarin-v2 (tab **Events** untuk status/harga/kategori) otomatis
+berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
 
-## Features
+## Struktur Kode yang Relevan
 
-- **Next.js** app router with **TypeScript**
-- **Tailwind CSS** v3 for flexible styling customization
-- Smooth transitions powered by **Framer Motion**
-- Built-in **font optimization** with [next/font](https://nextjs.org/docs/app/api-reference/components/font)
-- Automatic **image optimization** via [next/image](https://nextjs.org/docs/app/building-your-application/optimizing/images)
-- Access to **31+ icon packs** via [React Icons](https://react-icons.github.io/react-icons/)
-- Near-perfect **Lighthouse score**
-- Modular, responsive, and **scalable components**
-- **Free lifetime updates**
+| Path | Fungsi |
+|---|---|
+| `src/lib/kembarinEvents.ts` | Satu-satunya titik fetch data live (harga, kategori, status) dari kembarin-v2. |
+| `src/app/daftar/page.tsx` | Server Component — fetch data live, render `DaftarForm`. |
+| `src/app/daftar/DaftarForm.tsx` | Client Component — form interaktif, terima data live lewat props. |
+| `src/app/api/daftar/route.ts` | Proxy internal: validasi ketat input, validasi ulang harga/kategori dari data live, teruskan ke kembarin-v2. |
+| `src/data/tiket.ts` | **Hanya** metadata marketing (nama tampilan, daftar fasilitas) — bukan harga/ketersediaan. |
+| `src/components/Tiket/Tiket.tsx` | Server Component homepage — gabungkan data live + metadata marketing. |
 
----
+## Menjalankan Secara Lokal
 
-## Sections
+```bash
+npm install
+cp .env.example .env.local   # isi nilai sesuai kebutuhan, lihat tabel di bawah
+npm run dev
+```
 
-- Hero
-- Partners or Clients Logos
-- Features
-- Pricing
-- Testimonials
-- FAQ
-- Statistics
-- CTA
-- Footer
+Buka [http://localhost:3000](http://localhost:3000).
 
----
+## Environment Variables
 
-## Getting Started
+Lihat `.env.example` untuk template lengkap. Ringkasan:
 
-### Prerequisites
+| Variable | Wajib? | Keterangan |
+|---|---|---|
+| `KEMBAR_IN_API_URL` | Tidak (ada fallback ke production) | Endpoint registrasi kembarin-v2 yang dipanggil `/api/daftar`. |
+| `KEMBAR_IN_PUBLIC_EVENT_BASE_URL` | Tidak (ada fallback ke production) | Base URL endpoint publik lookup event per-kode. Kode ini menambahkan `/smadarun` sendiri. |
+| `TRUSTED_PROXY_API_KEY` | Tidak (opt-in) | Shared secret dengan kembarin-v2 agar rate limiter di sana bisa membedakan pengunjung asli (bukan menganggap semua pengunjung sebagai satu IP egress server). **Nilai asli JANGAN pernah masuk file `.env` yang ter-track git** — pakai `.env.local` (gitignored) untuk dev, dan Vercel Dashboard Environment Variables untuk production. |
+| `GOOGLE_ANALYTICS_ID` | Tidak | GA4 measurement ID, kosongkan untuk nonaktifkan analytics. |
 
-Before starting, make sure you have the following installed:
+`.env` di repo ini **tidak ter-track git** (lihat `.gitignore`) — riwayat commit lama sudah
+diaudit bersih, tidak ada secret asli yang pernah bocor.
 
-- **Node.js**: Version 18 or later
-- **npm**: Version 8 or later (bundled with Node.js)
-- **Code editor**: [VS Code](https://code.visualstudio.com/) is recommended.
+## Keamanan
 
-### Steps
+- Semua input divalidasi ketat di server (`api/daftar/route.ts`) — regex whitelist untuk nama, NIK, WhatsApp, kota, dsb.
+- Harga & kategori tiket divalidasi ulang di server terhadap data live kembarin-v2 sebelum diteruskan — mencegah manipulasi nominal dari client, walau kembarin-v2 sendiri juga sudah zero-trust terhadap ini.
+- Redirect otomatis ke halaman pembayaran DOKU divalidasi domainnya (`*.doku.com` via HTTPS saja) sebelum browser diarahkan — mencegah open-redirect kalau respons backend tidak sesuai ekspektasi.
+- Security headers (CSP, HSTS, X-Frame-Options, dst) diatur di `next.config.mjs`.
+- Rate limiting & proteksi double-submit di sisi server (`api/daftar/route.ts`), plus header trusted-proxy opsional supaya rate limiter kembarin-v2 tidak salah tembak pengunjung berbeda sebagai satu sumber (lihat env var di atas).
 
-1. **Install dependencies**: Run `npm install`
-2. **Run the development server**: `npm run dev`
-3. **View your project**: Open [localhost:3000](http://localhost:3000)
+## Deployment
 
----
+Auto-deploy ke Vercel dari branch `main`. Tidak ada langkah manual tambahan selain
+memastikan Environment Variables (tabel di atas) sudah diisi di Vercel Dashboard kalau
+tidak memakai nilai fallback default.
 
-## Customization
+## Project Terkait
 
-1. **Edit colors**: Update `globals.css` for primary, secondary, background, and accent colors.
-2. **Update site details**: Customize `siteDetails.ts` in `/src/data` to reflect your brand and site info.
-3. **Modify content**: Files in `/src/data` handle data for navigation, features, pricing, testimonials, and more.
-4. **Replace favicon**: Add your icon to `/src/app/favicon.ico`.
-5. **Add images**: Update `public/images` for Open Graph metadata (e.g., `og-image.jpg`, `twitter-image.jpg`).
-
----
-
-## Deploying on Vercel
-
-The fastest way to deploy Finwise is on [Vercel](https://vercel.com/). Simply click the "Deploy with Vercel" button at the top of this README, or check the [Next.js deployment docs](https://vercel.com/docs/deployments/deployment-methods) for other deployment options.
-
----
-
-## Contributing
-
-Finwise is an open-source project, and we welcome contributions from the community! If you have ideas for new components, designs, layouts, or optimizations, please join us in making Finwise even better.
-
-### How to Contribute
-
-1. **Fork the Repository**: Clone it locally.
-2. **Create a New Branch**: For example, `feature/new-section` or `fix/style-issue`.
-3. **Develop and Test**: Make sure your changes work and don't break existing functionality.
-4. **Submit a Pull Request**: Open a pull request with a clear description of your changes, and we'll review it.
-
-### Ideas for Contributions
-
-- New component sections (team introductions, comparison table, case studies, etc.)
-- Additional page variants (e.g., agency, eCommerce, portfolio layouts)
-- Additional themes
-- Documentation updates, tutorials, or guides
-
----
-
-## Community and Support
-
-Join our community discussions on GitHub to share ideas, ask questions, or suggest improvements. Let’s build something amazing together!
-
-
---- 
-
-## License
-
-This project is open-source and available under the MIT License. Feel free to use, modify, and distribute it for personal or commercial projects.
+- **[kembarin-v2](https://kembar.in)** — core system: database peserta, event, tiket, pembayaran DOKU, dasbor Super Admin. Semua pengaturan harga/kategori/status buka-tutup event SMADARUN 2027 dikelola di sana, bukan di repo ini.
