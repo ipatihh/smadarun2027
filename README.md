@@ -22,14 +22,15 @@ smadarun2027 (Next.js, project ini)
      │        (kembar.in, tanpa auth, dipanggil server-side, revalidate 30 detik)
      │
      └─ POST /api/daftar → proxy internal Next.js
-              │
+              │  (payload { buyer, participants[] } — 1 sampai N peserta per pesanan)
               ▼
         POST https://kembar.in/api/participants/register  (server-to-server)
               │
               ▼
         kembarin-v2 (core system): validasi ulang harga & kategori dari database-nya
         sendiri (zero-trust — tidak pernah percaya nominal/kategori dari client manapun),
-        buat order, buat transaksi DOKU, kembalikan paymentUrl.
+        hitung biaya layanan per tiket, kunci kuota per kategori, buat SATU order untuk
+        seluruh peserta, buat transaksi DOKU, kembalikan paymentUrl.
 ```
 
 **Pembelian kolektif:** satu pemesan dapat mendaftarkan beberapa peserta dalam satu
@@ -49,8 +50,8 @@ berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
 |---|---|
 | `src/lib/kembarinEvents.ts` | Satu-satunya titik fetch data live (harga, kategori, status) dari kembarin-v2. |
 | `src/app/daftar/page.tsx` | Server Component — fetch data live, render `DaftarForm`. |
-| `src/app/daftar/DaftarForm.tsx` | Client Component — form interaktif, terima data live lewat props. |
-| `src/app/api/daftar/route.ts` | Proxy internal: validasi ketat input, validasi ulang harga/kategori dari data live, teruskan ke kembarin-v2. |
+| `src/app/daftar/DaftarForm.tsx` | Client Component — form pemesan + daftar peserta (kolektif), terima data live lewat props. |
+| `src/app/api/daftar/route.ts` | Proxy internal: validasi ketat tiap peserta, hitung ulang harga & biaya layanan per tiket dari data live, teruskan sebagai pesanan `{ buyer, participants[] }`. |
 | `src/data/tiket.ts` | **Hanya** metadata marketing (nama tampilan, fasilitas, badge) — bukan harga/ketersediaan. |
 | `src/components/Tiket/Tiket.tsx` | Server Component homepage — gabungkan data live + metadata marketing. |
 | `src/data/sponsors.ts` | Daftar sponsor bertingkat (`title` / `community` / `media`) + spesifikasi aset logo. |
@@ -121,7 +122,8 @@ diaudit bersih, tidak ada secret asli yang pernah bocor.
 - Semua input divalidasi ketat di server (`api/daftar/route.ts`) — regex whitelist untuk nama, NIK, WhatsApp, kota, dsb.
 - Payload ke kembarin-v2 dibangun eksplisit dari field yang sudah divalidasi (tidak ada passthrough field liar dari client), dan persetujuan kesehatan + privasi divalidasi ulang di server lalu dicatat dengan timestamp sisi server.
 - Status buka/tutup pendaftaran menghormati `registration_closed`, `registration_open_at`, dan `ticket_types[].is_active` dari kembarin-v2 — bukan hanya status event.
-- Harga & kategori tiket divalidasi ulang di server terhadap data live kembarin-v2 sebelum diteruskan — mencegah manipulasi nominal dari client, walau kembarin-v2 sendiri juga sudah zero-trust terhadap ini.
+- Harga & kategori tiket divalidasi ulang di server terhadap data live kembarin-v2 sebelum diteruskan — mencegah manipulasi nominal dari client, walau kembarin-v2 sendiri juga sudah zero-trust terhadap ini. Biaya layanan ikut dihitung ulang **per tiket** (`fee × jumlah peserta`).
+- Pesanan kolektif divalidasi per peserta: jumlah tiket tidak boleh melebihi `max_tickets_per_order` live, dan satu NIK tidak boleh muncul dua kali dalam satu pesanan (mencegah satu orang memakan kuota kategori berkali-kali). Proteksi double-submit mengunci seluruh NIK dalam pesanan, bukan hanya satu.
 - Redirect otomatis ke halaman pembayaran DOKU divalidasi domainnya (`*.doku.com` via HTTPS saja) sebelum browser diarahkan — mencegah open-redirect kalau respons backend tidak sesuai ekspektasi.
 - Security headers (CSP, HSTS, X-Frame-Options, dst) diatur di `next.config.mjs`.
 - Rate limiting & proteksi double-submit di sisi server (`api/daftar/route.ts`), plus header trusted-proxy opsional supaya rate limiter kembarin-v2 tidak salah tembak pengunjung berbeda sebagai satu sumber (lihat env var di atas). IP pengunjung dibaca dari `x-vercel-forwarded-for` atau entri paling kanan `x-forwarded-for` — bukan seluruh string, yang bisa dikarang klien untuk memecah kunci rate limiter.

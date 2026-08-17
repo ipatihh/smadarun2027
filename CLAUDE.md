@@ -6,9 +6,9 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
 ## Fakta arsitektur yang wajib dipahami sebelum mengubah apa pun
 
 - **kembarin-v2 adalah sumber kebenaran mutlak**, project ini bukan. Harga tiket, kategori,
-  status buka/tutup pendaftaran, DAN biaya layanan/admin (`event_config.admin_fee_amount`)
-  SELALU di-fetch live dari kembarin-v2 (`src/lib/kembarinEvents.ts`), tidak pernah
-  di-hardcode. `src/data/tiket.ts` HANYA boleh berisi metadata marketing/tampilan (nama
+  status buka/tutup pendaftaran, biaya layanan/admin (`event_config.admin_fee_amount`),
+  DAN aturan pembelian kolektif (`multi_ticket_enabled`, `max_tickets_per_order`) SELALU
+  di-fetch live dari kembarin-v2 (`src/lib/kembarinEvents.ts`), tidak pernah di-hardcode. `src/data/tiket.ts` HANYA boleh berisi metadata marketing/tampilan (nama
   tampilan, daftar fasilitas, `badge`, `highlight`) — jangan pernah tambahkan field
   harga/isAvailable/adminFee ke situ lagi.
   Ini sudah 2x jadi sumber bug: kategori/harga tiket (commit `1b80757`, `3a337ae`), lalu biaya
