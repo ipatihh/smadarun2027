@@ -32,6 +32,12 @@ smadarun2027 (Next.js, project ini)
         buat order, buat transaksi DOKU, kembalikan paymentUrl.
 ```
 
+**Pembelian kolektif:** satu pemesan dapat mendaftarkan beberapa peserta dalam satu
+pembayaran (boleh beda kategori & ukuran jersey). Batasnya mengikuti
+`event_config.multi_ticket_enabled` dan `max_tickets_per_order` di kembarin-v2 — tidak
+di-hardcode di sini. **Biaya layanan dihitung per tiket**, jadi pesanan 5 tiket ditagih
+5 × biaya layanan, sama seperti perhitungan core.
+
 **Prinsip penting:** kembarin-v2 adalah sumber kebenaran mutlak untuk harga, kategori, dan
 status buka/tutup — bukan project ini. Lihat `src/lib/kembarinEvents.ts`. Mengubah pengaturan
 di dasbor Super Admin kembarin-v2 (tab **Events** untuk status/harga/kategori) otomatis

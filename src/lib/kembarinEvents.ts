@@ -9,6 +9,10 @@ const EVENT_CODE = "smadarun";
 export interface LiveTicketType {
   categoryKey: string; // = category_name di admin kembarin-v2
   price: number;
+  // id baris event_ticket_types di kembarin-v2. Dikirim sebagai ticketTypeId saat
+  // registrasi supaya core mencocokkan tiket lewat id (pasti), bukan lewat nama
+  // kategori (bisa meleset kalau admin mengganti namanya di tengah jalan).
+  id: number | null;
 }
 
 export interface ResolvedTicketTier extends LiveTicketType {
@@ -56,11 +60,24 @@ export interface LiveEventData {
   // JANGAN pernah di-hardcode di sisi ini — nilai ini murni mengikuti pengaturan admin
   // di dasbor Super Admin kembarin-v2 (field "Biaya Layanan / Fee Admin").
   adminFee: number;
+  // Pembelian kolektif: satu pemesan mendaftarkan beberapa peserta dalam satu
+  // pembayaran. Mengikuti event_config.multi_ticket_enabled di kembarin-v2.
+  multiTicketEnabled: boolean;
+  // Batas tiket per pesanan, mengikuti event_config.max_tickets_per_order dan
+  // dijepit dengan aturan yang sama seperti core (lihat RegistrationOrderService:
+  // DEFAULT_MAX_TICKETS = 5, ABSOLUTE_MAX_TICKETS = 10). Kalau angka di sini lebih
+  // longgar daripada core, peserta baru ditolak setelah mengisi formulir panjang —
+  // jadi keduanya harus dihitung dengan rumus yang sama.
+  maxTicketsPerOrder: number;
   // Jadwal pendaftaran dibuka (registration_open_at), apa adanya dari kembarin-v2.
   // Diisi hanya kalau tanggalnya masih di masa depan — dipakai UI untuk memberi tahu
   // pengunjung KAPAN bisa daftar, bukan sekadar "belum dibuka".
   opensAt: string | null;
 }
+
+// Cerminan konstanta core (RegistrationOrderService). Jangan diubah sepihak di sini.
+const DEFAULT_MAX_TICKETS = 5;
+const ABSOLUTE_MAX_TICKETS = 10;
 
 const CLOSED: LiveEventData = {
   isOpen: false,
@@ -69,6 +86,8 @@ const CLOSED: LiveEventData = {
   location: null,
   timeline: null,
   adminFee: 0,
+  multiTicketEnabled: false,
+  maxTicketsPerOrder: 1,
   opensAt: null,
 };
 
@@ -111,6 +130,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       .map((row) => ({
         categoryKey: typeof row.category_name === "string" ? row.category_name.trim() : "",
         price: Number(row.price) || 0,
+        id: Number.isFinite(Number(row.id)) ? Number(row.id) : null,
       }))
       .filter((t) => t.categoryKey.length > 0 && t.price > 0);
 
@@ -119,6 +139,8 @@ export async function getLiveEventData(): Promise<LiveEventData> {
 
     let timeline: EventTimelineConfig | null = null;
     let adminFee = 0;
+    let multiTicketEnabled = false;
+    let maxTicketsPerOrder = 1;
     // Toggle "tutup pendaftaran" di dasbor admin. Admin bisa menutup pendaftaran TANPA
     // mengubah status event jadi non-active — kalau flag ini diabaikan, partner site
     // tetap menjual tiket dan tetap membuat transaksi DOKU padahal panitia sudah menutup.
@@ -141,6 +163,17 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       if (cfg.enable_admin_fee === true) {
         adminFee = Number(cfg.admin_fee_amount) || 0;
       }
+
+      // Rumus identik dengan core: multi_ticket_enabled dianggap menyala kecuali
+      // di-set false secara eksplisit, lalu batasnya dijepit 2..ABSOLUTE_MAX.
+      multiTicketEnabled = cfg.multi_ticket_enabled !== false;
+      const configuredMax = Number(cfg.max_tickets_per_order || DEFAULT_MAX_TICKETS);
+      maxTicketsPerOrder = multiTicketEnabled
+        ? Math.min(
+            ABSOLUTE_MAX_TICKETS,
+            Math.max(2, Number.isFinite(configuredMax) ? Math.floor(configuredMax) : DEFAULT_MAX_TICKETS)
+          )
+        : 1;
     }
 
     // Jadwal pembukaan pendaftaran. Bisa berada di kolom event maupun di event_config.
@@ -174,6 +207,8 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       eventDate,
       location,
       adminFee,
+      multiTicketEnabled,
+      maxTicketsPerOrder,
       timeline,
       opensAt,
     };

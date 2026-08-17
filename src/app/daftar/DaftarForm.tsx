@@ -3,30 +3,34 @@
 import React, { useMemo, useState, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { tiketMarketing } from "@/data/tiket";
 import { LiveTicketType } from "@/lib/kembarinEvents";
 
-interface FormDataState {
+interface BuyerState {
   nama: string;
   email: string;
-  nik: string;
   whatsapp: string;
+}
+
+interface PesertaState {
+  key: string;
+  nama: string;
+  email: string;
+  whatsapp: string;
+  nik: string;
   gender: string;
   kota: string;
   kategori: string;
   size: string;
 }
 
-type FieldName = keyof FormDataState;
-type SubmitData = FormDataState & Record<string, unknown>;
+type BuyerField = keyof BuyerState;
+type PesertaField = Exclude<keyof PesertaState, "key">;
 
 // Hanya domain resmi gateway DOKU yang boleh dituju saat redirect otomatis ke halaman pembayaran.
 // Mencegah open-redirect/phishing seandainya respons backend core suatu saat tidak sesuai ekspektasi.
-const ALLOWED_PAYMENT_HOSTS = [
-  "doku.com",
-  "sandbox.doku.com",
-  "checkout.doku.com",
-];
+const ALLOWED_PAYMENT_HOSTS = ["doku.com", "sandbox.doku.com", "checkout.doku.com"];
 
 function isTrustedPaymentUrl(url: string): boolean {
   try {
@@ -43,31 +47,43 @@ function isTrustedPaymentUrl(url: string): boolean {
 // Cermin dari validasi server di api/daftar/route.ts. Tujuannya UX: pengguna tahu
 // kesalahan format SEBELUM menekan bayar, bukan lewat modal setelah request bolak-balik.
 // Server tetap jadi penentu akhir — validasi di sini tidak menggantikannya.
-const VALIDATORS: Record<FieldName, (value: string) => string | null> = {
-  nama: (v) => {
-    const t = v.trim();
-    if (!t) return "Nama lengkap wajib diisi.";
-    if (t.length < 3) return "Nama minimal 3 karakter.";
-    if (t.length > 100) return "Nama maksimal 100 karakter.";
-    if (!/^[a-zA-Z\s.']+$/.test(t)) return "Hanya huruf, spasi, titik, dan tanda kutip yang diperbolehkan.";
-    return null;
-  },
-  email: (v) => {
-    const t = v.trim();
-    if (!t) return "Email wajib diisi.";
-    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(t)) return "Format email belum benar, contoh: nama@email.com";
-    return null;
-  },
+const validasiNama = (v: string, label: string) => {
+  const t = v.trim();
+  if (!t) return `${label} wajib diisi.`;
+  if (t.length < 3) return `${label} minimal 3 karakter.`;
+  if (t.length > 100) return `${label} maksimal 100 karakter.`;
+  if (!/^[a-zA-Z\s.']+$/.test(t)) return "Hanya huruf, spasi, titik, dan tanda kutip yang diperbolehkan.";
+  return null;
+};
+
+const validasiEmail = (v: string, wajib: boolean) => {
+  const t = v.trim();
+  if (!t) return wajib ? "Email wajib diisi." : null;
+  if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(t)) return "Format email belum benar, contoh: nama@email.com";
+  return null;
+};
+
+const validasiWhatsapp = (v: string, wajib: boolean) => {
+  const t = v.trim();
+  if (!t) return wajib ? "Nomor WhatsApp wajib diisi." : null;
+  if (!/^\+?\d{8,15}$/.test(t)) return "Isi 8–15 digit angka tanpa spasi/strip, contoh: 081234567890";
+  return null;
+};
+
+const VALIDATOR_BUYER: Record<BuyerField, (v: string) => string | null> = {
+  nama: (v) => validasiNama(v, "Nama pemesan"),
+  email: (v) => validasiEmail(v, true),
+  whatsapp: (v) => validasiWhatsapp(v, true),
+};
+
+const VALIDATOR_PESERTA: Record<PesertaField, (v: string) => string | null> = {
+  nama: (v) => validasiNama(v, "Nama peserta"),
+  email: (v) => validasiEmail(v, false),
+  whatsapp: (v) => validasiWhatsapp(v, false),
   nik: (v) => {
     const t = v.trim();
     if (!t) return "NIK wajib diisi.";
     if (!/^\d{16}$/.test(t)) return `NIK harus 16 digit angka (sekarang ${t.length} karakter).`;
-    return null;
-  },
-  whatsapp: (v) => {
-    const t = v.trim();
-    if (!t) return "Nomor WhatsApp wajib diisi.";
-    if (!/^\+?\d{8,15}$/.test(t)) return "Isi 8–15 digit angka tanpa spasi/strip, contoh: 081234567890";
     return null;
   },
   gender: (v) => (v ? null : "Pilih jenis kelamin."),
@@ -83,16 +99,22 @@ const VALIDATORS: Record<FieldName, (value: string) => string | null> = {
   size: (v) => (v ? null : "Pilih ukuran jersey."),
 };
 
-const FIELD_ORDER: FieldName[] = ["nama", "email", "nik", "whatsapp", "gender", "kota", "kategori", "size"];
+// Urutan ini menentukan field mana yang difokuskan lebih dulu saat submit gagal.
+const URUTAN_BUYER: BuyerField[] = ["nama", "email", "whatsapp"];
+const URUTAN_PESERTA: PesertaField[] = ["nama", "nik", "gender", "kota", "kategori", "size", "email", "whatsapp"];
 
 interface DaftarFormProps {
   ticketTypes: LiveTicketType[];
   isOpen: boolean;
-  // Biaya layanan/admin per transaksi, live dari event_config.admin_fee_amount kembarin-v2
+  // Biaya layanan/admin PER TIKET, live dari event_config.admin_fee_amount kembarin-v2
   // (lihat src/lib/kembarinEvents.ts) — bukan hardcode di sisi ini.
   adminFee: number;
   /** Jadwal pembukaan pendaftaran yang sudah diformat WIB, kalau panitia mengisinya. */
   opensAtLabel: string | null;
+  /** Pembelian kolektif aktif atau tidak (event_config.multi_ticket_enabled). */
+  multiTicketEnabled: boolean;
+  /** Batas tiket per pesanan (event_config.max_tickets_per_order). */
+  maxTicketsPerOrder: number;
 }
 
 const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
@@ -125,7 +147,27 @@ const StepHeading: React.FC<{ step: number; title: string; hint?: string }> = ({
   </div>
 );
 
-export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel }: DaftarFormProps) {
+let pesertaCounter = 0;
+const pesertaBaru = (kategoriDefault: string): PesertaState => ({
+  key: `peserta-${++pesertaCounter}`,
+  nama: "",
+  email: "",
+  whatsapp: "",
+  nik: "",
+  gender: "",
+  kota: "",
+  kategori: kategoriDefault,
+  size: "",
+});
+
+export default function DaftarForm({
+  ticketTypes,
+  isOpen,
+  adminFee,
+  opensAtLabel,
+  multiTicketEnabled,
+  maxTicketsPerOrder,
+}: DaftarFormProps) {
   const WEBHOOK_URL = "/api/daftar";
   const imageSrc = "/images/ivan-1.jpg";
 
@@ -145,18 +187,18 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
   const KATEGORI_KEYS = Object.keys(KATEGORI_TIKET);
   const PENDAFTARAN_DIBUKA = isOpen && KATEGORI_KEYS.length > 0;
   const isFormClosed = !PENDAFTARAN_DIBUKA;
+  const batasTiket = Math.max(1, maxTicketsPerOrder);
 
-  const [formData, setFormData] = useState<FormDataState>({
-    nama: "",
-    email: "",
-    nik: "",
-    whatsapp: "",
-    gender: "",
-    kota: "",
-    kategori: KATEGORI_KEYS[0] || "",
-    size: "",
-  });
-  const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
+  const [buyer, setBuyer] = useState<BuyerState>({ nama: "", email: "", whatsapp: "" });
+  const [buyerErrors, setBuyerErrors] = useState<Partial<Record<BuyerField, string>>>({});
+
+  // Pemesan umumnya ikut lari juga (kasus paling sering). Kalau dicentang, data
+  // nama/email/WhatsApp peserta pertama mengikuti pemesan supaya tidak diketik dua kali.
+  const [pemesanIkut, setPemesanIkut] = useState(true);
+
+  const [pesertaList, setPesertaList] = useState<PesertaState[]>([pesertaBaru(KATEGORI_KEYS[0] || "")]);
+  const [pesertaErrors, setPesertaErrors] = useState<Record<string, Partial<Record<PesertaField, string>>>>({});
+
   const [isHealthyChecked, setIsHealthyChecked] = useState(false);
   const [isConsentChecked, setIsConsentChecked] = useState(false);
   const [consentErrors, setConsentErrors] = useState<{ health?: string; privacy?: string }>({});
@@ -170,38 +212,63 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
     message: "",
   });
 
-  const selectedCategory = KATEGORI_TIKET[formData.kategori] || KATEGORI_TIKET[KATEGORI_KEYS[0]] || { label: "-", price: 0 };
-  const subtotal = selectedCategory.price;
-  const totalAmount = subtotal + adminFee;
+  // Peserta pertama memakai identitas pemesan kalau kotaknya dicentang.
+  const dataPesertaEfektif = (p: PesertaState, index: number): PesertaState =>
+    index === 0 && pemesanIkut
+      ? { ...p, nama: buyer.nama, email: buyer.email, whatsapp: buyer.whatsapp }
+      : p;
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const hargaPeserta = (p: PesertaState) => KATEGORI_TIKET[p.kategori]?.price ?? 0;
+
+  const subtotal = pesertaList.reduce((sum, p) => sum + hargaPeserta(p), 0);
+  // BIAYA LAYANAN DIHITUNG PER TIKET, bukan per pesanan — sama seperti calculateAdminFee()
+  // di kembarin-v2 (feePerTicket * ticketCount). Pesanan 5 tiket = 5 x biaya layanan.
+  const totalAdminFee = adminFee * pesertaList.length;
+  const totalAmount = subtotal + totalAdminFee;
+
+  const bolehTambahPeserta = multiTicketEnabled && pesertaList.length < batasTiket;
+
+  const handleBuyerChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Error dibersihkan begitu pengguna mulai memperbaiki — jangan menyalahkan sambil mengetik.
-    if (errors[name as FieldName]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    setBuyer((prev) => ({ ...prev, [name]: value }));
+    if (buyerErrors[name as BuyerField]) {
+      setBuyerErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  const handleBlur = (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const name = e.target.name as FieldName;
-    const validator = VALIDATORS[name];
-    if (!validator) return;
-    const message = validator(e.target.value);
-    setErrors((prev) => ({ ...prev, [name]: message ?? undefined }));
+  const handleBuyerBlur = (e: FocusEvent<HTMLInputElement>) => {
+    const name = e.target.name as BuyerField;
+    setBuyerErrors((prev) => ({ ...prev, [name]: VALIDATOR_BUYER[name](e.target.value) ?? undefined }));
   };
 
-  const validateAll = () => {
-    const nextErrors: Partial<Record<FieldName, string>> = {};
-    for (const field of FIELD_ORDER) {
-      const message = VALIDATORS[field](formData[field]);
-      if (message) nextErrors[field] = message;
+  const handlePesertaChange = (key: string, field: PesertaField, value: string) => {
+    setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, [field]: value } : p)));
+    if (pesertaErrors[key]?.[field]) {
+      setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: undefined } }));
     }
-    return nextErrors;
   };
 
-  const focusField = (name: string) => {
-    const el = document.getElementById(name);
+  const handlePesertaBlur = (key: string, field: PesertaField, value: string) => {
+    const message = VALIDATOR_PESERTA[field](value);
+    setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: message ?? undefined } }));
+  };
+
+  const tambahPeserta = () => {
+    if (!bolehTambahPeserta) return;
+    setPesertaList((prev) => [...prev, pesertaBaru(KATEGORI_KEYS[0] || "")]);
+  };
+
+  const hapusPeserta = (key: string) => {
+    setPesertaList((prev) => (prev.length <= 1 ? prev : prev.filter((p) => p.key !== key)));
+    setPesertaErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const focusField = (id: string) => {
+    const el = document.getElementById(id);
     if (el) {
       el.focus();
       el.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -212,67 +279,91 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
     e.preventDefault();
     if (loading || isFormClosed) return;
 
-    // 1) Validasi field
-    const nextErrors = validateAll();
-    setErrors(nextErrors);
+    // 1) Validasi data pemesan
+    const nextBuyerErrors: Partial<Record<BuyerField, string>> = {};
+    for (const field of URUTAN_BUYER) {
+      const message = VALIDATOR_BUYER[field](buyer[field]);
+      if (message) nextBuyerErrors[field] = message;
+    }
+    setBuyerErrors(nextBuyerErrors);
 
-    // 2) Validasi persetujuan — tombol sengaja TIDAK di-disable supaya alasannya bisa dijelaskan.
+    // 2) Validasi tiap peserta
+    const nextPesertaErrors: Record<string, Partial<Record<PesertaField, string>>> = {};
+    const nikTerpakai = new Map<string, number>();
+    pesertaList.forEach((raw, index) => {
+      const p = dataPesertaEfektif(raw, index);
+      const errorsPeserta: Partial<Record<PesertaField, string>> = {};
+      for (const field of URUTAN_PESERTA) {
+        // Nama/email/WA peserta pertama mengikuti pemesan; kesalahannya sudah
+        // dilaporkan di bagian pemesan, jangan dilaporkan dua kali.
+        if (index === 0 && pemesanIkut && (field === "nama" || field === "email" || field === "whatsapp")) continue;
+        const message = VALIDATOR_PESERTA[field](p[field]);
+        if (message) errorsPeserta[field] = message;
+      }
+      const nik = p.nik.trim();
+      if (nik && !errorsPeserta.nik) {
+        const sebelumnya = nikTerpakai.get(nik);
+        if (sebelumnya !== undefined) {
+          errorsPeserta.nik = `NIK ini sama dengan Peserta ${sebelumnya + 1}.`;
+        } else {
+          nikTerpakai.set(nik, index);
+        }
+      }
+      if (Object.keys(errorsPeserta).length > 0) nextPesertaErrors[raw.key] = errorsPeserta;
+    });
+    setPesertaErrors(nextPesertaErrors);
+
+    // 3) Validasi persetujuan — tombol sengaja TIDAK di-disable supaya alasannya bisa dijelaskan.
     const nextConsentErrors = {
       health: isHealthyChecked ? undefined : "Pernyataan kondisi sehat wajib dicentang.",
       privacy: isConsentChecked ? undefined : "Persetujuan kebijakan privasi wajib dicentang.",
     };
     setConsentErrors(nextConsentErrors);
 
-    const firstInvalidField = FIELD_ORDER.find((f) => nextErrors[f]);
-    if (firstInvalidField) {
-      focusField(firstInvalidField);
-      return;
+    const buyerInvalid = URUTAN_BUYER.find((f) => nextBuyerErrors[f]);
+    if (buyerInvalid) return focusField(`buyer-${buyerInvalid}`);
+
+    for (const [index, p] of pesertaList.entries()) {
+      const errorsPeserta = nextPesertaErrors[p.key];
+      if (!errorsPeserta) continue;
+      const field = URUTAN_PESERTA.find((f) => errorsPeserta[f]);
+      if (field) return focusField(`peserta-${index}-${field}`);
     }
+
     if (nextConsentErrors.health) return focusField("healthDeclaration");
     if (nextConsentErrors.privacy) return focusField("privacyConsent");
 
     setLoading(true);
 
-    const payload: SubmitData = {
+    const payload = {
       eventCode: "smadarun",
-      nama: formData.nama.trim(),
-      email: formData.email.trim(),
-      nik: formData.nik.trim(),
-      whatsapp: formData.whatsapp.trim(),
-      gender: formData.gender,
-      kota: formData.kota.trim(),
-      kategori: formData.kategori,
-
-      // Tiket / Subtotal Murni
-      subtotal: subtotal,
-      ticket_price: subtotal,
-      price: subtotal,
-
-      // Biaya Layanan Platform (Semua Alias, nilai live dari kembarin-v2)
-      admin_fee: adminFee,
-      platform_fee: adminFee,
-      service_fee: adminFee,
-      fee: adminFee,
-      biaya_admin: adminFee,
-      biaya_layanan: adminFee,
-
-      // Total Pembayaran (Subtotal + Biaya Layanan) (Semua Alias)
-      total_amount: totalAmount,
-      totalAmount: totalAmount,
-      nominal: totalAmount,
-      amount: totalAmount,
-      total: totalAmount,
-      total_price: totalAmount,
-
+      buyer: {
+        nama: buyer.nama.trim(),
+        email: buyer.email.trim(),
+        whatsapp: buyer.whatsapp.trim(),
+      },
+      participants: pesertaList.map((raw, index) => {
+        const p = dataPesertaEfektif(raw, index);
+        return {
+          nama: p.nama.trim(),
+          email: p.email.trim(),
+          whatsapp: p.whatsapp.trim(),
+          nik: p.nik.trim(),
+          gender: p.gender,
+          kota: p.kota.trim(),
+          kategori: p.kategori,
+          size: p.size,
+        };
+      }),
       paymentGateway: "doku",
-      payment_gateway: "doku",
-      size: formData.size,
-      custom_fields: {},
 
-      // Persetujuan peserta — ikut dikirim dan divalidasi ulang di server
-      // (api/daftar/route.ts), bukan cuma mengunci tombol di browser.
+      // Persetujuan ikut dikirim dan divalidasi ulang di server, bukan cuma mengunci tombol.
       health_declaration: true,
       privacy_consent: true,
+
+      // Dikirim hanya sebagai pencocokan silang; server & core menghitung ulang sendiri.
+      subtotal,
+      total_amount: totalAmount,
     };
 
     try {
@@ -292,7 +383,8 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
       const result = await response.json();
 
       if (response.ok && result.success !== false) {
-        const paymentUrl = result.paymentUrl || result.payment_url || result.data?.paymentUrl || result.data?.payment_url;
+        const paymentUrl =
+          result.paymentUrl || result.payment_url || result.data?.paymentUrl || result.data?.payment_url;
 
         if (paymentUrl) {
           // Redirect hanya diizinkan ke domain resmi DOKU untuk mencegah open-redirect/phishing.
@@ -314,19 +406,12 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
             "Data pendaftaran Anda telah aman tersimpan. Silakan periksa email Anda untuk rincian pembayaran.",
         });
 
-        setFormData({
-          nama: "",
-          email: "",
-          nik: "",
-          whatsapp: "",
-          gender: "",
-          kota: "",
-          kategori: KATEGORI_KEYS[0] || "",
-          size: "",
-        });
+        setBuyer({ nama: "", email: "", whatsapp: "" });
+        setPesertaList([pesertaBaru(KATEGORI_KEYS[0] || "")]);
+        setPesertaErrors({});
+        setBuyerErrors({});
         setIsHealthyChecked(false);
         setIsConsentChecked(false);
-        setErrors({});
         setConsentErrors({});
       } else {
         throw new Error(result.message || result.error || "Gagal memproses pendaftaran");
@@ -349,13 +434,27 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
   // Rincian biaya — dipakai dua kali: inline (mobile) & di kartu ringkasan sticky (desktop).
   const RincianBiaya = (
     <dl className="space-y-2.5 text-sm">
-      <div className="flex justify-between gap-4 text-foreground-accent font-medium">
-        <dt>Tiket {selectedCategory.label}</dt>
-        <dd className="tabular-nums">{rupiah(subtotal)}</dd>
-      </div>
-      <div className="flex justify-between gap-4 text-foreground-accent font-medium">
-        <dt>Biaya layanan platform</dt>
-        <dd className="tabular-nums">{rupiah(adminFee)}</dd>
+      {pesertaList.map((raw, index) => {
+        const nama = dataPesertaEfektif(raw, index).nama.trim();
+        const kategori = KATEGORI_TIKET[raw.kategori];
+        return (
+          <div key={raw.key} className="flex justify-between gap-4 text-foreground-accent font-medium">
+            <dt className="min-w-0">
+              <span className="block truncate">{nama || `Peserta ${index + 1}`}</span>
+              <span className="text-xs text-muted-foreground">{kategori?.label ?? "-"}</span>
+            </dt>
+            <dd className="tabular-nums">{rupiah(hargaPeserta(raw))}</dd>
+          </div>
+        );
+      })}
+      <div className="flex justify-between gap-4 border-t border-border pt-2.5 text-foreground-accent font-medium">
+        <dt>
+          Biaya layanan platform
+          <span className="block text-xs text-muted-foreground">
+            {rupiah(adminFee)} × {pesertaList.length} tiket
+          </span>
+        </dt>
+        <dd className="tabular-nums">{rupiah(totalAdminFee)}</dd>
       </div>
       <div className="flex justify-between gap-4 border-t border-border pt-2.5 font-black text-base text-foreground">
         <dt>Total pembayaran</dt>
@@ -383,8 +482,6 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
   // saat halaman digulir. Latar dekoratifnya sudah absolute inset-0, jadi tidak perlu diklip.
   return (
     <div className="relative min-h-screen px-5 pb-40 pt-28 lg:pb-20">
-      {/* Motif speed-lines yang sama dengan hero — sebelumnya halaman ini memakai
-          dot-grid generik sehingga terasa seperti situs yang berbeda. */}
       <div
         aria-hidden="true"
         className="absolute inset-0 -z-10 bg-hero-background bg-[repeating-linear-gradient(115deg,#80808014_0px,#80808014_1.5px,transparent_1.5px,transparent_40px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_60%,transparent_100%)]"
@@ -411,10 +508,6 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
           </div>
         )}
 
-        {/* Sengaja TANPA items-start: kolom aside harus ikut setinggi kolom form
-            (align stretch) supaya kartu sticky di dalamnya punya ruang untuk menempel
-            sepanjang formulir digulir. Dengan items-start, tinggi aside = tinggi kartu
-            dan sticky-nya tidak pernah kelihatan bekerja. */}
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
           {/* KOLOM FORM */}
           <form
@@ -424,177 +517,309 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
             className="rounded-card border border-border bg-card p-6 shadow-rest md:p-9"
           >
             <fieldset disabled={isFormClosed} className="space-y-10">
-              {/* LANGKAH 1 */}
+              {/* LANGKAH 1 — PEMESAN */}
               <section className="space-y-5">
-                <StepHeading step={1} title="Data Diri" hint="Isi sesuai identitas resmi — dipakai untuk verifikasi race pack." />
+                <StepHeading
+                  step={1}
+                  title="Data Pemesan"
+                  hint="Penanggung jawab pesanan. Tautan pembayaran & bukti pendaftaran dikirim ke sini."
+                />
                 <div>
-                  <label htmlFor="nama" className={labelClass}>Nama lengkap</label>
+                  <label htmlFor="buyer-nama" className={labelClass}>Nama pemesan</label>
                   <input
-                    id="nama"
+                    id="buyer-nama"
                     name="nama"
                     type="text"
                     autoComplete="name"
-                    value={formData.nama}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    placeholder="Sesuai KTP / Kartu Pelajar"
-                    aria-invalid={!!errors.nama}
-                    aria-describedby={errors.nama ? "nama-error" : undefined}
-                    className={fieldClass(!!errors.nama)}
+                    value={buyer.nama}
+                    onChange={handleBuyerChange}
+                    onBlur={handleBuyerBlur}
+                    placeholder="Nama lengkap"
+                    aria-invalid={!!buyerErrors.nama}
+                    aria-describedby={buyerErrors.nama ? "buyer-nama-error" : undefined}
+                    className={fieldClass(!!buyerErrors.nama)}
                   />
-                  <FieldError id="nama-error" message={errors.nama} />
-                </div>
-                <div>
-                  <label htmlFor="email" className={labelClass}>Alamat email</label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    placeholder="contoh@email.com"
-                    aria-invalid={!!errors.email}
-                    aria-describedby={errors.email ? "email-error" : "email-hint"}
-                    className={fieldClass(!!errors.email)}
-                  />
-                  {errors.email ? (
-                    <FieldError id="email-error" message={errors.email} />
-                  ) : (
-                    <p id="email-hint" className="mt-1.5 text-xs text-muted-foreground">
-                      Bukti pendaftaran & tautan pembayaran dikirim ke email ini.
-                    </p>
-                  )}
+                  <FieldError id="buyer-nama-error" message={buyerErrors.nama} />
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="nik" className={labelClass}>NIK (16 digit)</label>
+                    <label htmlFor="buyer-email" className={labelClass}>Alamat email</label>
                     <input
-                      id="nik"
-                      name="nik"
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={16}
-                      autoComplete="off"
-                      value={formData.nik}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      placeholder="16 digit angka"
-                      aria-invalid={!!errors.nik}
-                      aria-describedby={errors.nik ? "nik-error" : "nik-hint"}
-                      className={fieldClass(!!errors.nik)}
+                      id="buyer-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      value={buyer.email}
+                      onChange={handleBuyerChange}
+                      onBlur={handleBuyerBlur}
+                      placeholder="contoh@email.com"
+                      aria-invalid={!!buyerErrors.email}
+                      aria-describedby={buyerErrors.email ? "buyer-email-error" : undefined}
+                      className={fieldClass(!!buyerErrors.email)}
                     />
-                    {errors.nik ? (
-                      <FieldError id="nik-error" message={errors.nik} />
-                    ) : (
-                      <p id="nik-hint" className="mt-1.5 text-xs text-muted-foreground">
-                        Pelajar: pakai NIK di KTP/Kartu Keluarga.
-                      </p>
-                    )}
+                    <FieldError id="buyer-email-error" message={buyerErrors.email} />
                   </div>
                   <div>
-                    <label htmlFor="whatsapp" className={labelClass}>Nomor WhatsApp</label>
+                    <label htmlFor="buyer-whatsapp" className={labelClass}>Nomor WhatsApp</label>
                     <input
-                      id="whatsapp"
+                      id="buyer-whatsapp"
                       name="whatsapp"
                       type="tel"
                       inputMode="tel"
                       autoComplete="tel"
-                      value={formData.whatsapp}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
+                      value={buyer.whatsapp}
+                      onChange={handleBuyerChange}
+                      onBlur={handleBuyerBlur}
                       placeholder="081234567890"
-                      aria-invalid={!!errors.whatsapp}
-                      aria-describedby={errors.whatsapp ? "whatsapp-error" : undefined}
-                      className={fieldClass(!!errors.whatsapp)}
+                      aria-invalid={!!buyerErrors.whatsapp}
+                      aria-describedby={buyerErrors.whatsapp ? "buyer-whatsapp-error" : undefined}
+                      className={fieldClass(!!buyerErrors.whatsapp)}
                     />
-                    <FieldError id="whatsapp-error" message={errors.whatsapp} />
+                    <FieldError id="buyer-whatsapp-error" message={buyerErrors.whatsapp} />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="gender" className={labelClass}>Jenis kelamin</label>
-                    <select
-                      id="gender"
-                      name="gender"
-                      value={formData.gender}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      aria-invalid={!!errors.gender}
-                      aria-describedby={errors.gender ? "gender-error" : undefined}
-                      className={fieldClass(!!errors.gender)}
-                    >
-                      <option value="" disabled>Pilih jenis kelamin</option>
-                      <option value="Laki-laki">Laki-laki</option>
-                      <option value="Perempuan">Perempuan</option>
-                    </select>
-                    <FieldError id="gender-error" message={errors.gender} />
-                  </div>
-                  <div>
-                    <label htmlFor="kota" className={labelClass}>Kota domisili</label>
-                    <input
-                      id="kota"
-                      name="kota"
-                      type="text"
-                      autoComplete="address-level2"
-                      value={formData.kota}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      placeholder="Contoh: Nganjuk"
-                      aria-invalid={!!errors.kota}
-                      aria-describedby={errors.kota ? "kota-error" : undefined}
-                      className={fieldClass(!!errors.kota)}
-                    />
-                    <FieldError id="kota-error" message={errors.kota} />
-                  </div>
+                <div className="flex items-start gap-3 rounded-field border border-border bg-surface-sunken p-4">
+                  <input
+                    type="checkbox"
+                    id="pemesanIkut"
+                    checked={pemesanIkut}
+                    onChange={(e) => setPemesanIkut(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary"
+                  />
+                  <label htmlFor="pemesanIkut" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
+                    Pemesan juga ikut lari sebagai <span className="font-bold text-foreground">Peserta 1</span> — nama,
+                    email, dan WhatsApp di atas dipakai ulang, tinggal lengkapi NIK dan pilihan lombanya.
+                  </label>
                 </div>
               </section>
 
-              {/* LANGKAH 2 */}
+              {/* LANGKAH 2 — PESERTA */}
               <section className="space-y-5">
-                <StepHeading step={2} title="Lomba & Jersey" hint="Ukuran jersey tidak bisa diubah setelah pembayaran." />
-                {PENDAFTARAN_DIBUKA && (
-                  <div>
-                    <label htmlFor="kategori" className={labelClass}>Kategori lomba</label>
-                    <select
-                      id="kategori"
-                      name="kategori"
-                      value={formData.kategori}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      aria-invalid={!!errors.kategori}
-                      aria-describedby={errors.kategori ? "kategori-error" : undefined}
-                      className={fieldClass(!!errors.kategori)}
+                <StepHeading
+                  step={2}
+                  title="Data Peserta"
+                  hint={
+                    multiTicketEnabled
+                      ? `Satu pembayaran bisa untuk maksimal ${batasTiket} peserta. Tiap peserta boleh beda kategori & ukuran jersey.`
+                      : "Isi data peserta sesuai identitas resmi — dipakai untuk verifikasi race pack."
+                  }
+                />
+
+                {pesertaList.map((raw, index) => {
+                  const p = dataPesertaEfektif(raw, index);
+                  const errs = pesertaErrors[raw.key] || {};
+                  const identitasDariPemesan = index === 0 && pemesanIkut;
+
+                  return (
+                    <div key={raw.key} className="rounded-field border border-border bg-surface-sunken/60 p-5">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <p className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
+                          Peserta {index + 1}
+                          {identitasDariPemesan && (
+                            <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-on-primary">
+                              Pemesan
+                            </span>
+                          )}
+                        </p>
+                        {pesertaList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => hapusPeserta(raw.key)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground-accent transition hover:border-danger hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          >
+                            <FiTrash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            Hapus
+                            <span className="sr-only">peserta {index + 1}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        {identitasDariPemesan ? (
+                          <p className="rounded-field border border-dashed border-border-strong bg-card px-4 py-3 text-xs text-muted-foreground">
+                            Nama, email, dan WhatsApp mengikuti data pemesan di atas.
+                          </p>
+                        ) : (
+                          <>
+                            <div>
+                              <label htmlFor={`peserta-${index}-nama`} className={labelClass}>Nama lengkap</label>
+                              <input
+                                id={`peserta-${index}-nama`}
+                                type="text"
+                                value={p.nama}
+                                onChange={(e) => handlePesertaChange(raw.key, "nama", e.target.value)}
+                                onBlur={(e) => handlePesertaBlur(raw.key, "nama", e.target.value)}
+                                placeholder="Sesuai KTP / Kartu Pelajar"
+                                aria-invalid={!!errs.nama}
+                                aria-describedby={errs.nama ? `peserta-${index}-nama-error` : undefined}
+                                className={fieldClass(!!errs.nama)}
+                              />
+                              <FieldError id={`peserta-${index}-nama-error`} message={errs.nama} />
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                              <div>
+                                <label htmlFor={`peserta-${index}-email`} className={labelClass}>
+                                  Email <span className="font-medium normal-case tracking-normal text-muted-foreground">(opsional)</span>
+                                </label>
+                                <input
+                                  id={`peserta-${index}-email`}
+                                  type="email"
+                                  value={p.email}
+                                  onChange={(e) => handlePesertaChange(raw.key, "email", e.target.value)}
+                                  onBlur={(e) => handlePesertaBlur(raw.key, "email", e.target.value)}
+                                  placeholder="Kosongkan = pakai email pemesan"
+                                  aria-invalid={!!errs.email}
+                                  aria-describedby={errs.email ? `peserta-${index}-email-error` : undefined}
+                                  className={fieldClass(!!errs.email)}
+                                />
+                                <FieldError id={`peserta-${index}-email-error`} message={errs.email} />
+                              </div>
+                              <div>
+                                <label htmlFor={`peserta-${index}-whatsapp`} className={labelClass}>
+                                  WhatsApp <span className="font-medium normal-case tracking-normal text-muted-foreground">(opsional)</span>
+                                </label>
+                                <input
+                                  id={`peserta-${index}-whatsapp`}
+                                  type="tel"
+                                  inputMode="tel"
+                                  value={p.whatsapp}
+                                  onChange={(e) => handlePesertaChange(raw.key, "whatsapp", e.target.value)}
+                                  onBlur={(e) => handlePesertaBlur(raw.key, "whatsapp", e.target.value)}
+                                  placeholder="Kosongkan = pakai WA pemesan"
+                                  aria-invalid={!!errs.whatsapp}
+                                  aria-describedby={errs.whatsapp ? `peserta-${index}-whatsapp-error` : undefined}
+                                  className={fieldClass(!!errs.whatsapp)}
+                                />
+                                <FieldError id={`peserta-${index}-whatsapp-error`} message={errs.whatsapp} />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label htmlFor={`peserta-${index}-nik`} className={labelClass}>NIK (16 digit)</label>
+                            <input
+                              id={`peserta-${index}-nik`}
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={16}
+                              autoComplete="off"
+                              value={p.nik}
+                              onChange={(e) => handlePesertaChange(raw.key, "nik", e.target.value)}
+                              onBlur={(e) => handlePesertaBlur(raw.key, "nik", e.target.value)}
+                              placeholder="16 digit angka"
+                              aria-invalid={!!errs.nik}
+                              aria-describedby={errs.nik ? `peserta-${index}-nik-error` : `peserta-${index}-nik-hint`}
+                              className={fieldClass(!!errs.nik)}
+                            />
+                            {errs.nik ? (
+                              <FieldError id={`peserta-${index}-nik-error`} message={errs.nik} />
+                            ) : (
+                              <p id={`peserta-${index}-nik-hint`} className="mt-1.5 text-xs text-muted-foreground">
+                                Pelajar: pakai NIK di KTP/Kartu Keluarga.
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <label htmlFor={`peserta-${index}-gender`} className={labelClass}>Jenis kelamin</label>
+                            <select
+                              id={`peserta-${index}-gender`}
+                              value={p.gender}
+                              onChange={(e) => handlePesertaChange(raw.key, "gender", e.target.value)}
+                              onBlur={(e) => handlePesertaBlur(raw.key, "gender", e.target.value)}
+                              aria-invalid={!!errs.gender}
+                              aria-describedby={errs.gender ? `peserta-${index}-gender-error` : undefined}
+                              className={fieldClass(!!errs.gender)}
+                            >
+                              <option value="" disabled>Pilih jenis kelamin</option>
+                              <option value="Laki-laki">Laki-laki</option>
+                              <option value="Perempuan">Perempuan</option>
+                            </select>
+                            <FieldError id={`peserta-${index}-gender-error`} message={errs.gender} />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div>
+                            <label htmlFor={`peserta-${index}-kota`} className={labelClass}>Kota domisili</label>
+                            <input
+                              id={`peserta-${index}-kota`}
+                              type="text"
+                              autoComplete="address-level2"
+                              value={p.kota}
+                              onChange={(e) => handlePesertaChange(raw.key, "kota", e.target.value)}
+                              onBlur={(e) => handlePesertaBlur(raw.key, "kota", e.target.value)}
+                              placeholder="Contoh: Nganjuk"
+                              aria-invalid={!!errs.kota}
+                              aria-describedby={errs.kota ? `peserta-${index}-kota-error` : undefined}
+                              className={fieldClass(!!errs.kota)}
+                            />
+                            <FieldError id={`peserta-${index}-kota-error`} message={errs.kota} />
+                          </div>
+                          <div>
+                            <label htmlFor={`peserta-${index}-size`} className={labelClass}>Ukuran jersey (unisex)</label>
+                            <select
+                              id={`peserta-${index}-size`}
+                              value={p.size}
+                              onChange={(e) => handlePesertaChange(raw.key, "size", e.target.value)}
+                              onBlur={(e) => handlePesertaBlur(raw.key, "size", e.target.value)}
+                              aria-invalid={!!errs.size}
+                              aria-describedby={errs.size ? `peserta-${index}-size-error` : undefined}
+                              className={fieldClass(!!errs.size)}
+                            >
+                              <option value="" disabled>Pilih ukuran</option>
+                              {["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                            <FieldError id={`peserta-${index}-size-error`} message={errs.size} />
+                          </div>
+                        </div>
+
+                        {PENDAFTARAN_DIBUKA && (
+                          <div>
+                            <label htmlFor={`peserta-${index}-kategori`} className={labelClass}>Kategori lomba</label>
+                            <select
+                              id={`peserta-${index}-kategori`}
+                              value={p.kategori}
+                              onChange={(e) => handlePesertaChange(raw.key, "kategori", e.target.value)}
+                              onBlur={(e) => handlePesertaBlur(raw.key, "kategori", e.target.value)}
+                              aria-invalid={!!errs.kategori}
+                              aria-describedby={errs.kategori ? `peserta-${index}-kategori-error` : undefined}
+                              className={fieldClass(!!errs.kategori)}
+                            >
+                              {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
+                                <option key={key} value={key}>
+                                  {cat.label} — {rupiah(cat.price)}
+                                </option>
+                              ))}
+                            </select>
+                            <FieldError id={`peserta-${index}-kategori-error`} message={errs.kategori} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {multiTicketEnabled && (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={tambahPeserta}
+                      disabled={!bolehTambahPeserta}
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-border-strong px-5 py-3 text-sm font-bold text-foreground transition hover:border-primary-accent hover:text-primary-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
-                      {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
-                        <option key={key} value={key}>
-                          {cat.label} — {rupiah(cat.price)}
-                        </option>
-                      ))}
-                    </select>
-                    <FieldError id="kategori-error" message={errors.kategori} />
+                      <FiPlus className="h-4 w-4" aria-hidden="true" />
+                      Tambah peserta
+                    </button>
+                    <p className="text-xs text-muted-foreground" aria-live="polite">
+                      {pesertaList.length} dari {batasTiket} tiket dalam pesanan ini
+                    </p>
                   </div>
                 )}
-                <div>
-                  <label htmlFor="size" className={labelClass}>Ukuran jersey (unisex)</label>
-                  <select
-                    id="size"
-                    name="size"
-                    value={formData.size}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    aria-invalid={!!errors.size}
-                    aria-describedby={errors.size ? "size-error" : undefined}
-                    className={fieldClass(!!errors.size)}
-                  >
-                    <option value="" disabled>Pilih ukuran</option>
-                    {["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                  <FieldError id="size-error" message={errors.size} />
-                </div>
+
                 <div>
                   <span className={labelClass}>Panduan ukuran</span>
                   <button
@@ -617,7 +842,7 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
                 </div>
               </section>
 
-              {/* LANGKAH 3 */}
+              {/* LANGKAH 3 — KONFIRMASI */}
               <section className="space-y-5">
                 <StepHeading step={3} title="Konfirmasi & Bayar" hint="Periksa rincian biaya sebelum melanjutkan ke pembayaran." />
 
@@ -650,10 +875,11 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
                   />
                   <div>
                     <label htmlFor="healthDeclaration" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
-                      Saya menyatakan dengan sadar bahwa saya dalam kondisi{" "}
-                      <span className="font-bold text-foreground">sehat walafiat</span>, memiliki fisik yang prima, dan{" "}
-                      <span className="font-bold text-foreground">bertanggung jawab penuh</span> atas keselamatan diri saya sendiri
-                      selama mengikuti seluruh rangkaian kegiatan SMADARUN 2027.
+                      Saya menyatakan bahwa{" "}
+                      <span className="font-bold text-foreground">seluruh peserta dalam pesanan ini</span> berada dalam
+                      kondisi sehat, memiliki fisik yang prima, dan{" "}
+                      <span className="font-bold text-foreground">bertanggung jawab penuh</span> atas keselamatan
+                      masing-masing selama mengikuti seluruh rangkaian kegiatan SMADARUN 2027.
                     </label>
                     <FieldError id="health-error" message={consentErrors.health} />
                   </div>
@@ -679,9 +905,9 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
                   <div>
                     <label htmlFor="privacyConsent" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
                       Saya telah membaca dan menyetujui{" "}
-                      <span className="font-bold text-foreground">Kebijakan Privasi</span>, serta memberikan persetujuan atas
-                      pengumpulan dan pemrosesan data pribadi saya (termasuk NIK, email, dan nomor WhatsApp) untuk keperluan
-                      pendaftaran dan verifikasi kepesertaan SMADARUN 2027.
+                      <span className="font-bold text-foreground">Kebijakan Privasi</span>, serta memberikan persetujuan
+                      atas pengumpulan dan pemrosesan data pribadi seluruh peserta yang saya daftarkan (termasuk NIK,
+                      email, dan nomor WhatsApp) untuk keperluan pendaftaran dan verifikasi kepesertaan SMADARUN 2027.
                     </label>
                     <FieldError id="privacy-error" message={consentErrors.privacy} />
                   </div>
@@ -693,9 +919,16 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
           {/* KOLOM RINGKASAN — sticky di desktop */}
           <aside className="hidden lg:block">
             <div className="sticky top-28 rounded-card border border-border bg-card p-6 shadow-rest">
-              <p className="mb-4 text-xs font-black uppercase tracking-widest text-muted-foreground">
-                Ringkasan pesanan
-              </p>
+              <div className="mb-4 flex items-baseline justify-between gap-2">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  Ringkasan pesanan
+                </p>
+                {PENDAFTARAN_DIBUKA && (
+                  <span className="text-xs font-bold text-foreground-accent">
+                    {pesertaList.length} tiket
+                  </span>
+                )}
+              </div>
               {PENDAFTARAN_DIBUKA ? (
                 <>
                   {RincianBiaya}
@@ -719,7 +952,9 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md lg:hidden">
           <div className="mx-auto flex max-w-xl items-center gap-4 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
             <div className="min-w-0">
-              <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Total</div>
+              <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Total · {pesertaList.length} tiket
+              </div>
               <div className="font-display text-xl font-bold leading-none text-foreground tabular-nums">
                 {rupiah(totalAmount)}
               </div>

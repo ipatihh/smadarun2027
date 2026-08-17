@@ -50,11 +50,19 @@ async function Tiket() {
           Kategori tiket akan segera diumumkan. Pantau terus info resmi panitia.
         </div>
       ) : (
-        <TiketGrid
-          tiers={tiersWithUniqueFeatures}
-          sharedFeatures={sharedFeatures}
-          adminFee={live.adminFee}
-        />
+        <>
+          <TiketGrid
+            tiers={tiersWithUniqueFeatures}
+            sharedFeatures={sharedFeatures}
+            adminFee={live.adminFee}
+          />
+          {live.multiTicketEnabled && live.maxTicketsPerOrder > 1 && (
+            <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-foreground-accent">
+              <span className="font-bold text-foreground">Daftar rombongan?</span> Satu pembayaran bisa untuk sampai{" "}
+              {live.maxTicketsPerOrder} peserta sekaligus — boleh beda kategori dan beda ukuran jersey.
+            </p>
+          )}
+        </>
       )}
     </section>
   );

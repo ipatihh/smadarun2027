@@ -41,7 +41,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
           </span>
           {adminFee > 0 && (
             <p className="mt-1.5 text-xs text-muted-foreground">
-              + biaya layanan {rupiah(adminFee)} per transaksi
+              + biaya layanan {rupiah(adminFee)} per tiket
             </p>
           )}
         </div>

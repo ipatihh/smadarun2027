@@ -23,6 +23,8 @@ export default async function DaftarPage() {
       isOpen={live.isOpen}
       adminFee={live.adminFee}
       opensAtLabel={formatJadwalBuka(live.opensAt)}
+      multiTicketEnabled={live.multiTicketEnabled}
+      maxTicketsPerOrder={live.maxTicketsPerOrder}
     />
   );
 }

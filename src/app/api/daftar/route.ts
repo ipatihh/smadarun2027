@@ -74,6 +74,36 @@ function bersihkanCacheMundur(now: number) {
   }
 }
 
+// ─── Validator satuan ────────────────────────────────────────────────────────
+const NAMA_PATTERN = /^[a-zA-Z\s\.\']+$/;
+const KOTA_PATTERN = /^[a-zA-Z\s\.\'\-]+$/;
+const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const WHATSAPP_PATTERN = /^\+?\d{8,15}$/;
+const NIK_PATTERN = /^\d{16}$/;
+const GENDER_WHITELIST = ["Laki-laki", "Perempuan"];
+const SIZE_WHITELIST = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function gagal(message: string, status = 400) {
+  return NextResponse.json({ success: false, message }, { status });
+}
+
+interface PesertaTervalidasi {
+  nama: string;
+  email: string | null;
+  whatsapp: string | null;
+  nik: string;
+  gender: string;
+  kota: string;
+  kategori: string;
+  size: string;
+  harga: number;
+  ticketTypeId: number | null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const now = Date.now();
@@ -89,7 +119,6 @@ export async function POST(req: NextRequest) {
       rateLimitMap.set(ip, { count: 1, lastReset: now });
     } else {
       if (now - limitData.lastReset > RATE_LIMIT_WINDOW) {
-        // Reset window
         rateLimitMap.set(ip, { count: 1, lastReset: now });
       } else {
         if (limitData.count >= MAX_REQUESTS_PER_WINDOW) {
@@ -111,241 +140,212 @@ export async function POST(req: NextRequest) {
     try {
       body = (await req.json()) as Record<string, unknown>;
     } catch {
-      return NextResponse.json({ success: false, message: "Format JSON tidak valid." }, { status: 400 });
+      return gagal("Format JSON tidak valid.");
     }
 
-    const {
-      eventCode,
-      nama,
-      email,
-      nik,
-      whatsapp,
-      gender,
-      kota,
-      kategori,
-      subtotal,
-      total_amount,
-      nominal,
-      paymentGateway,
-      size,
-      health_declaration,
-      privacy_consent,
-    } = body;
+    const { eventCode, buyer, participants, paymentGateway, health_declaration, privacy_consent, subtotal, total_amount } = body;
 
-    // 4. Validasi & Sanitasi Data Ketat (Mencegah SQL Injection & Manipulasi Input)
+    // 4. Validasi & sanitasi ketat
 
-    // Event Code Verification
     if (typeof eventCode !== "string" || eventCode.trim() !== "smadarun") {
-      return NextResponse.json({ success: false, message: "Kode event tidak valid." }, { status: 400 });
+      return gagal("Kode event tidak valid.");
     }
 
-    // Nama Lengkap: String, huruf, spasi, titik (.), tanda petik tunggal (\'), panjang 3 - 100
-    if (
-      typeof nama !== "string" ||
-      nama.trim().length < 3 ||
-      nama.trim().length > 100 ||
-      !/^[a-zA-Z\s\.\']+$/.test(nama.trim())
-    ) {
-      return NextResponse.json(
-        { success: false, message: "Format nama tidak valid. Hanya diperbolehkan huruf, spasi, titik (.), atau kutip (')." },
-        { status: 400 }
-      );
+    // ── Data pemesan ──────────────────────────────────────────────────────────
+    if (!isRecord(buyer)) return gagal("Data pemesan wajib diisi.");
+
+    const buyerNama = typeof buyer.nama === "string" ? buyer.nama.trim() : "";
+    if (buyerNama.length < 3 || buyerNama.length > 100 || !NAMA_PATTERN.test(buyerNama)) {
+      return gagal("Format nama pemesan tidak valid. Hanya diperbolehkan huruf, spasi, titik (.), atau kutip (').");
     }
 
-    // Email: Validasi regex email standar
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (typeof email !== "string" || !emailRegex.test(email.trim())) {
-      return NextResponse.json({ success: false, message: "Format email tidak valid." }, { status: 400 });
+    const buyerEmail = typeof buyer.email === "string" ? buyer.email.trim() : "";
+    if (!EMAIL_PATTERN.test(buyerEmail)) return gagal("Format email pemesan tidak valid.");
+
+    const buyerWhatsapp = typeof buyer.whatsapp === "string" ? buyer.whatsapp.trim() : "";
+    if (!WHATSAPP_PATTERN.test(buyerWhatsapp)) {
+      return gagal("Format nomor WhatsApp pemesan tidak valid. Masukkan 8-15 digit angka.");
     }
 
-    // NIK KTP / Kartu Pelajar: Harus angka tepat 16 digit
-    if (typeof nik !== "string" || !/^\d{16}$/.test(nik.trim())) {
-      return NextResponse.json({ success: false, message: "NIK harus berupa angka dengan panjang tepat 16 digit." }, { status: 400 });
-    }
-
-    // WhatsApp: Harus angka, minimal 8 digit dan maksimal 15 digit (opsional didahului tanda +)
-    if (typeof whatsapp !== "string" || !/^\+?\d{8,15}$/.test(whatsapp.trim())) {
-      return NextResponse.json(
-        { success: false, message: "Format nomor WhatsApp tidak valid. Masukkan 8-15 digit angka." },
-        { status: 400 }
-      );
-    }
-
-    // Gender Whitelist
-    const genderWhitelist = ["Laki-laki", "Perempuan"];
-    if (typeof gender !== "string" || !genderWhitelist.includes(gender)) {
-      return NextResponse.json({ success: false, message: "Pilihan Jenis Kelamin tidak valid." }, { status: 400 });
-    }
-
-    // Size Whitelist
-    const sizeWhitelist = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-    if (typeof size !== "string" || !sizeWhitelist.includes(size)) {
-      return NextResponse.json({ success: false, message: "Pilihan Ukuran Jersey tidak valid." }, { status: 400 });
-    }
-
-    // Kota: huruf, spasi, titik, kutip, dan strip (mis. "Nganjuk", "Jakarta Barat").
-    if (
-      typeof kota !== "string" ||
-      kota.trim().length < 2 ||
-      kota.trim().length > 100 ||
-      !/^[a-zA-Z\s\.\'\-]+$/.test(kota.trim())
-    ) {
-      return NextResponse.json(
-        { success: false, message: "Format nama kota tidak valid. Hanya huruf, spasi, titik, strip, dan kutip." },
-        { status: 400 }
-      );
-    }
-
-    // Persetujuan wajib. Sebelumnya kedua checkbox HANYA mengunci tombol di browser,
-    // sehingga request langsung ke endpoint ini bisa mendaftar tanpa persetujuan apa pun
-    // dan tidak ada satu pun jejak persetujuan yang tersimpan (padahal yang dikumpulkan
-    // termasuk NIK — data pribadi di bawah UU PDP).
+    // ── Persetujuan (satu kali per pesanan, mewakili seluruh peserta) ─────────
+    // Sebelumnya kedua checkbox HANYA mengunci tombol di browser, sehingga request
+    // langsung ke endpoint ini bisa mendaftar tanpa persetujuan apa pun.
     if (health_declaration !== true) {
-      return NextResponse.json(
-        { success: false, message: "Pernyataan kondisi kesehatan wajib disetujui sebelum mendaftar." },
-        { status: 400 }
-      );
+      return gagal("Pernyataan kondisi kesehatan wajib disetujui sebelum mendaftar.");
     }
     if (privacy_consent !== true) {
-      return NextResponse.json(
-        { success: false, message: "Persetujuan Kebijakan Privasi wajib diberikan sebelum mendaftar." },
-        { status: 400 }
-      );
+      return gagal("Persetujuan Kebijakan Privasi wajib diberikan sebelum mendaftar.");
     }
 
-    // Kategori & Nominal Verification (Mencegah manipulasi nominal/harga tiket dari frontend)
-    // Harga & kategori diambil live dari kembarin-v2 (satu-satunya sumber kebenaran, dikontrol
-    // penuh dari dasbor Super Admin kembarin-v2) — bukan hardcode di project ini.
+    // ── Data live: harga, kategori aktif, status buka/tutup, batas kolektif ───
+    // kembarin-v2 adalah sumber kebenaran; nominal apa pun dari klien tidak dipercaya.
     const live = await getLiveEventData();
     if (!live.isOpen) {
-      return NextResponse.json(
-        { success: false, message: "Pendaftaran untuk event ini sedang tidak dibuka. Silakan coba beberapa saat lagi." },
-        { status: 400 }
+      return gagal("Pendaftaran untuk event ini sedang tidak dibuka. Silakan coba beberapa saat lagi.");
+    }
+
+    const tarifPerKategori = new Map(live.ticketTypes.map((t) => [t.categoryKey, t]));
+
+    // ── Daftar peserta ────────────────────────────────────────────────────────
+    if (!Array.isArray(participants) || participants.length === 0) {
+      return gagal("Minimal satu peserta wajib diisi.");
+    }
+    if (participants.length > live.maxTicketsPerOrder) {
+      return gagal(
+        live.multiTicketEnabled
+          ? `Maksimal ${live.maxTicketsPerOrder} tiket dalam satu pesanan.`
+          : "Event ini hanya mengizinkan satu tiket per pesanan."
       );
     }
-    const KATEGORI_TARIF: Record<string, number> = Object.fromEntries(
-      live.ticketTypes.map((t) => [t.categoryKey, t.price])
-    );
 
-    if (typeof kategori !== "string" || KATEGORI_TARIF[kategori] === undefined) {
-      return NextResponse.json({ success: false, message: "Kategori lomba tidak valid." }, { status: 400 });
+    const pesertaTervalidasi: PesertaTervalidasi[] = [];
+    const nikTerpakai = new Set<string>();
+
+    for (let i = 0; i < participants.length; i++) {
+      const nomor = i + 1;
+      const p = participants[i];
+      if (!isRecord(p)) return gagal(`Data peserta ${nomor} tidak valid.`);
+
+      const nama = typeof p.nama === "string" ? p.nama.trim() : "";
+      if (nama.length < 3 || nama.length > 100 || !NAMA_PATTERN.test(nama)) {
+        return gagal(`Format nama peserta ${nomor} tidak valid. Hanya huruf, spasi, titik (.), atau kutip (').`);
+      }
+
+      const nik = typeof p.nik === "string" ? p.nik.trim() : "";
+      if (!NIK_PATTERN.test(nik)) {
+        return gagal(`NIK peserta ${nomor} harus berupa angka dengan panjang tepat 16 digit.`);
+      }
+      // Satu NIK hanya boleh muncul sekali dalam satu pesanan — kalau tidak, satu orang
+      // bisa terdaftar berkali-kali dalam satu order dan memakan kuota kategori.
+      if (nikTerpakai.has(nik)) {
+        return gagal(`NIK peserta ${nomor} sama dengan peserta lain dalam pesanan ini.`);
+      }
+      nikTerpakai.add(nik);
+
+      const gender = typeof p.gender === "string" ? p.gender : "";
+      if (!GENDER_WHITELIST.includes(gender)) {
+        return gagal(`Pilihan jenis kelamin peserta ${nomor} tidak valid.`);
+      }
+
+      const size = typeof p.size === "string" ? p.size : "";
+      if (!SIZE_WHITELIST.includes(size)) {
+        return gagal(`Pilihan ukuran jersey peserta ${nomor} tidak valid.`);
+      }
+
+      const kota = typeof p.kota === "string" ? p.kota.trim() : "";
+      if (kota.length < 2 || kota.length > 100 || !KOTA_PATTERN.test(kota)) {
+        return gagal(`Format kota domisili peserta ${nomor} tidak valid. Hanya huruf, spasi, titik, strip, dan kutip.`);
+      }
+
+      const kategori = typeof p.kategori === "string" ? p.kategori : "";
+      const tiket = tarifPerKategori.get(kategori);
+      if (!tiket) {
+        return gagal(`Kategori lomba peserta ${nomor} tidak valid atau sedang tidak aktif.`);
+      }
+
+      // Email & WhatsApp peserta bersifat opsional: kalau kosong, core memakai data
+      // pemesan (lihat resolveParticipantEmail di kembarin-v2).
+      const emailPeserta = typeof p.email === "string" && p.email.trim() ? p.email.trim() : null;
+      if (emailPeserta && !EMAIL_PATTERN.test(emailPeserta)) {
+        return gagal(`Format email peserta ${nomor} tidak valid.`);
+      }
+      const waPeserta = typeof p.whatsapp === "string" && p.whatsapp.trim() ? p.whatsapp.trim() : null;
+      if (waPeserta && !WHATSAPP_PATTERN.test(waPeserta)) {
+        return gagal(`Format nomor WhatsApp peserta ${nomor} tidak valid. Masukkan 8-15 digit angka.`);
+      }
+
+      pesertaTervalidasi.push({
+        nama,
+        email: emailPeserta,
+        whatsapp: waPeserta,
+        nik,
+        gender,
+        kota,
+        kategori,
+        size,
+        harga: tiket.price,
+        ticketTypeId: tiket.id,
+      });
     }
 
-    const expectedSubtotal = KATEGORI_TARIF[kategori]; // Subtotal tiket murni panitia
-    const expectedAdminFee = live.adminFee;            // Biaya Layanan Platform, live dari kembarin-v2
+    // ── Perhitungan nominal ──────────────────────────────────────────────────
+    // BIAYA LAYANAN DIHITUNG PER TIKET, BUKAN PER PESANAN — sama seperti
+    // calculateAdminFee() di kembarin-v2 (feePerTicket * ticketCount). Pesanan 5 tiket
+    // berarti 5 x biaya layanan. Kalau di sini dihitung per pesanan, total yang tampil
+    // di layar akan lebih kecil daripada yang ditagihkan DOKU.
+    const expectedSubtotal = pesertaTervalidasi.reduce((sum, p) => sum + p.harga, 0);
+    const expectedAdminFee = live.adminFee * pesertaTervalidasi.length;
     const expectedTotal = expectedSubtotal + expectedAdminFee;
 
-    // Verifikasi penyesuaian nominal jika dikirim oleh client
+    // Nominal dari klien tidak dipakai untuk apa pun — hanya dicocokkan sebagai
+    // deteksi manipulasi/ketidaksinkronan harga.
     if (typeof subtotal === "number" && subtotal !== expectedSubtotal) {
-      return NextResponse.json(
-        { success: false, message: "Nominal subtotal tiket tidak sesuai dengan tarif kategori yang dipilih." },
-        { status: 400 }
-      );
+      return gagal("Nominal subtotal tiket tidak sesuai dengan tarif kategori yang dipilih.");
     }
-
     if (typeof total_amount === "number" && total_amount !== expectedTotal) {
-      return NextResponse.json(
-        { success: false, message: "Total nominal pembayaran tidak sesuai." },
-        { status: 400 }
-      );
+      return gagal("Total nominal pembayaran tidak sesuai.");
     }
 
-    if (typeof nominal === "number" && nominal !== expectedTotal && nominal !== expectedSubtotal) {
-      return NextResponse.json(
-        { success: false, message: "Nominal pembayaran tidak sesuai dengan tarif kategori yang dipilih." },
-        { status: 400 }
-      );
+    // 5. Proteksi double-submit — mengunci SEMUA NIK dalam pesanan
+    const nikKeys = pesertaTervalidasi.map((p) => hashNik(p.nik));
+    const terkunci = nikKeys.find((key) => {
+      const last = doubleSubmitMap.get(key);
+      return last && now - last < DOUBLE_SUBMIT_WINDOW;
+    });
+    if (terkunci) {
+      return gagal("Pendaftaran dengan NIK ini sedang diproses. Silakan tunggu beberapa detik.", 409);
     }
+    nikKeys.forEach((key) => doubleSubmitMap.set(key, now));
+    const lepasKunci = () => nikKeys.forEach((key) => doubleSubmitMap.delete(key));
 
-    // 5. Proteksi Double-Submit Sisi Server (Pencegahan Duplikat Cepat)
-    const normalizedNik = nik.trim();
-    const nikKey = hashNik(normalizedNik);
-    const lastSubmitTime = doubleSubmitMap.get(nikKey);
-    if (lastSubmitTime && now - lastSubmitTime < DOUBLE_SUBMIT_WINDOW) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Data pendaftaran dengan NIK ini sedang diproses. Silakan tunggu beberapa detik.",
-        },
-        { status: 409 }
-      );
-    }
-    // Set lock
-    doubleSubmitMap.set(nikKey, now);
-
-    // 6. Siapkan Payload & Proxy Request ke Backend Kembarin (kembarin-v2)
+    // 6. Payload ke core (kembarin-v2)
     const kembarInUrl = process.env.KEMBAR_IN_API_URL || "https://kembar.in/api/participants/register";
 
-    const gatewayName = typeof paymentGateway === "string" && /^[a-z0-9_-]{2,20}$/i.test(paymentGateway)
-      ? paymentGateway
-      : "doku";
+    const gatewayName =
+      typeof paymentGateway === "string" && /^[a-z0-9_-]{2,20}$/i.test(paymentGateway) ? paymentGateway : "doku";
 
     // PENTING: payload dibangun EKSPLISIT dari field yang sudah divalidasi.
-    // Sebelumnya di sini ada `...body`, sehingga field apa pun yang dikirim klien
-    // (status pembayaran, flag verifikasi, dsb) ikut diteruskan ke core system —
-    // dan diteruskan sebagai request tepercaya kalau header trusted-proxy aktif.
+    // Jangan pernah menyebar body mentah dari klien ke sini — endpoint ini mengirim
+    // header trusted-proxy, jadi field liar akan sampai ke core sebagai request tepercaya.
+    // Bentuk { buyer, participants[] } adalah kontrak pesanan kolektif core; core
+    // menghitung ulang seluruh harga, biaya layanan, dan kuota dari databasenya sendiri.
     const payloadBackend = {
       eventCode: "smadarun",
-      nama: nama.trim(),
-      email: email.trim(),
-      nik: normalizedNik,
-      whatsapp: whatsapp.trim(),
-      gender,
-      kota: kota.trim(),
-      kategori,
-      size,
-      custom_fields: {},
+      buyer: {
+        nama: buyerNama,
+        email: buyerEmail,
+        whatsapp: buyerWhatsapp,
+      },
+      participants: pesertaTervalidasi.map((p) => ({
+        nama: p.nama,
+        email: p.email ?? buyerEmail,
+        ticketTypeId: p.ticketTypeId ?? undefined,
+        customFields: {
+          nik: p.nik,
+          whatsapp: p.whatsapp ?? buyerWhatsapp,
+          gender: p.gender,
+          kota: p.kota,
+          kategori: p.kategori,
+          size: p.size,
+        },
+      })),
+      paymentGateway: gatewayName,
 
       // Jejak persetujuan peserta. Timestamp sengaja dibuat di server, bukan diambil
       // dari klien, supaya tidak bisa dikarang.
       health_declaration: true,
       privacy_consent: true,
       consent_recorded_at: new Date(now).toISOString(),
-
-      // Tiket / Subtotal Murni Event
-      subtotal: expectedSubtotal,
-      ticket_price: expectedSubtotal,
-      ticketPrice: expectedSubtotal,
-      price: expectedSubtotal,
-
-      // Biaya Layanan Platform, live dari kembarin-v2 (Semua Varian Nama Parameter)
-      admin_fee: expectedAdminFee,
-      adminFee: expectedAdminFee,
-      platform_fee: expectedAdminFee,
-      platformFee: expectedAdminFee,
-      service_fee: expectedAdminFee,
-      serviceFee: expectedAdminFee,
-      fee: expectedAdminFee,
-      biaya_admin: expectedAdminFee,
-      biayaAdmin: expectedAdminFee,
-      biaya_layanan: expectedAdminFee,
-      biayaLayanan: expectedAdminFee,
-
-      // Total Pembayaran (Subtotal + Biaya Layanan) (Semua Varian Nama Parameter)
-      total_amount: expectedTotal,
-      totalAmount: expectedTotal,
-      nominal: expectedTotal,
-      amount: expectedTotal,
-      total: expectedTotal,
-      total_price: expectedTotal,
-      totalPrice: expectedTotal,
-      final_amount: expectedTotal,
-      finalAmount: expectedTotal,
-
-      // Payment Gateway
-      paymentGateway: gatewayName,
-      payment_gateway: gatewayName,
     };
 
-    // Set timeout request proxy 25 detik (25000ms) agar API route Next.js memberikan waktu cukup untuk backend core
+    // Set timeout request proxy 25 detik agar API route Next.js memberi waktu cukup untuk backend core
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     // Header trusted-proxy: memberitahu core system IP pengunjung ASLI (bukan IP egress
     // server-to-server smadarun2027), supaya rate limiter kembarin-v2 tidak salah tembak
     // saat banyak pendaftar berbeda mendaftar bersamaan. Opt-in — kalau TRUSTED_PROXY_API_KEY
-    // belum dikonfigurasi (belum dikoordinasikan dengan tim core), header ini tidak dikirim
-    // dan perilaku proxy tetap seperti sebelumnya.
+    // belum dikonfigurasi, header ini tidak dikirim dan perilaku proxy tetap seperti sebelumnya.
     const proxyHeaders: Record<string, string> = { "Content-Type": "application/json" };
     const trustedProxyKey = process.env.TRUSTED_PROXY_API_KEY;
     if (trustedProxyKey) {
@@ -363,16 +363,11 @@ export async function POST(req: NextRequest) {
 
       clearTimeout(timeoutId);
 
-      // Pastikan merespons balik secara anggun & aman
       if (!response.ok) {
         const errText = await response.text();
         // Log tanpa deretan angka panjang (NIK/WhatsApp bisa ikut terpantul di pesan error).
-        console.error(
-          `[api/daftar] core menolak (HTTP ${response.status}):`,
-          redact(errText).slice(0, 300)
-        );
-        // Lepas lock NIK agar user bisa mencoba lagi
-        doubleSubmitMap.delete(nikKey);
+        console.error(`[api/daftar] core menolak (HTTP ${response.status}):`, redact(errText).slice(0, 300));
+        lepasKunci();
 
         // Teruskan pesan validasi dari core HANYA kalau bentuknya memang pesan untuk
         // pengguna (mis. "NIK sudah terdaftar"), bukan potongan error internal.
@@ -395,19 +390,12 @@ export async function POST(req: NextRequest) {
           // Respons bukan JSON — pakai pesan generik di atas, jangan pantulkan isinya.
         }
 
-        return NextResponse.json(
-          {
-            success: false,
-            message: customMessage,
-          },
-          { status: response.status }
-        );
+        return NextResponse.json({ success: false, message: customMessage }, { status: response.status });
       }
 
       const result = await response.json();
       if (result && result.success === false) {
-        // Lepas lock jika backend mengembalikan 200 dengan success: false
-        doubleSubmitMap.delete(nikKey);
+        lepasKunci();
       }
       return NextResponse.json(result);
     } catch (fetchErr: unknown) {
@@ -416,21 +404,15 @@ export async function POST(req: NextRequest) {
         "[api/daftar] gagal menghubungi core:",
         fetchErr instanceof Error ? `${fetchErr.name}: ${fetchErr.message}` : "unknown error"
       );
-      // Lepas lock NIK agar user bisa mencoba lagi
-      doubleSubmitMap.delete(nikKey);
+      lepasKunci();
 
-      let errorMsg = "Koneksi ke core system pendaftaran terputus atau sibuk. Data Anda belum tersimpan, silakan coba beberapa saat lagi.";
+      let errorMsg =
+        "Koneksi ke core system pendaftaran terputus atau sibuk. Data Anda belum tersimpan, silakan coba beberapa saat lagi.";
       if (fetchErr instanceof Error && fetchErr.name === "AbortError") {
         errorMsg = "Request Timeout. Waktu tunggu pendaftaran habis (25 detik). Silakan periksa koneksi Anda dan coba lagi.";
       }
 
-      return NextResponse.json(
-        {
-          success: false,
-          message: errorMsg,
-        },
-        { status: 504 }
-      );
+      return NextResponse.json({ success: false, message: errorMsg }, { status: 504 });
     }
   } catch (globalErr: unknown) {
     console.error(
