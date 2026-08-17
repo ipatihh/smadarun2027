@@ -2,24 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  SISTEM TOKEN — satu-satunya tempat warna mentah boleh ditulis.
+  Di komponen, JANGAN pakai palet Tailwind mentah (gray-*, zinc-*, amber-*, white, black).
+  Pakai kelas token: bg-background / bg-card / bg-surface-sunken / text-foreground /
+  text-on-primary / text-on-secondary / bg-warning-surface, dst.
+  Alasannya: sebelum ini permukaan abu-abu di form punya 3 nuansa berbeda tanpa alasan
+  (gray-50, gray-100, zinc-50) dan tidak ada satu titik pun untuk mengganti tema.
+*/
 :root {
+  /* Permukaan berjenjang */
   --background: #FDFDFB;
-  --foreground: #171717;
-  --primary: #FED835;
-  --secondary: #1A1D21;
-
-  --primary-accent: #e5c230;
-  --secondary-accent: #2E3238;
-  --foreground-accent: #454545;
+  --card: #FFFFFF;
+  --surface-sunken: #F5F5F3;
   --hero-background: #F3F3F2;
 
-  --card: #ffffff;
-  --border: #E5E5E2;
+  /* Teks */
+  --foreground: #171717;
+  --foreground-accent: #454545;
   --muted-foreground: #6B6B68;
+
+  /* Garis */
+  --border: #E5E5E2;
+  --border-strong: #D2D2CE;
+
+  /* Brand — kuning HANYA untuk permukaan/aksen, bukan warna teks di latar terang */
+  --primary: #FED835;
+  --primary-accent: #E5C230;
+  --on-primary: #171717;
+
+  /* Panel gelap (countdown, CTA, portal pendaftaran) */
+  --secondary: #1A1D21;
+  --secondary-accent: #2E3238;
+  --on-secondary: #FFFFFF;
+  --on-secondary-muted: #C7C9CC;
+
+  /* Semantik */
+  --success: #16794C;
+  --success-surface: #E7F4EE;
+  --warning: #8A6100;
+  --warning-surface: #FFF6DF;
+  --danger: #B3261E;
+  --danger-surface: #FCEBEA;
+
+  /* Lapisan overlay modal */
+  --overlay: rgb(0 0 0 / 0.6);
+}
+
+/*
+  Mode gelap mengikuti setelan sistem. Semua komponen sudah memakai token, jadi cukup
+  menukar nilainya di sini. Panel gelap (--secondary) justru dinaikkan sedikit supaya
+  tetap terbaca sebagai panel "terangkat" di atas latar gelap, bukan lubang hitam.
+*/
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #121316;
+    --card: #1A1D21;
+    --surface-sunken: #212429;
+    --hero-background: #17191D;
+
+    --foreground: #F4F4F2;
+    --foreground-accent: #C9C9C6;
+    --muted-foreground: #9A9A97;
+
+    --border: #2E3238;
+    --border-strong: #43474E;
+
+    --secondary: #22262B;
+    --secondary-accent: #2E3238;
+
+    --success: #6FD3A4;
+    --success-surface: #143A2A;
+    --warning: #F2C862;
+    --warning-surface: #3A2F12;
+    --danger: #F1948C;
+    --danger-surface: #3D1F1C;
+
+    --overlay: rgb(0 0 0 / 0.72);
+  }
 }
 
 html {
   @apply scroll-smooth;
+  /* Header fixed setinggi ±64-72px: tanpa ini judul seksi ketutup saat anchor diklik. */
+  scroll-padding-top: 6rem;
 }
 
 body {
@@ -35,6 +101,40 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /*
+    Reveal berbasis CSS murni, menggantikan animasi framer-motion yang sebelumnya
+    dipasang di hampir semua seksi. Bedanya penting: animasi ini jalan tanpa JavaScript,
+    jadi konten tidak pernah "hilang" (opacity 0 permanen) kalau hidrasi gagal, lambat,
+    atau tab sedang tidak aktif. Otomatis nonaktif lewat blok prefers-reduced-motion.
+  */
+  .reveal {
+    animation: reveal-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .reveal-1 { animation-delay: 90ms; }
+  .reveal-2 { animation-delay: 180ms; }
+  .reveal-3 { animation-delay: 270ms; }
+  .reveal-4 { animation-delay: 360ms; }
+
+  /* Dipakai carousel testimoni di mobile — sebelumnya kelas ini tidak pernah didefinisikan. */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -56,4 +156,18 @@ h1, h2, h3, h4, h5, h6 {
 
 .benefit-section:last-of-type > div {
   @apply mb-10;
+}
+
+/* Hormati preferensi sistem: animasi reveal tidak boleh jadi syarat konten terlihat. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

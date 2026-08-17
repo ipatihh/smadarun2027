@@ -19,7 +19,12 @@ const ContentSecurityPolicy = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    unoptimized: true, // Memastikan gambar eksternal aman
+    // Optimasi bawaan Next aktif (resize + WebP/AVIF). Sebelumnya dimatikan total,
+    // sehingga foto sample berukuran megabyte dikirim apa adanya ke pengunjung mobile.
+    // Semua gambar di sini lokal (folder /public), tidak ada host eksternal yang perlu
+    // di-allowlist.
+    formats: ["image/avif", "image/webp"],
+    qualities: [75, 90],
   },
   async headers() {
     return [
