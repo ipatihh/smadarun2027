@@ -378,8 +378,11 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
     </button>
   );
 
+  // CATATAN: pembungkus di bawah sengaja TIDAK memakai overflow-hidden. Elemen leluhur
+  // dengan overflow selain "visible" membuat kartu ringkasan sticky berhenti menempel
+  // saat halaman digulir. Latar dekoratifnya sudah absolute inset-0, jadi tidak perlu diklip.
   return (
-    <div className="relative min-h-screen overflow-hidden px-5 pb-40 pt-28 lg:pb-20">
+    <div className="relative min-h-screen px-5 pb-40 pt-28 lg:pb-20">
       {/* Motif speed-lines yang sama dengan hero — sebelumnya halaman ini memakai
           dot-grid generik sehingga terasa seperti situs yang berbeda. */}
       <div
@@ -408,7 +411,11 @@ export default function DaftarForm({ ticketTypes, isOpen, adminFee, opensAtLabel
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+        {/* Sengaja TANPA items-start: kolom aside harus ikut setinggi kolom form
+            (align stretch) supaya kartu sticky di dalamnya punya ruang untuk menempel
+            sepanjang formulir digulir. Dengan items-start, tinggi aside = tinggi kartu
+            dan sticky-nya tidak pernah kelihatan bekerja. */}
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
           {/* KOLOM FORM */}
           <form
             id="formDaftar"

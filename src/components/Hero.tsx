@@ -43,11 +43,17 @@ const Hero: React.FC = () => {
                     {heroDetails.kicker}
                 </p>
 
-                {/* Judul & Sub-judul Event */}
-                <h1 className="reveal reveal-1 text-5xl md:text-7xl md:leading-tight font-bold text-foreground max-w-lg md:max-w-2xl mx-auto">
-                    {heroDetails.heading}
+                {/* Nama event — langsung menyambung kalimat "…mempersembahkan" di atasnya */}
+                <h1 className="reveal reveal-1 font-display text-6xl md:text-8xl md:leading-none font-bold uppercase tracking-tight text-foreground">
+                    {heroDetails.heading} <span className="text-primary-accent">{heroDetails.headingAccent}</span>
                 </h1>
-                <p className="reveal reveal-2 mt-4 text-foreground max-w-lg mx-auto">
+
+                {/* Tagline: kalimat ajakannya, sekarang berdiri sebagai barisnya sendiri */}
+                <p className="reveal reveal-2 mt-3 font-display text-xl md:text-3xl uppercase tracking-[0.2em] text-foreground-accent">
+                    {heroDetails.tagline}
+                </p>
+
+                <p className="reveal reveal-2 mt-5 text-foreground max-w-lg mx-auto">
                     {heroDetails.subheading}
                 </p>
 
