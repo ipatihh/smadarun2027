@@ -45,8 +45,46 @@ berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
 | `src/app/daftar/page.tsx` | Server Component — fetch data live, render `DaftarForm`. |
 | `src/app/daftar/DaftarForm.tsx` | Client Component — form interaktif, terima data live lewat props. |
 | `src/app/api/daftar/route.ts` | Proxy internal: validasi ketat input, validasi ulang harga/kategori dari data live, teruskan ke kembarin-v2. |
-| `src/data/tiket.ts` | **Hanya** metadata marketing (nama tampilan, daftar fasilitas) — bukan harga/ketersediaan. |
+| `src/data/tiket.ts` | **Hanya** metadata marketing (nama tampilan, fasilitas, badge) — bukan harga/ketersediaan. |
 | `src/components/Tiket/Tiket.tsx` | Server Component homepage — gabungkan data live + metadata marketing. |
+| `src/data/sponsors.ts` | Daftar sponsor bertingkat (`title` / `community` / `media`) + spesifikasi aset logo. |
+| `src/components/Logos.tsx` | Galeri sponsor — seluruh isinya digerakkan `sponsors.ts`, tidak ada logo yang di-hardcode. |
+| `src/app/globals.css` + `tailwind.config.ts` | Sistem token warna/radius/bayangan, termasuk mode gelap. Satu-satunya tempat warna mentah boleh ditulis. |
+| `src/components/StickyDaftarBar.tsx` | Bar aksi melayang di mobile (harga termurah + tombol daftar), datanya live dari `layout.tsx`. |
+
+## Sistem UI
+
+- **Semua warna, radius, dan bayangan lewat token** yang didefinisikan di
+  `src/app/globals.css` dan dipetakan di `tailwind.config.ts`. Di komponen jangan pakai
+  palet Tailwind mentah (`bg-white`, `gray-*`, `amber-*`, dst) — pakai `bg-card`,
+  `bg-surface-sunken`, `text-on-primary`, `rounded-card|field|panel`, `shadow-rest|hover`.
+- **Mode gelap otomatis** mengikuti setelan sistem pengunjung (tanpa toggle). Setiap warna
+  baru wajib punya pasangan di blok `@media (prefers-color-scheme: dark)`.
+- **Tanpa library animasi.** Reveal memakai kelas CSS `.reveal` + `.reveal-1..4`, sehingga
+  konten tetap terlihat walau JavaScript gagal/lambat, dan otomatis nonaktif lewat
+  `prefers-reduced-motion`.
+- **Semua modal memakai `Dialog` dari `@headlessui/react`** — sudah termasuk Escape, focus
+  trap, dan pengembalian fokus.
+- `src/data/**` ikut dipindai Tailwind (lihat `content` di `tailwind.config.ts`) karena file
+  data di sana menuliskan kelas (ukuran kotak logo sponsor, warna ikon statistik).
+
+## Menambah Logo Sponsor
+
+1. Taruh file logo di `public/images/sponsors/` (nama huruf kecil tanpa spasi, mis.
+   `bank-jatim.png`). Format PNG latar transparan, WebP, atau SVG — tinggi minimal 200px.
+2. Tambahkan satu baris di array `sponsors` pada `src/data/sponsors.ts`:
+
+   ```ts
+   { name: "Bank Jatim", logo: "bank-jatim.png", tier: "community", url: "https://bankjatim.co.id" },
+   ```
+
+   `tier` yang tersedia: `"title"` (Sponsor Utama), `"community"` (Community Partner),
+   `"media"` (Media & Partner). `url` boleh dikosongkan.
+3. Selesai — ukuran kotak, hierarki, dan pembagian baris menyesuaikan otomatis berapa pun
+   jumlah logonya. Belum punya file logonya? Kosongkan `logo`, nama sponsor akan tampil
+   sebagai teks di kotak yang sama.
+
+Label dan ukuran tiap tier diatur di `sponsorTiers` pada file yang sama.
 
 ## Menjalankan Secara Lokal
 
@@ -75,10 +113,14 @@ diaudit bersih, tidak ada secret asli yang pernah bocor.
 ## Keamanan
 
 - Semua input divalidasi ketat di server (`api/daftar/route.ts`) — regex whitelist untuk nama, NIK, WhatsApp, kota, dsb.
+- Payload ke kembarin-v2 dibangun eksplisit dari field yang sudah divalidasi (tidak ada passthrough field liar dari client), dan persetujuan kesehatan + privasi divalidasi ulang di server lalu dicatat dengan timestamp sisi server.
+- Status buka/tutup pendaftaran menghormati `registration_closed`, `registration_open_at`, dan `ticket_types[].is_active` dari kembarin-v2 — bukan hanya status event.
 - Harga & kategori tiket divalidasi ulang di server terhadap data live kembarin-v2 sebelum diteruskan — mencegah manipulasi nominal dari client, walau kembarin-v2 sendiri juga sudah zero-trust terhadap ini.
 - Redirect otomatis ke halaman pembayaran DOKU divalidasi domainnya (`*.doku.com` via HTTPS saja) sebelum browser diarahkan — mencegah open-redirect kalau respons backend tidak sesuai ekspektasi.
 - Security headers (CSP, HSTS, X-Frame-Options, dst) diatur di `next.config.mjs`.
-- Rate limiting & proteksi double-submit di sisi server (`api/daftar/route.ts`), plus header trusted-proxy opsional supaya rate limiter kembarin-v2 tidak salah tembak pengunjung berbeda sebagai satu sumber (lihat env var di atas).
+- Rate limiting & proteksi double-submit di sisi server (`api/daftar/route.ts`), plus header trusted-proxy opsional supaya rate limiter kembarin-v2 tidak salah tembak pengunjung berbeda sebagai satu sumber (lihat env var di atas). IP pengunjung dibaca dari `x-vercel-forwarded-for` atau entri paling kanan `x-forwarded-for` — bukan seluruh string, yang bisa dikarang klien untuk memecah kunci rate limiter.
+- Pesan error dari core hanya diteruskan ke pengguna kalau lolos saringan "pesan untuk manusia"; respons non-JSON tidak dipantulkan, dan log dibersihkan dari deretan angka panjang (NIK/WhatsApp).
+- Kunci proteksi double-submit memakai hash NIK ber-salt, bukan NIK mentah.
 
 ## Deployment
 
