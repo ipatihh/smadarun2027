@@ -11,9 +11,6 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 menit
 const MAX_REQUESTS_PER_WINDOW = 3;   // Maksimal 3 kali daftar per menit per IP
 const DOUBLE_SUBMIT_WINDOW = 5000;   // 5 detik pencegahan double-submit untuk NIK yang sama
 
-// Biaya Layanan Platform (Platform Service Fee) Rp 5.000
-const PLATFORM_ADMIN_FEE = 5000;
-
 // Pembersihan cache memori berkala dilakukan secara pasif di dalam request handler
 function bersihkanCacheMundur(now: number) {
   if (rateLimitMap.size > 200) {
@@ -153,8 +150,8 @@ export async function POST(req: NextRequest) {
     }
 
     const expectedSubtotal = KATEGORI_TARIF[kategori]; // Subtotal tiket murni panitia
-    const expectedAdminFee = PLATFORM_ADMIN_FEE;       // Biaya Layanan Platform Rp 5.000
-    const expectedTotal = expectedSubtotal + expectedAdminFee; // Subtotal + 5.000
+    const expectedAdminFee = live.adminFee;            // Biaya Layanan Platform, live dari kembarin-v2
+    const expectedTotal = expectedSubtotal + expectedAdminFee;
 
     // Verifikasi penyesuaian nominal jika dikirim oleh client
     if (typeof subtotal === "number" && subtotal !== expectedSubtotal) {
@@ -221,7 +218,7 @@ export async function POST(req: NextRequest) {
       ticketPrice: expectedSubtotal,
       price: expectedSubtotal,
 
-      // Biaya Layanan Platform Rp 5.000 (Semua Varian Nama Parameter)
+      // Biaya Layanan Platform, live dari kembarin-v2 (Semua Varian Nama Parameter)
       admin_fee: expectedAdminFee,
       adminFee: expectedAdminFee,
       platform_fee: expectedAdminFee,
@@ -234,7 +231,7 @@ export async function POST(req: NextRequest) {
       biaya_layanan: expectedAdminFee,
       biayaLayanan: expectedAdminFee,
 
-      // Total Pembayaran (Subtotal + Rp 5.000) (Semua Varian Nama Parameter)
+      // Total Pembayaran (Subtotal + Biaya Layanan) (Semua Varian Nama Parameter)
       total_amount: expectedTotal,
       totalAmount: expectedTotal,
       nominal: expectedTotal,

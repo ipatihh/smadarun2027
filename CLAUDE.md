@@ -5,12 +5,16 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
 
 ## Fakta arsitektur yang wajib dipahami sebelum mengubah apa pun
 
-- **kembarin-v2 adalah sumber kebenaran mutlak**, project ini bukan. Harga, kategori tiket,
-  dan status buka/tutup pendaftaran SELALU di-fetch live dari kembarin-v2
-  (`src/lib/kembarinEvents.ts`), tidak pernah di-hardcode. `src/data/tiket.ts` HANYA boleh
-  berisi metadata marketing (nama tampilan, daftar fasilitas) — jangan pernah tambahkan field
-  harga/isAvailable ke situ lagi, itu sudah pernah jadi sumber bug (lihat commit `1b80757`
-  dan `3a337ae`).
+- **kembarin-v2 adalah sumber kebenaran mutlak**, project ini bukan. Harga tiket, kategori,
+  status buka/tutup pendaftaran, DAN biaya layanan/admin (`event_config.admin_fee_amount`)
+  SELALU di-fetch live dari kembarin-v2 (`src/lib/kembarinEvents.ts`), tidak pernah
+  di-hardcode. `src/data/tiket.ts` HANYA boleh berisi metadata marketing (nama tampilan,
+  daftar fasilitas) — jangan pernah tambahkan field harga/isAvailable/adminFee ke situ lagi.
+  Ini sudah 2x jadi sumber bug: kategori/harga tiket (commit `1b80757`, `3a337ae`), lalu biaya
+  layanan platform yang sempat hardcode Rp5.000 padahal admin sudah ubah jadi Rp2.000 di
+  kembarin-v2 (`event_config.enable_admin_fee` + `admin_fee_amount`) — kalau nanti nambah
+  field baru dari kembarin-v2, cek dulu apakah field itu memang dibaca live di
+  `kembarinEvents.ts`, jangan asumsi otomatis ikut.
 - Server (`api/daftar/route.ts`) juga fetch live data sendiri untuk validasi ulang harga —
   JANGAN percaya nominal/subtotal/total yang dikirim client, walau kembarin-v2 sendiri juga
   sudah zero-trust terhadap ini (defense-in-depth, bukan redundan sia-sia).

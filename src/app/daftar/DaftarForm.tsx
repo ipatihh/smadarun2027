@@ -7,10 +7,6 @@ import { tiketMarketing } from "@/data/tiket";
 import { LiveTicketType } from "@/lib/kembarinEvents";
 import { revealContainer, revealChild } from "@/lib/motion";
 
-// Biaya Layanan Platform Rp 5.000 per transaksi (spesifik ke platform smadarun2027 ini,
-// bukan bagian dari harga tiket yang diatur kembarin-v2).
-const PLATFORM_ADMIN_FEE = 5000;
-
 interface FormDataState {
   nama: string;
   email: string;
@@ -47,9 +43,12 @@ function isTrustedPaymentUrl(url: string): boolean {
 interface DaftarFormProps {
   ticketTypes: LiveTicketType[];
   isOpen: boolean;
+  // Biaya layanan/admin per transaksi, live dari event_config.admin_fee_amount kembarin-v2
+  // (lihat src/lib/kembarinEvents.ts) — bukan hardcode di sisi ini.
+  adminFee: number;
 }
 
-export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
+export default function DaftarForm({ ticketTypes, isOpen, adminFee }: DaftarFormProps) {
   // ALUR TERPUSAT: Mengarah langsung ke API Route internal Next.js (Secure API Proxy)
   const WEBHOOK_URL = "/api/daftar";
   const imageSrc = "/images/ivan-1.jpg";
@@ -98,7 +97,7 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
   // Hitung otomatis subtotal & total amount berdasarkan pilihan kategori
   const selectedCategory = KATEGORI_TIKET[formData.kategori] || KATEGORI_TIKET[KATEGORI_KEYS[0]] || { price: 0 };
   const subtotal = selectedCategory.price;
-  const totalAmount = subtotal + PLATFORM_ADMIN_FEE;
+  const totalAmount = subtotal + adminFee;
 
   const handleKategoriChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setFormData((prev) => ({ ...prev, kategori: e.target.value }));
@@ -131,16 +130,15 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
       ticket_price: subtotal,
       price: subtotal,
 
-      // Biaya Layanan Platform Rp 5.000 (Semua Alias)
-      admin_fee: PLATFORM_ADMIN_FEE,
-      adminFee: PLATFORM_ADMIN_FEE,
-      platform_fee: PLATFORM_ADMIN_FEE,
-      service_fee: PLATFORM_ADMIN_FEE,
-      fee: PLATFORM_ADMIN_FEE,
-      biaya_admin: PLATFORM_ADMIN_FEE,
-      biaya_layanan: PLATFORM_ADMIN_FEE,
+      // Biaya Layanan Platform (Semua Alias, nilai live dari kembarin-v2)
+      admin_fee: adminFee,
+      platform_fee: adminFee,
+      service_fee: adminFee,
+      fee: adminFee,
+      biaya_admin: adminFee,
+      biaya_layanan: adminFee,
 
-      // Total Pembayaran (Subtotal + Rp 5.000) (Semua Alias)
+      // Total Pembayaran (Subtotal + Biaya Layanan) (Semua Alias)
       total_amount: totalAmount,
       totalAmount: totalAmount,
       nominal: totalAmount,
@@ -343,7 +341,7 @@ export default function DaftarForm({ ticketTypes, isOpen }: DaftarFormProps) {
                 </div>
                 <div className="flex justify-between text-foreground-accent font-medium">
                   <span>Biaya Layanan Platform</span>
-                  <span>Rp {PLATFORM_ADMIN_FEE.toLocaleString("id-ID")}</span>
+                  <span>Rp {adminFee.toLocaleString("id-ID")}</span>
                 </div>
                 <div className="border-t border-border pt-2.5 flex justify-between font-black text-foreground text-base">
                   <span>Total Pembayaran</span>

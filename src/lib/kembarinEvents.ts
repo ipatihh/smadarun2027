@@ -44,9 +44,21 @@ export interface LiveEventData {
   // Data susunan acara apa adanya dari event_config kembarin-v2 (RPC & gun-start),
   // null kalau event_config tidak ada/tidak bisa dibaca sama sekali.
   timeline: EventTimelineConfig | null;
+  // Biaya layanan/admin PER TRANSAKSI, live dari event_config.admin_fee_amount kembarin-v2
+  // (0 kalau enable_admin_fee bukan true, atau event_config tidak ada/tidak terbaca).
+  // JANGAN pernah di-hardcode di sisi ini — nilai ini murni mengikuti pengaturan admin
+  // di dasbor Super Admin kembarin-v2 (field "Biaya Layanan / Fee Admin").
+  adminFee: number;
 }
 
-const CLOSED: LiveEventData = { isOpen: false, ticketTypes: [], eventDate: null, location: null, timeline: null };
+const CLOSED: LiveEventData = {
+  isOpen: false,
+  ticketTypes: [],
+  eventDate: null,
+  location: null,
+  timeline: null,
+  adminFee: 0,
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -89,6 +101,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
     const location = typeof event.location === "string" && event.location.trim() ? event.location.trim() : null;
 
     let timeline: EventTimelineConfig | null = null;
+    let adminFee = 0;
     if (isRecord(event.event_config)) {
       const cfg = event.event_config;
       const gunStarts: Record<string, string> = {};
@@ -103,6 +116,9 @@ export async function getLiveEventData(): Promise<LiveEventData> {
         rpcLokasi: typeof cfg.rpc_lokasi === "string" && cfg.rpc_lokasi.trim() ? cfg.rpc_lokasi : null,
         gunStarts,
       };
+      if (cfg.enable_admin_fee === true) {
+        adminFee = Number(cfg.admin_fee_amount) || 0;
+      }
     }
 
     return {
@@ -110,6 +126,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       ticketTypes,
       eventDate,
       location,
+      adminFee,
       timeline,
     };
   } catch (err) {
