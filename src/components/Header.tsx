@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useState } from 'react';
-import { usePathname } from 'next/navigation'; // 1. Tambahkan import untuk membaca URL aktif
+import React, { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Transition } from '@headlessui/react';
 import { HiOutlineXMark, HiBars3 } from 'react-icons/hi2';
 import { FaRunning } from 'react-icons/fa';
@@ -13,59 +13,89 @@ import { menuItems } from '@/data/menuItems';
 
 const Header: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const pathname = usePathname(); // 2. Ambil path URL saat ini (misal: '/' atau '/daftar')
+    const [isScrolled, setIsScrolled] = useState(false);
+    const pathname = usePathname();
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
     };
 
-    // 3. Fungsi pembantu untuk memodifikasi URL secara dinamis
+    // Header transparan saat di puncak halaman, lalu memadat (latar + garis bawah)
+    // begitu digulir — supaya hero tidak terpotong bar putih, tapi menu tetap terbaca
+    // di atas konten apa pun.
+    useEffect(() => {
+        const onScroll = () => setIsScrolled(window.scrollY > 16);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    // Anchor '#tiket' hanya valid di beranda; di halaman lain jadikan '/#tiket'.
     const formatUrl = (url: string) => {
-        // Jika URL diawali dengan '#' (anchor scroll) dan kita sedang tidak di beranda ('/')
         if (url.startsWith('#') && pathname !== '/') {
-            return `/${url}`; // Mengubah '#tiket' menjadi '/#tiket'
+            return `/${url}`;
         }
-        return url; // Tetap biarkan asli jika sudah di beranda atau bukan link anchor
+        return url;
     };
 
+    const isDaftarPage = pathname === '/daftar';
+    const isSolid = isScrolled || isOpen || isDaftarPage;
+
     return (
-        /* 
-           PERUBAHAN UTAMA DI SINI:
-           - Di HP: tetap menggunakan 'fixed' bawaan agar aman.
-           - Di Desktop (md:): diubah menjadi 'md:fixed md:bg-white/90 md:backdrop-blur-md md:shadow-sm'.
-             Ini membuat header terkunci di atas saat di-scroll, berubah warna jadi putih transparan (efek kaca),
-             dan memberikan bayangan tipis agar terpisah dari konten di bawahnya.
-        */
-        <header className="bg-transparent fixed top-0 left-0 right-0 md:fixed md:bg-white/90 md:backdrop-blur-md md:shadow-sm z-50 mx-auto w-full transition-all duration-300">
+        <header
+            className={`fixed top-0 left-0 right-0 z-50 mx-auto w-full transition-all duration-300 ${
+                isSolid ? 'bg-card/90 backdrop-blur-md border-b border-border shadow-rest' : 'bg-transparent'
+            }`}
+        >
             <Container className="!px-0">
-                {/* Menyesuaikan padding desktop (md:py-4) agar saat melayang tidak terlalu tebal */}
-                <nav className="shadow-md md:shadow-none bg-white md:bg-transparent mx-auto flex justify-between items-center py-2 px-5 md:py-4 transition-all">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
+                <nav aria-label="Navigasi utama" className="mx-auto flex justify-between items-center gap-4 py-3 px-5 md:py-4">
+                    <Link href="/" className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
                         <FaRunning className="text-foreground min-w-fit w-7 h-7" />
-                        <span className="font-display text-xl font-semibold text-foreground cursor-pointer">
+                        <span className="font-display text-xl font-semibold text-foreground">
                             {siteDetails.siteName}
                         </span>
                     </Link>
 
-                    {/* Desktop Menu */}
+                    {/* Menu Desktop */}
                     <ul className="hidden md:flex space-x-6 items-center">
                         {menuItems.map(item => (
                             <li key={item.text}>
-                                {/* 4. Terapkan fungsi formatUrl(item.url) di sini */}
-                                <Link href={formatUrl(item.url)} className="text-foreground hover:text-foreground-accent transition-colors font-medium">
+                                <Link
+                                    href={formatUrl(item.url)}
+                                    className="text-foreground hover:text-foreground-accent transition-colors font-medium rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+                                >
                                     {item.text}
                                 </Link>
                             </li>
                         ))}
                     </ul>
 
-                    {/* Mobile Menu Button */}
-                    <div className="md:hidden flex items-center">
+                    {/* Aksi utama — sebelumnya tidak ada sama sekali di navigasi */}
+                    <div className="hidden md:block">
+                        {!isDaftarPage && (
+                            <Link
+                                href="/daftar"
+                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-6 py-2.5 text-sm uppercase tracking-wide shadow-rest hover:shadow-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            >
+                                Daftar
+                            </Link>
+                        )}
+                    </div>
+
+                    {/* Aksi utama + tombol menu (mobile) */}
+                    <div className="md:hidden flex items-center gap-2">
+                        {!isDaftarPage && (
+                            <Link
+                                href="/daftar"
+                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-4 py-2 text-xs uppercase tracking-wide shadow-rest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            >
+                                Daftar
+                            </Link>
+                        )}
                         <button
                             onClick={toggleMenu}
                             type="button"
-                            className="bg-primary text-black focus:outline-none rounded-full w-10 h-10 flex items-center justify-center"
+                            className="bg-surface-sunken text-foreground rounded-full w-10 h-10 flex items-center justify-center border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             aria-controls="mobile-menu"
                             aria-expanded={isOpen}
                         >
@@ -74,13 +104,13 @@ const Header: React.FC = () => {
                             ) : (
                                 <HiBars3 className="h-6 w-6" aria-hidden="true" />
                             )}
-                            <span className="sr-only">Toggle navigation</span>
+                            <span className="sr-only">Buka/tutup navigasi</span>
                         </button>
                     </div>
                 </nav>
             </Container>
 
-            {/* Mobile Menu with Transition */}
+            {/* Menu Mobile */}
             <Transition
                 show={isOpen}
                 enter="transition ease-out duration-200 transform"
@@ -90,12 +120,15 @@ const Header: React.FC = () => {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
             >
-                <div id="mobile-menu" className="md:hidden bg-white shadow-lg">
-                    <ul className="flex flex-col space-y-4 pt-1 pb-6 px-6">
+                <div id="mobile-menu" className="md:hidden bg-card border-t border-border shadow-hover">
+                    <ul className="flex flex-col space-y-1 pt-2 pb-6 px-6">
                         {menuItems.map(item => (
                             <li key={item.text}>
-                                {/* 5. Terapkan juga fungsi formatUrl(item.url) untuk menu mobile */}
-                                <Link href={formatUrl(item.url)} className="text-foreground hover:text-primary block" onClick={toggleMenu}>
+                                <Link
+                                    href={formatUrl(item.url)}
+                                    className="block py-2 text-foreground hover:text-foreground-accent font-medium rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    onClick={toggleMenu}
+                                >
                                     {item.text}
                                 </Link>
                             </li>

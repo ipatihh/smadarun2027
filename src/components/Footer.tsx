@@ -2,18 +2,30 @@
 
 import Link from 'next/link';
 import React, { useState } from 'react';
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { FaRunning, FaShieldAlt, FaFileContract } from 'react-icons/fa'; 
 
 import { siteDetails } from '@/data/siteDetails';
 import { footerDetails } from '@/data/footer';
 import { getPlatformIconByName } from '@/utils';
 
-const Footer: React.FC = () => {
+interface FooterProps {
+    /**
+     * Biaya layanan platform per transaksi — live dari kembarin-v2 lewat layout.tsx.
+     * WAJIB dari data live: nominal ini pernah di-hardcode "Rp3.000" di Syarat & Ketentuan
+     * padahal admin sudah mengubahnya jadi Rp2.000, sehingga dokumen yang disetujui peserta
+     * menyebut angka yang berbeda dengan yang benar-benar ditagihkan.
+     */
+    adminFee: number;
+}
+
+const Footer: React.FC<FooterProps> = ({ adminFee }) => {
     // State untuk mengontrol buka/tutup modal pop-up
     const [modalType, setModalType] = useState<'privacy' | 'terms' | null>(null);
+    const adminFeeLabel = `Rp${adminFee.toLocaleString('id-ID')}`;
 
     return (
-        <footer className="bg-hero-background text-foreground py-10 relative">
+        <footer className="bg-hero-background text-foreground pt-10 pb-28 md:pb-10 relative">
             <div className="max-w-7xl w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
                 <div>
                     <Link href="/" className="flex items-center gap-2">
@@ -67,7 +79,7 @@ const Footer: React.FC = () => {
                 <p>Copyright &copy; {siteDetails.siteName}. All rights reserved.</p>
                 
                 {/* 🟢 BLOK MODIFIKASI: Tombol Pemicu Pop-up Legalitas */}
-                <div className="flex justify-center items-center gap-4 mt-2 text-sm text-gray-500">
+                <div className="flex justify-center items-center gap-4 mt-2 text-sm text-muted-foreground">
                     <button 
                         onClick={() => setModalType('privacy')} 
                         className="hover:text-foreground flex items-center gap-1.5 transition outline-none"
@@ -83,7 +95,7 @@ const Footer: React.FC = () => {
                     </button>
                 </div>
 
-                <p className="text-sm mt-3 text-gray-500">
+                <p className="text-sm mt-3 text-muted-foreground">
                     Developed by{' '}
                     <a 
                         href="https://kembar.in" 
@@ -96,36 +108,37 @@ const Footer: React.FC = () => {
                 </p>
             </div>
 
-            {/* 🟢 BLOK POP-UP MODAL (Kombinasi Privacy Policy & Terms & Conditions) */}
-            {modalType && (
-                <div 
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4"
-                    onClick={() => setModalType(null)} // Klik di luar box untuk menutup
-                >
-                    <div 
-                        className="bg-white text-gray-900 p-6 md:p-8 rounded-2xl max-w-lg w-full shadow-2xl border border-gray-100 relative animate-fadeIn"
-                        onClick={(e) => e.stopPropagation()} // Mencegah tertutup tidak sengaja jika teks diklik
-                    >
-                        {/* Tombol Silang */}
-                        <button 
-                            onClick={() => setModalType(null)} 
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold font-sans focus:outline-none"
+            {/*
+               Modal legal memakai Dialog dari Headless UI (sudah jadi dependency):
+               dapat ditutup dengan Escape, fokus terkunci di dalam dialog, dan fokus
+               dikembalikan ke tombol pemicu saat ditutup — sebelumnya semua itu tidak ada.
+            */}
+            <Dialog open={modalType !== null} onClose={() => setModalType(null)} className="relative z-50">
+                <div className="fixed inset-0 bg-overlay backdrop-blur-sm" aria-hidden="true" />
+                <div className="fixed inset-0 flex justify-center items-center p-4">
+                    <DialogPanel className="bg-card text-foreground p-6 md:p-8 rounded-card max-w-lg w-full shadow-hover border border-border relative">
+                        <button
+                            onClick={() => setModalType(null)}
+                            className="absolute top-4 right-4 rounded-full px-2 text-muted-foreground hover:text-foreground-accent text-2xl font-bold font-sans focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
-                            &times;
+                            <span aria-hidden="true">&times;</span>
+                            <span className="sr-only">Tutup</span>
                         </button>
 
                         {/* Konten Kebijakan Privasi */}
                         {modalType === 'privacy' && (
                             <div>
-                                <div className="flex items-center gap-2 mb-4 text-gray-800">
-                                    <FaShieldAlt className="w-6 h-6 text-primary-accent" />
-                                    <h4 className="text-xl font-black tracking-tight uppercase">Kebijakan Privasi</h4>
-                                </div>
-                                <div className="text-sm text-gray-600 space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
-                                    <p>Panitia <strong>SMADARUN 2027</strong> berkomitmen penuh untuk menjaga keamanan dan kerahasiaan data pribadi Anda.</p>
-                                    <p><strong>1. Pengumpulan Data:</strong> Kami mengumpulkan informasi identitas resmi berupa Nama Lengkap, Email, NIK, Nomor WhatsApp, dan Ukuran Jersey untuk keperluan validasi kepesertaan, asuransi keselamatan, dan distribusi Paket Lari (Race Pack).</p>
-                                    <p><strong>2. Keamanan Dokumen:</strong> File bukti transfer pembayaran yang Anda unggah disimpan dalam infrastruktur digital kami yang aman dan hanya digunakan oleh tim verifikasi internal.</p>
-                                    <p><strong>3. Rahasia Pihak Ketiga:</strong> Seluruh database yang terkumpul melalui portal pendaftaran ini tidak akan diperjualbelikan atau disebarluaskan kepada pihak eksternal di luar kepentingan operasional resmi event.</p>
+                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-xl font-black tracking-tight uppercase">
+                                    <FaShieldAlt className="w-6 h-6 text-primary-accent shrink-0" aria-hidden="true" />
+                                    Kebijakan Privasi
+                                </DialogTitle>
+                                <div className="text-sm text-foreground-accent space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
+                                    <p>Panitia <strong>SMADARUN 2027</strong> berkomitmen menjaga keamanan dan kerahasiaan data pribadi Anda, sesuai UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.</p>
+                                    <p><strong>1. Data yang dikumpulkan:</strong> Nama lengkap, alamat email, NIK, nomor WhatsApp, jenis kelamin, kota domisili, dan ukuran jersey. Data ini dipakai untuk validasi kepesertaan, pendataan asuransi/keselamatan, dan distribusi Race Pack.</p>
+                                    <p><strong>2. Dasar pemrosesan:</strong> Persetujuan Anda, yang diberikan lewat kotak centang di formulir pendaftaran. Anda boleh menolak, dengan konsekuensi pendaftaran tidak dapat diproses.</p>
+                                    <p><strong>3. Pihak yang ikut memproses:</strong> Data pendaftaran diproses oleh <strong>kembar.in</strong> selaku penyedia sistem pendaftaran resmi event ini, dan data transaksi diproses oleh <strong>DOKU</strong> selaku penyedia gerbang pembayaran. Panitia tidak pernah menerima atau menyimpan data kartu/rekening Anda.</p>
+                                    <p><strong>4. Penyebarluasan:</strong> Data peserta tidak diperjualbelikan dan tidak dibagikan ke pihak lain di luar keperluan operasional resmi event dan kewajiban hukum yang berlaku.</p>
+                                    <p><strong>5. Penyimpanan & hak Anda:</strong> Data disimpan selama penyelenggaraan event dan keperluan administrasi setelahnya. Anda berhak meminta akses, koreksi, atau penghapusan data dengan menghubungi <a className="font-semibold underline underline-offset-2" href={`mailto:${footerDetails.email}`}>{footerDetails.email}</a>.</p>
                                 </div>
                             </div>
                         )}
@@ -133,28 +146,28 @@ const Footer: React.FC = () => {
                         {/* Konten Syarat & Ketentuan */}
                         {modalType === 'terms' && (
                             <div>
-                                <div className="flex items-center gap-2 mb-4 text-gray-800">
-                                    <FaFileContract className="w-6 h-6 text-primary-accent" />
-                                    <h4 className="text-xl font-black tracking-tight uppercase">Syarat & Ketentuan</h4>
-                                </div>
-                                <div className="text-sm text-gray-600 space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
+                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-xl font-black tracking-tight uppercase">
+                                    <FaFileContract className="w-6 h-6 text-primary-accent shrink-0" aria-hidden="true" />
+                                    Syarat &amp; Ketentuan
+                                </DialogTitle>
+                                <div className="text-sm text-foreground-accent space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
                                     <p>Dengan mendaftarkan diri di <strong>SMADARUN 2027</strong>, Anda dianggap menyetujui seluruh aturan kepesertaan di bawah ini:</p>
-                                    <p><strong>1. Kebijakan Tiket & Pembatalan:</strong> Tiket pendaftaran serta biaya administrasi sistem (Rp3.000) yang telah dibayarkan bersifat final, mengikat, dan <strong>tidak dapat di-refund</strong> atau dibatalkan sepihak dengan alasan pribadi apa pun.</p>
+                                    <p><strong>1. Kebijakan Tiket &amp; Pembatalan:</strong> Tiket pendaftaran{adminFee > 0 ? ` serta biaya layanan sistem (${adminFeeLabel} per transaksi)` : ''} yang telah dibayarkan bersifat final, mengikat, dan <strong>tidak dapat di-refund</strong> atau dibatalkan sepihak dengan alasan pribadi apa pun. Nominal biaya layanan yang berlaku selalu ditampilkan pada rincian biaya sebelum Anda membayar.</p>
                                     <p><strong>2. Aturan Jersey:</strong> Pilihan ukuran jersey lari yang sudah Anda konfirmasi di formulir tidak dapat ditukar atau diubah kembali pada saat pengambilan Paket Lari (Race Pack) demi kelancaran manajemen produksi.</p>
                                     <p><strong>3. Tanggung Jawab Kesehatan:</strong> Setiap peserta menyatakan dirinya dalam kondisi fisik dan medis yang sehat untuk mengikuti jarak tempuh lomba lari ini serta bertanggung jawab penuh atas keselamatan dirinya masing-masing.</p>
                                 </div>
                             </div>
                         )}
 
-                        <button 
-                            onClick={() => setModalType(null)} 
-                            className="mt-6 w-full py-2.5 bg-secondary hover:bg-secondary-accent text-white font-bold text-sm rounded-full transition"
+                        <button
+                            onClick={() => setModalType(null)}
+                            className="mt-6 w-full py-2.5 bg-secondary hover:bg-secondary-accent text-on-secondary font-bold text-sm rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                         >
                             Saya Mengerti
                         </button>
-                    </div>
+                    </DialogPanel>
                 </div>
-            )}
+            </Dialog>
         </footer>
     );
 };

@@ -4,7 +4,9 @@ import { Oswald, Plus_Jakarta_Sans } from "next/font/google";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import StickyDaftarBar from "@/components/StickyDaftarBar";
 import { siteDetails } from '@/data/siteDetails';
+import { getLiveEventData } from '@/lib/kembarinEvents';
 
 import "./globals.css";
 
@@ -37,11 +39,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Harga termurah untuk bar aksi mobile — tetap live dari kembarin-v2, tidak di-hardcode.
+  const live = await getLiveEventData();
+  const lowestPrice = live.isOpen && live.ticketTypes.length > 0
+    ? Math.min(...live.ticketTypes.map((t) => t.price))
+    : null;
+
   return (
     <html lang="id">
       <body
@@ -52,7 +60,8 @@ export default function RootLayout({
         <main>
           {children}
         </main>
-        <Footer />
+        <Footer adminFee={live.adminFee} />
+        <StickyDaftarBar lowestPrice={lowestPrice} />
       </body>
     </html>
   );
