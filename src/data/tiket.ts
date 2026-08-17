@@ -14,12 +14,17 @@ export interface ITiketMarketing {
   name: string;
   features: string[];
   url: string;
+  /** Label kecil di sudut kartu, mis. "Early Bird" atau "Paling diminati". Opsional. */
+  badge?: string;
+  /** Tandai satu kategori sebagai kartu yang ditonjolkan. Opsional. */
+  highlight?: boolean;
 }
 
 export const tiketMarketing: ITiketMarketing[] = [
   {
     categoryKey: '5K Pelajar',
     name: '5K - Pelajar',
+    badge: 'Khusus pelajar',
     features: [
       'Slot Lari Kategori 5K Pelajar',
       'Jersey Eksklusif SMADARUN 2027',

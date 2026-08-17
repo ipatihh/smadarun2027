@@ -1,23 +1,17 @@
 "use client"
 import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react";
 import { BiMinus, BiPlus } from "react-icons/bi";
-import { motion } from "framer-motion";
 
 import SectionTitle from "./SectionTitle";
 import { faqs } from "@/data/faq";
-import { revealContainer, revealChild } from "@/lib/motion";
 
 const FAQ: React.FC = () => {
     return (
         <section id="faq" className="py-10 lg:py-20">
-            <motion.div
+            <div
                 className="flex flex-col lg:flex-row gap-10"
-                variants={revealContainer}
-                initial="offscreen"
-                whileInView="onscreen"
-                viewport={{ once: true }}
             >
-                <motion.div variants={revealChild} className="">
+                <div className="">
                     <p className="hidden lg:block text-foreground-accent font-semibold tracking-wide">FAQ</p>
                     <SectionTitle>
                         {/* Judul diubah ke Bahasa Indonesia agar serasi dengan isi pertanyaannya */}
@@ -35,9 +29,9 @@ const FAQ: React.FC = () => {
                     >
                         info@kembar.in
                     </a>
-                </motion.div>
+                </div>
 
-                <motion.div variants={revealChild} className="w-full lg:max-w-2xl mx-auto border-b">
+                <div className="w-full lg:max-w-2xl mx-auto border-b">
                     {faqs.map((faq, index) => (
                         <div key={index} className="mb-7">
                             <Disclosure>
@@ -61,8 +55,8 @@ const FAQ: React.FC = () => {
                             </Disclosure>
                         </div>
                     ))}
-                </motion.div>
-            </motion.div>
+                </div>
+            </div>
         </section>
     );
 };

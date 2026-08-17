@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { revealChild } from "@/lib/motion";
 
 interface Props {
   eventDate: string | null;
@@ -49,28 +47,28 @@ const Countdown: React.FC<Props> = ({ eventDate }) => {
 
   if (!targetMs || !timeLeft) {
     return (
-      <motion.div variants={revealChild} className="text-center">
-        <p className="font-display text-2xl sm:text-3xl font-semibold text-white">
+      <div className="text-center">
+        <p className="font-display text-2xl sm:text-3xl font-semibold text-on-secondary">
           Tanggal Hari-H Akan Segera Diumumkan
         </p>
-        <p className="mt-2 text-sm text-gray-300">
+        <p className="mt-2 text-sm text-on-secondary-muted">
           Pantau terus info resmi panitia SMADARUN 2027 untuk update jadwal.
         </p>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div variants={revealChild} className="flex items-center justify-center gap-4 sm:gap-10">
+    <div className="flex items-center justify-center gap-4 sm:gap-10">
       {UNITS.map((u) => (
         <div key={u.key} className="text-center">
           <div className="font-display text-4xl sm:text-6xl font-bold text-primary tabular-nums leading-none">
             {String(timeLeft[u.key]).padStart(2, "0")}
           </div>
-          <div className="mt-2 text-xs sm:text-sm uppercase tracking-wider text-gray-300">{u.label}</div>
+          <div className="mt-2 text-xs sm:text-sm uppercase tracking-wider text-on-secondary-muted">{u.label}</div>
         </div>
       ))}
-    </motion.div>
+    </div>
   );
 };
 

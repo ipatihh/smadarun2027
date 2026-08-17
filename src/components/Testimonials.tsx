@@ -1,30 +1,28 @@
-"use client";
 
 import React from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { testimonials } from '@/data/testimonials';
-import { revealContainer, revealChild } from '@/lib/motion';
+import SectionTitle from './SectionTitle';
 
 const Testimonials: React.FC = () => {
     return (
-        /*
-           MENGUBAH CONTAINER UTAMA:
-           - Di HP/Tablet (default): flex, bisa di-slide kesamping (overflow-x-auto), efek magnet (snap-x snap-mandatory)
-           - Di Desktop (lg:): berubah otomatis jadi grid 3 kolom kembali (lg:grid lg:grid-cols-3)
-           - Ditambahkan kelas scrollbar-hide agar bar scroller di bawahnya tidak mengganggu estetika
-        */
-        <motion.div
+        <section id="testimonials" className="scroll-mt-24 py-10 lg:py-20">
+            <SectionTitle>
+                <h2 className="text-center mb-4">Apa Kata Mereka?</h2>
+            </SectionTitle>
+            <p className="mb-12 text-center text-foreground-accent">
+                Kesan dan cerita seru dari para pelari yang telah bergabung di event kami sebelumnya.
+            </p>
+            {/*
+               Mobile: carousel geser dengan snap; desktop: grid 3 kolom.
+               scrollbar-hide kini benar-benar ada (didefinisikan di globals.css).
+            */}
+            <div
             className="flex lg:grid lg:grid-cols-3 gap-6 lg:gap-8 overflow-x-auto lg:overflow-x-visible snap-x snap-mandatory pb-6 max-w-full mx-auto scrollbar-hide"
-            variants={revealContainer}
-            initial="offscreen"
-            whileInView="onscreen"
-            viewport={{ once: true }}
         >
             {testimonials.map((testimonial, index) => (
-                <motion.div
+                <div
                     key={index}
-                    variants={revealChild}
                     /*
                        MENGUBAH KARTU TESTIMONI:
                        - min-w-[85%] di HP agar kartu berikutnya agak mengintip (memberi petunjuk bisa di-slide)
@@ -32,7 +30,7 @@ const Testimonials: React.FC = () => {
                        - snap-center membuat kartu otomatis mengunci di tengah layar saat di-swipe
                        - offset vertikal selang-seling di desktop supaya tidak rata sempurna seperti tabel
                     */
-                    className={`min-w-[85%] md:min-w-[45%] lg:min-w-full snap-center bg-card border border-border p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${index % 2 !== 0 ? "lg:translate-y-6" : ""}`}
+                    className={`min-w-[85%] md:min-w-[45%] lg:min-w-full snap-center bg-card border border-border p-6 rounded-card shadow-rest hover:shadow-hover transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${index % 2 !== 0 ? "lg:translate-y-6" : ""}`}
                 >
                     <span className="font-display absolute -top-3 right-4 text-7xl text-primary/25 select-none leading-none" aria-hidden="true">&rdquo;</span>
                     <div>
@@ -42,7 +40,7 @@ const Testimonials: React.FC = () => {
                                 alt={`${testimonial.name} avatar`}
                                 width={50}
                                 height={50}
-                                className="rounded-full shadow-md object-cover"
+                                className="rounded-full shadow-rest object-cover"
                             />
                             <div className="ml-4 text-left">
                                 <h3 className="text-lg font-semibold text-secondary">{testimonial.name}</h3>
@@ -52,9 +50,10 @@ const Testimonials: React.FC = () => {
                         {/* Mengubah text-center di mobile menjadi text-left agar lebih rapi saat di-slide */}
                         <p className="text-foreground-accent text-left text-sm leading-relaxed">&quot;{testimonial.message}&quot;</p>
                     </div>
-                </motion.div>
+                </div>
             ))}
-        </motion.div>
+            </div>
+        </section>
     );
 };
 

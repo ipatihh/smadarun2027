@@ -1,53 +1,44 @@
 import Hero from "@/components/Hero";
 import Testimonials from "@/components/Testimonials";
-// 1. PERBAIKAN IMPOR: Mengarah ke folder Pricing, tapi memanggil file Tiket
-import Pricing from "@/components/Tiket/Tiket";
+import Tiket from "@/components/Tiket/Tiket";
 import FAQ from "@/components/FAQ";
 import Logos from "@/components/Logos";
 import Benefits from "@/components/Benefits/Benefits";
 import Container from "@/components/Container";
-import Section from "@/components/Section";
 import Stats from "@/components/Stats";
 import CTA from "@/components/CTA";
 import CountdownSection from "@/components/CountdownSection";
 import Timeline from "@/components/Timeline";
 
+/**
+ * Urutan seksi mengikuti pertanyaan pengunjung: ini lomba apa & kapan (Hero, Countdown) →
+ * kenapa layak diikuti (Stats, Benefits) → berapa & daftar di mana (Tiket) → detail
+ * hari-H (Timeline) → keyakinan (Testimoni, FAQ) → apresiasi sponsor → ajakan terakhir.
+ * Sponsor sengaja tidak lagi di posisi ketiga: sebelumnya blok itu memakan layar persis
+ * saat pengunjung sedang mencari harga dan jadwal.
+ */
 const HomePage: React.FC = () => {
   return (
     <>
       <Hero />
       <CountdownSection />
-      <Logos />
       <Container>
+        <Stats />
+
         <Benefits />
 
-        {/*
-           2. PERBAIKAN ID SEKSYEN:
-           Mengubah id="pricing" menjadi id="tiket" agar pas saat diklik dari menu "Kategori Tiket" di header
-        */}
-        <Section
-          id="tiket"
-          title="Kategori Tiket"
-          description="Amankan slot sekarang sebelum kehabisan!"
-        >
-          <Pricing />
-        </Section>
+        <Tiket />
 
         <Timeline />
 
-        {/* Bagian Testimoni */}
-        <Section
-          id="testimonials"
-          title="Apa Kata Mereka?"
-          description="Kesan dan cerita seru dari para pelari yang telah bergabung di event kami sebelumnya."
-        >
-          <Testimonials />
-        </Section>
+        <Testimonials />
 
         <FAQ />
+      </Container>
 
-        <Stats />
-        
+      <Logos />
+
+      <Container>
         <CTA />
       </Container>
     </>
