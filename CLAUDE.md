@@ -87,8 +87,10 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   baru yang memuat className, tambahkan juga globnya.
 - **Semua modal wajib pakai `Dialog` dari `@headlessui/react`** (sudah jadi dependency),
   bukan div overlay manual — supaya dapat Escape, focus trap, dan pengembalian fokus.
-- Bar aksi mobile (`StickyDaftarBar`) mengambil harga termurah dari `layout.tsx`; harga itu
-  tetap live dari kembarin-v2, jangan di-hardcode di komponennya.
+- **Bar aksi melayang hanya boleh ada di `/daftar`**, tidak di beranda. Beranda pernah
+  punya `StickyDaftarBar` (harga termurah + tombol daftar) dan itu dicopot: header sudah
+  memuat tombol "Daftar" yang selalu terlihat, jadi bar itu CTA kedua yang menutupi
+  konten tanpa menambah jalan menuju pendaftaran.
 
 ## Gotcha operasional
 

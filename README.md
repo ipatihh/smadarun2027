@@ -57,7 +57,6 @@ berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
 | `src/data/sponsors.ts` | Daftar sponsor bertingkat (`title` / `community` / `media`) + spesifikasi aset logo. |
 | `src/components/Logos.tsx` | Galeri sponsor — seluruh isinya digerakkan `sponsors.ts`, tidak ada logo yang di-hardcode. |
 | `src/app/globals.css` + `tailwind.config.ts` | Sistem token warna/radius/bayangan, termasuk mode gelap. Satu-satunya tempat warna mentah boleh ditulis. |
-| `src/components/StickyDaftarBar.tsx` | Bar aksi melayang di mobile (harga termurah + tombol daftar), datanya live dari `layout.tsx`. |
 
 ## Sistem UI
 
