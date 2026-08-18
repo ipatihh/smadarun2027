@@ -637,8 +637,7 @@ export default function DaftarForm({
                     className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary"
                   />
                   <label htmlFor="pemesanIkut" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
-                    Pemesan juga ikut lari sebagai <span className="font-bold text-foreground">Peserta 1</span> — nama,
-                    email, dan WhatsApp di atas dipakai ulang, tinggal lengkapi NIK dan pilihan lombanya.
+                    Saya (pemesan) juga ikut lari sebagai <span className="font-bold text-foreground">Peserta 1</span>.
                   </label>
                 </div>
               </section>
@@ -927,11 +926,10 @@ export default function DaftarForm({
                   />
                   <div>
                     <label htmlFor="healthDeclaration" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
-                      Saya menyatakan bahwa{" "}
-                      <span className="font-bold text-foreground">seluruh peserta dalam pesanan ini</span> berada dalam
-                      kondisi sehat, memiliki fisik yang prima, dan{" "}
-                      <span className="font-bold text-foreground">bertanggung jawab penuh</span> atas keselamatan
-                      masing-masing selama mengikuti seluruh rangkaian kegiatan SMADARUN 2027.
+                      Saya dan{" "}
+                      <span className="font-bold text-foreground">seluruh peserta dalam pesanan ini</span> menyatakan{" "}
+                      <span className="font-bold text-foreground">sehat dan bertanggung jawab penuh</span> atas
+                      keselamatan masing-masing selama SMADARUN 2027.
                     </label>
                     <FieldError id="health-error" message={consentErrors.health} />
                   </div>
@@ -956,10 +954,9 @@ export default function DaftarForm({
                   />
                   <div>
                     <label htmlFor="privacyConsent" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
-                      Saya telah membaca dan menyetujui{" "}
-                      <span className="font-bold text-foreground">Kebijakan Privasi</span>, serta memberikan persetujuan
-                      atas pengumpulan dan pemrosesan data pribadi seluruh peserta yang saya daftarkan (termasuk NIK,
-                      email, dan nomor WhatsApp) untuk keperluan pendaftaran dan verifikasi kepesertaan SMADARUN 2027.
+                      Saya menyetujui{" "}
+                      <span className="font-bold text-foreground">Kebijakan Privasi</span> atas data pribadi seluruh
+                      peserta yang saya daftarkan.
                     </label>
                     <FieldError id="privacy-error" message={consentErrors.privacy} />
                   </div>

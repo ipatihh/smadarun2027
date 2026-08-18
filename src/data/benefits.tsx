@@ -7,7 +7,7 @@ import { IBenefit } from "@/types"
 export const benefits: IBenefit[] = [
     {
         title: "Fasilitas & Race Pack Peserta",
-        description: "Setiap peserta SMADARUN akan mendapatkan paket lomba eksklusif untuk mendukung kenyamanan dan performa terbaikmu saat berlari.",
+        description: "Paket lomba eksklusif untuk kenyamanan dan performa terbaikmu.",
         bullets: [
             {
                 title: "Jersey Eksklusif SMADARUN 2027",
@@ -29,7 +29,7 @@ export const benefits: IBenefit[] = [
     },
     {
         title: "Rute Steril & Penuh Semangat",
-        description: "Nikmati jalur lari yang aman dengan pemandangan kota yang menyenangkan dan dukungan penuh di sepanjang jalan.",
+        description: "Jalur aman dengan dukungan penuh di sepanjang rute.",
         bullets: [
             {
                 title: "Water Station Terjadwal",
@@ -52,7 +52,7 @@ export const benefits: IBenefit[] = [
     },
     {
         title: "Aman & Didukung Komunitas",
-        description: "Keselamatan pelari adalah prioritas utama kami. Berlari dengan tenang bersama ratusan peserta lainnya.",
+        description: "Keselamatan pelari adalah prioritas utama kami.",
         bullets: [
             {
                 title: "Tim Medis & Ambulans Standby",
