@@ -75,6 +75,10 @@ export interface LiveEventData {
   opensAt: string | null;
 }
 
+// Batas tunggu fetch data live. Dipilih 8 detik: cukup longgar untuk jaringan lambat,
+// tapi jauh di bawah ambang kesabaran pengunjung terhadap halaman yang belum muncul.
+const FETCH_TIMEOUT_MS = 8000;
+
 // Cerminan konstanta core (RegistrationOrderService). Jangan diubah sepihak di sini.
 const DEFAULT_MAX_TICKETS = 5;
 const ABSOLUTE_MAX_TICKETS = 10;
@@ -106,6 +110,11 @@ export async function getLiveEventData(): Promise<LiveEventData> {
 
   try {
     const res = await fetch(eventLookupUrl, {
+      // Batas tunggu keras. Tanpa ini, kembar.in yang lambat merespons (menggantung,
+      // bukan mati) ikut menggantungkan render halaman ini tanpa batas — pengunjung
+      // hanya melihat layar diam. Lebih baik menyerah cepat dan jatuh ke keadaan
+      // "tertutup" yang jelas daripada halaman yang tidak pernah selesai dimuat.
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       // Data ini tidak butuh instan-real-time (core tetap jadi validator akhir saat
       // submit), tapi tetap harus "hidup" — revalidate pendek supaya perubahan admin
       // terlihat di sini dalam hitungan detik tanpa membebani kembar.in tiap request.
@@ -213,7 +222,12 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       opensAt,
     };
   } catch (err) {
-    console.error("[kembarinEvents] Gagal mengambil data event live dari kembarin-v2:", err);
+    const alasan = err instanceof Error && err.name === "TimeoutError"
+      ? `tidak merespons dalam ${FETCH_TIMEOUT_MS} ms`
+      : err instanceof Error
+        ? `${err.name}: ${err.message}`
+        : "kesalahan tidak dikenal";
+    console.error(`[kembarinEvents] Gagal mengambil data event live dari kembarin-v2 (${alasan}).`);
     // Gagal fetch = anggap tertutup. Lebih aman menolak pendaftaran sementara
     // daripada memakai harga/kategori yang sudah usang atau tidak terverifikasi.
     return CLOSED;
