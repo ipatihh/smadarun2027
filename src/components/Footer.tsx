@@ -25,7 +25,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
     const adminFeeLabel = `Rp${adminFee.toLocaleString('id-ID')}`;
 
     return (
-        <footer className="bg-hero-background text-foreground pt-10 pb-28 md:pb-10 relative">
+        <footer className="bg-hero-background text-foreground py-10 relative">
             <div className="max-w-7xl w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
                 <div>
                     <Link href="/" className="flex items-center gap-2">
