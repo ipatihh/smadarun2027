@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { tiketMarketing } from "@/data/tiket";
@@ -203,7 +204,15 @@ export default function DaftarForm({
   const [isConsentChecked, setIsConsentChecked] = useState(false);
   const [consentErrors, setConsentErrors] = useState<{ health?: string; privacy?: string }>({});
 
-  const [loading, setLoading] = useState(false);
+  /**
+   * 'redirecting' penting dan bukan sekadar kosmetik: setelah paymentUrl diterima,
+   * browser butuh waktu berpindah ke DOKU. Sebelumnya blok `finally` mengembalikan
+   * tombol ke keadaan diam SEBELUM perpindahan itu terjadi, sehingga di detik-detik
+   * terakhir halaman tampak menganggur — persis kesan "stuck".
+   */
+  const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
+  const loading = status !== "idle";
+  const [ringkasanError, setRingkasanError] = useState<{ jumlah: number; targetId: string } | null>(null);
   const [isImgOpen, setIsImgOpen] = useState(false);
   const [modal, setModal] = useState<{ show: boolean; success: boolean; title: string; message: string }>({
     show: false,
@@ -231,6 +240,7 @@ export default function DaftarForm({
   const handleBuyerChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setBuyer((prev) => ({ ...prev, [name]: value }));
+    setRingkasanError(null);
     if (buyerErrors[name as BuyerField]) {
       setBuyerErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -243,6 +253,7 @@ export default function DaftarForm({
 
   const handlePesertaChange = (key: string, field: PesertaField, value: string) => {
     setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, [field]: value } : p)));
+    setRingkasanError(null);
     if (pesertaErrors[key]?.[field]) {
       setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: undefined } }));
     }
@@ -320,20 +331,27 @@ export default function DaftarForm({
     };
     setConsentErrors(nextConsentErrors);
 
-    const buyerInvalid = URUTAN_BUYER.find((f) => nextBuyerErrors[f]);
-    if (buyerInvalid) return focusField(`buyer-${buyerInvalid}`);
-
-    for (const [index, p] of pesertaList.entries()) {
+    // Kumpulkan SEMUA isian bermasalah lebih dulu, supaya bisa diberi tahu jumlahnya —
+    // sebelumnya halaman hanya melompat ke field pertama tanpa satu kalimat penjelasan.
+    const daftarMasalah: string[] = [];
+    for (const f of URUTAN_BUYER) if (nextBuyerErrors[f]) daftarMasalah.push(`buyer-${f}`);
+    pesertaList.forEach((p, index) => {
       const errorsPeserta = nextPesertaErrors[p.key];
-      if (!errorsPeserta) continue;
-      const field = URUTAN_PESERTA.find((f) => errorsPeserta[f]);
-      if (field) return focusField(`peserta-${index}-${field}`);
+      if (!errorsPeserta) return;
+      for (const f of URUTAN_PESERTA) if (errorsPeserta[f]) daftarMasalah.push(`peserta-${index}-${f}`);
+    });
+    if (nextConsentErrors.health) daftarMasalah.push("healthDeclaration");
+    if (nextConsentErrors.privacy) daftarMasalah.push("privacyConsent");
+
+    if (daftarMasalah.length > 0) {
+      setRingkasanError({ jumlah: daftarMasalah.length, targetId: daftarMasalah[0] });
+      focusField(daftarMasalah[0]);
+      return;
     }
+    setRingkasanError(null);
 
-    if (nextConsentErrors.health) return focusField("healthDeclaration");
-    if (nextConsentErrors.privacy) return focusField("privacyConsent");
-
-    setLoading(true);
+    setStatus("submitting");
+    let sedangDialihkan = false;
 
     const payload = {
       eventCode: "smadarun",
@@ -393,6 +411,10 @@ export default function DaftarForm({
               "Tautan pembayaran yang diterima tidak berasal dari domain resmi DOKU. Pendaftaran dibatalkan demi keamanan Anda."
             );
           }
+          // Tandai supaya blok `finally` TIDAK mengembalikan tombol ke keadaan diam
+          // selagi browser berpindah ke halaman pembayaran.
+          sedangDialihkan = true;
+          setStatus("redirecting");
           window.location.href = paymentUrl;
           return;
         }
@@ -413,6 +435,7 @@ export default function DaftarForm({
         setIsHealthyChecked(false);
         setIsConsentChecked(false);
         setConsentErrors({});
+        setRingkasanError(null);
       } else {
         throw new Error(result.message || result.error || "Gagal memproses pendaftaran");
       }
@@ -427,9 +450,33 @@ export default function DaftarForm({
             : "Gagal mengirim data pendaftaran. Silakan periksa koneksi Anda dan coba lagi.",
       });
     } finally {
-      setLoading(false);
+      if (!sedangDialihkan) setStatus("idle");
     }
   };
+
+  // Ringkasan kesalahan: menjelaskan APA yang terjadi saat tombol bayar ditekan tapi
+  // formulir belum lengkap. Tanpa ini, halaman hanya melompat ke isian pertama dan
+  // pengguna di bar bawah tidak tahu kenapa layarnya tiba-tiba berpindah.
+  const KotakRingkasanError = ringkasanError ? (
+    <div
+      role="alert"
+      className="rounded-field border border-danger bg-danger-surface p-4 text-left"
+    >
+      <p className="text-sm font-bold text-danger">
+        {ringkasanError.jumlah} isian belum benar
+      </p>
+      <p className="mt-1 text-xs text-danger">
+        Periksa bagian yang ditandai merah, lalu tekan Konfirmasi &amp; Bayar lagi.
+      </p>
+      <button
+        type="button"
+        onClick={() => focusField(ringkasanError.targetId)}
+        className="mt-2 text-xs font-bold text-danger underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
+      >
+        Lompat ke isian pertama
+      </button>
+    </div>
+  ) : null;
 
   // Rincian biaya — dipakai dua kali: inline (mobile) & di kartu ringkasan sticky (desktop).
   const RincianBiaya = (
@@ -463,14 +510,17 @@ export default function DaftarForm({
     </dl>
   );
 
+  const labelStatus = status === "redirecting" ? "Mengalihkan ke pembayaran…" : "Memproses…";
+
   const submitButton = (label = "Konfirmasi & Bayar", extraClass = "py-4") => (
     <button
       type="submit"
       form="formDaftar"
       disabled={loading || isFormClosed}
+      aria-busy={loading}
       className={`w-full bg-primary hover:bg-primary-accent text-on-primary font-extrabold text-sm uppercase tracking-wider rounded-full shadow-rest hover:shadow-hover transition-all disabled:bg-surface-sunken disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center gap-3 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
     >
-      <span>{loading ? "Memproses…" : label}</span>
+      <span>{loading ? labelStatus : label}</span>
       {loading && (
         <span className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" aria-hidden="true" />
       )}
@@ -846,6 +896,8 @@ export default function DaftarForm({
               <section className="space-y-5">
                 <StepHeading step={3} title="Konfirmasi & Bayar" hint="Periksa rincian biaya sebelum melanjutkan ke pembayaran." />
 
+                {KotakRingkasanError}
+
                 {/* Rincian inline — di desktop informasi yang sama tampil di kartu sticky. */}
                 {PENDAFTARAN_DIBUKA && (
                   <div className="rounded-field border border-border bg-surface-sunken p-5 lg:hidden">
@@ -932,9 +984,13 @@ export default function DaftarForm({
               {PENDAFTARAN_DIBUKA ? (
                 <>
                   {RincianBiaya}
+                  {ringkasanError && <div className="mt-4">{KotakRingkasanError}</div>}
                   <div className="mt-6">{submitButton()}</div>
                   <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-                    Pembayaran diproses oleh DOKU. Anda akan diarahkan ke halaman pembayaran resmi.
+                    Pembayaran diproses oleh DOKU. Anda akan diarahkan ke halaman pembayaran resmi.{" "}
+                    <Link href="/daftar/status" className="font-semibold underline underline-offset-2 hover:text-foreground-accent">
+                      Sudah bayar?
+                    </Link>
                   </p>
                 </>
               ) : (
@@ -958,8 +1014,42 @@ export default function DaftarForm({
               <div className="font-display text-xl font-bold leading-none text-foreground tabular-nums">
                 {rupiah(totalAmount)}
               </div>
+              {ringkasanError && (
+                <div className="mt-1 text-[11px] font-bold text-danger">
+                  {ringkasanError.jumlah} isian belum benar
+                </div>
+              )}
             </div>
             <div className="ml-auto w-36 shrink-0 sm:w-44">{submitButton("Bayar", "py-3.5")}</div>
+          </div>
+        </div>
+      )}
+
+      {/*
+         Lapisan status pengiriman. Sebelumnya satu-satunya tanda bahwa tombol sudah
+         ditekan hanyalah teks kecil di dalam tombol itu sendiri — kalau pengguna
+         menggulir sedikit saja, halaman tampak tidak melakukan apa-apa. Lapisan ini
+         sekaligus mencegah isian diubah selagi permintaan berjalan.
+      */}
+      {loading && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-6 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-xs rounded-card border border-border bg-card p-6 text-center shadow-hover">
+            <span
+              className="mx-auto mb-4 block h-8 w-8 animate-spin rounded-full border-[3px] border-border border-t-primary-accent"
+              aria-hidden="true"
+            />
+            <p className="font-display text-base font-bold uppercase tracking-wide text-foreground">
+              {status === "redirecting" ? "Mengalihkan ke pembayaran" : "Mengirim data pendaftaran"}
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              {status === "redirecting"
+                ? "Anda sedang dibawa ke halaman pembayaran resmi DOKU. Jangan tutup halaman ini."
+                : "Mohon tunggu sebentar dan jangan tutup halaman ini."}
+            </p>
           </div>
         </div>
       )}
@@ -1007,12 +1097,22 @@ export default function DaftarForm({
             </div>
             <DialogTitle className="mb-2 font-display text-xl font-black text-foreground">{modal.title}</DialogTitle>
             <p className="mb-6 text-sm leading-relaxed text-foreground-accent">{modal.message}</p>
-            <button
-              onClick={() => setModal((prev) => ({ ...prev, show: false }))}
-              className="w-full rounded-full bg-secondary px-6 py-2.5 text-sm font-bold text-on-secondary transition hover:bg-secondary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-            >
-              Tutup
-            </button>
+            <div className="flex flex-col gap-2">
+              {modal.success && (
+                <Link
+                  href="/daftar/status"
+                  className="w-full rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary transition hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                >
+                  Lihat langkah berikutnya
+                </Link>
+              )}
+              <button
+                onClick={() => setModal((prev) => ({ ...prev, show: false }))}
+                className="w-full rounded-full bg-secondary px-6 py-2.5 text-sm font-bold text-on-secondary transition hover:bg-secondary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              >
+                Tutup
+              </button>
+            </div>
           </DialogPanel>
         </div>
       </Dialog>
