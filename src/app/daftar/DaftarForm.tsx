@@ -121,7 +121,7 @@ interface DaftarFormProps {
 const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
 const fieldClass = (hasError: boolean) =>
-  `w-full p-3.5 bg-surface-sunken border rounded-field text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
+  `w-full p-3.5 bg-surface-sunken border rounded-field text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
     hasError
       ? "border-danger focus:border-danger focus:ring-danger/20"
       : "border-border focus:border-primary-accent focus:ring-primary/25"
