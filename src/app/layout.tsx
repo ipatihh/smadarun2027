@@ -35,6 +35,13 @@ export const metadata: Metadata = {
     description: siteDetails.metadata.description,
     images: ['/images/twitter-image.jpg'],
   },
+  // Verifikasi kepemilikan situs via meta tag Google Search Console — metode
+  // cadangan di luar TXT record DNS (yang ditambahkan terpisah di panel
+  // pengelola domain smadarun.id, bukan di kode ini). Kode verifikasi ini
+  // memang dirancang publik, bukan secret.
+  verification: {
+    google: 'E-ajJkGSPmaPXLEWIkmpT2A9eDR76DEmry5JYmqlZZo',
+  },
 };
 
 export default function RootLayout({
