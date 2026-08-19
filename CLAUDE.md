@@ -50,7 +50,7 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   sudah zero-trust terhadap ini (defense-in-depth, bukan redundan sia-sia).
 - `event_code` yang dipakai adalah **`"smadarun"`**, BUKAN `"smadarun2027"` — kembarin-v2
   sudah rename dari `smadarun2027` ke `smadarun` (lihat commit `625705b`). Nama project,
-  domain (`smadarun2027.vercel.app`), dan branding UI tetap "SMADARUN 2027" — itu berbeda
+  domain (`smadarun.id`), dan branding UI tetap "SMADARUN 2027" — itu berbeda
   dari event_code teknis. Jangan bingung antara keduanya.
 - Endpoint yang dipakai untuk baca data live: `GET /api/public/events/[eventCode]` (lookup
   per-kode, tidak terpengaruh `show_in_gallery`) — BUKAN `GET /api/public/events` (listing
@@ -59,7 +59,18 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
 - Kalau fetch ke kembarin-v2 gagal (network error, 5xx, dsb), kode selalu **fail-closed** —
   dianggap "pendaftaran tertutup", bukan pakai data lama/fallback. Ini prinsip yang harus
   dipertahankan di kode terkait pembayaran: lebih baik gagal aman daripada menampilkan
-  harga/status yang sudah usang.
+  harga/status yang sudah usang. Fetch juga dibatasi timeout 8 detik (`AbortSignal.timeout`)
+  supaya kembar.in yang menggantung (bukan error jelas) tidak ikut menggantungkan render
+  halaman tanpa batas.
+- **Kategori tiket dicocokkan lewat `id` (ticketTypeId) kalau tersedia**, bukan cuma nama.
+  `LiveTicketType.id` dikirim sebagai `ticketTypeId` ke core, yang mencoba match by ID lebih
+  dulu sebelum jatuh ke match by nama kategori — jadi kalau admin ganti nama kategori di
+  tengah jalan, peserta yang sudah pilih kategori itu di form tetap match dengan benar.
+- **`FooterLive.tsx` sengaja membungkus fetch live-nya sendiri dalam `Suspense` terpisah** —
+  JANGAN pindahkan `getLiveEventData()` balik ke root layout (`layout.tsx`) yang `async`.
+  Itu pernah membuat SATU fetch (buat teks biaya layanan di footer) menahan render SELURUH
+  halaman (header, hero, semuanya) sampai kembar.in selesai merespons. Pola sekarang: header
+  & konten utama tampil seketika, cuma footer yang menyusul.
 
 ## Aturan sistem desain (UI)
 

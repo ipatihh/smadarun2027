@@ -1,7 +1,7 @@
 # SMADARUN 2027 — Landing Page & Portal Pendaftaran
 
 Landing page resmi event lari SMADARUN 2027 (persembahan SMA Negeri 2 Nganjuk). Next.js App
-Router (v16) + Tailwind CSS, di-deploy mandiri di Vercel (`smadarun2027.vercel.app`), **tapi
+Router (v16) + Tailwind CSS, di-deploy mandiri di Vercel dengan domain `smadarun.id`, **tapi
 seluruh data event/tiket dan proses registrasi/pembayaran ditangani oleh core system
 [kembarin-v2](https://kembar.in)** — project ini murni frontend + proxy tipis ke sana.
 
@@ -48,15 +48,35 @@ berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
 
 | Path | Fungsi |
 |---|---|
-| `src/lib/kembarinEvents.ts` | Satu-satunya titik fetch data live (harga, kategori, status) dari kembarin-v2. |
+| `src/lib/kembarinEvents.ts` | Satu-satunya titik fetch data live (harga, kategori, status, jadwal RPC/gun-start, aturan kolektif) dari kembarin-v2. Fetch dibatasi timeout 8 detik — kalau kembar.in menggantung, halaman tetap jatuh ke keadaan "tertutup" dengan cepat, bukan ikut menggantung. |
 | `src/app/daftar/page.tsx` | Server Component — fetch data live, render `DaftarForm`. |
-| `src/app/daftar/DaftarForm.tsx` | Client Component — form pemesan + daftar peserta (kolektif), terima data live lewat props. |
-| `src/app/api/daftar/route.ts` | Proxy internal: validasi ketat tiap peserta, hitung ulang harga & biaya layanan per tiket dari data live, teruskan sebagai pesanan `{ buyer, participants[] }`. |
-| `src/data/tiket.ts` | **Hanya** metadata marketing (nama tampilan, fasilitas, badge) — bukan harga/ketersediaan. |
-| `src/components/Tiket/Tiket.tsx` | Server Component homepage — gabungkan data live + metadata marketing. |
+| `src/app/daftar/DaftarForm.tsx` | Client Component — form pemesan + daftar peserta (kolektif, bisa tambah/hapus peserta), validasi sisi klien sebagai cermin validasi server (bukan pengganti), redirect ke DOKU. |
+| `src/app/daftar/status/page.tsx` | Halaman tujuan balik setelah pembayaran DOKU. Sengaja **informasional saja**, bukan pengecek status asli — kembarin-v2 belum menyediakan endpoint publik untuk itu; mengarang tampilan "berhasil/gagal" tanpa data asli justru menyesatkan. |
+| `src/app/api/daftar/route.ts` | Proxy internal: validasi ketat tiap peserta (termasuk persetujuan kesehatan & privasi di server, bukan cuma checkbox), hitung ulang harga & biaya layanan per tiket dari data live, teruskan sebagai pesanan `{ buyer, participants[] }`. Log dan double-submit map dibersihkan dari NIK mentah (di-hash). |
+| `src/data/tiket.ts` | **Hanya** metadata marketing (nama tampilan, fasilitas, `badge`, `highlight`) — bukan harga/ketersediaan. |
+| `src/components/Tiket/Tiket.tsx` + `TiketGrid.tsx` + `TiketColumn.tsx` | Server Component homepage — gabungkan data live + metadata marketing. `Tiket.tsx` juga memisahkan fasilitas yang sama di semua kategori ke satu baris ringkas di bawah grid, supaya pembeda asli (harga) tidak tenggelam. |
+| `src/components/CountdownSection.tsx` + `Countdown.tsx` | Panel hitung mundur ke `live.eventDate`. Client Component kecil (`Countdown.tsx`) yang di-tick tiap detik; fallback teks kalau tanggal belum diisi panitia. |
+| `src/components/Timeline.tsx` + `TimelineItems.tsx` | Seksi "Susunan Acara" — RPC (jadwal/lokasi pengambilan race pack) dan gun-start per kategori jarak, semua dari `event_config` live. Otomatis tidak render apa pun kalau datanya kosong. |
+| `src/components/FooterLive.tsx` + `Footer.tsx` | `FooterLive` membungkus fetch data live (biaya layanan untuk teks Syarat & Ketentuan) dalam `Suspense` miliknya sendiri — **jangan pindahkan fetch ini ke root layout**, itu pernah membuat SELURUH halaman (bukan cuma footer) ikut menunggu kembar.in sebelum tampil apa pun. |
 | `src/data/sponsors.ts` | Daftar sponsor bertingkat (`title` / `community` / `media`) + spesifikasi aset logo. |
 | `src/components/Logos.tsx` | Galeri sponsor — seluruh isinya digerakkan `sponsors.ts`, tidak ada logo yang di-hardcode. |
-| `src/app/globals.css` + `tailwind.config.ts` | Sistem token warna/radius/bayangan, termasuk mode gelap. Satu-satunya tempat warna mentah boleh ditulis. |
+| `src/app/globals.css` + `tailwind.config.ts` | Sistem token warna/radius/bayangan (41 custom property, termasuk pasangan mode gelap). Satu-satunya tempat warna mentah boleh ditulis. |
+
+## Halaman & Bagian Situs
+
+**Beranda (`/`)** — urutan section mengikuti alur pertanyaan pengunjung: `Hero` → `CountdownSection`
+(hitung mundur ke hari-H, live dari `event_date`) → `Stats` → `Benefits` → `Tiket` (kartu
+kategori, live) → `Timeline` (susunan acara/RPC, live, otomatis tersembunyi kalau datanya
+kosong) → `Testimonials` → `FAQ` → `Logos` (sponsor) → `CTA`.
+
+**Form pendaftaran (`/daftar`)** — form kolektif: satu pemesan bisa mendaftarkan beberapa
+peserta sekaligus (kalau `multi_ticket_enabled` aktif di kembarin-v2), tiap peserta boleh beda
+kategori & ukuran jersey. Ada kartu ringkasan biaya sticky di desktop dan bar aksi melayang di
+mobile. Redirect otomatis ke DOKU setelah submit berhasil.
+
+**Status pendaftaran (`/daftar/status`)** — halaman tujuan balik setelah pembayaran, murni
+informasional (langkah apa yang terjadi setelah bayar, kontak kalau belum dapat email). Tidak
+mengecek status order asli karena kembarin-v2 belum punya endpoint publik untuk itu.
 
 ## Sistem UI
 
@@ -73,6 +93,8 @@ berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
   trap, dan pengembalian fokus.
 - `src/data/**` ikut dipindai Tailwind (lihat `content` di `tailwind.config.ts`) karena file
   data di sana menuliskan kelas (ukuran kotak logo sponsor, warna ikon statistik).
+- **Optimasi gambar bawaan Next.js aktif** (`next.config.mjs`, format AVIF/WebP otomatis).
+  Semua gambar ada di `/public` (lokal), tidak ada host eksternal yang perlu di-allowlist.
 
 ## Menambah Logo Sponsor
 
