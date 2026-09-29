@@ -13,13 +13,14 @@ import { footerDetails } from "@/data/footer";
  */
 
 const SponsorLogo: React.FC<{ sponsor: ISponsor; tier: ISponsorTierConfig }> = ({ sponsor, tier }) => {
-  const boxClass = `flex ${tier.boxHeight} ${tier.boxWidth} items-center justify-center rounded-field border border-border bg-card px-4 py-2 shadow-rest transition-shadow hover:shadow-hover`;
+  // bg-logo-surface tetap terang di mode gelap — logo sponsor hampir selalu dibuat untuk latar putih.
+  const boxClass = `flex ${tier.boxHeight} ${tier.boxWidth} items-center justify-center rounded-field border border-border bg-logo-surface px-4 py-2 shadow-rest transition-shadow hover:shadow-hover`;
 
   // Belum ada file logonya → tampilkan nama sponsor supaya barisnya tetap rapi.
   if (!sponsor.logo) {
     return (
       <span className={boxClass}>
-        <span className="text-center font-display text-sm font-bold uppercase leading-tight tracking-wide text-foreground-accent">
+        <span className="text-center font-display text-sm font-bold uppercase leading-tight tracking-wide text-on-primary">
           {sponsor.name}
         </span>
       </span>
@@ -59,16 +60,12 @@ const Logos: React.FC = () => {
   return (
     <section id="logos" className="scroll-mt-24 bg-background px-5 py-12 lg:py-16">
       <div className="mx-auto max-w-5xl">
-        <p className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Didukung oleh
-        </p>
+        <h2 className="text-center text-2xl font-bold text-foreground">Didukung oleh</h2>
 
         <div className="mt-8 space-y-10">
           {tiersWithSponsors.map((tier) => (
             <div key={tier.tier}>
-              <p className="mb-4 text-center text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                {tier.label}
-              </p>
+              <p className="mb-4 text-center text-sm text-muted-foreground">{tier.label}</p>
               {/* flex-wrap: berapa pun jumlah logonya otomatis turun baris, tetap rata tengah */}
               <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
                 {tier.items.map((sponsor) =>

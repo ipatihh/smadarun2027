@@ -124,10 +124,10 @@ const fieldClass = (hasError: boolean) =>
   `w-full p-3.5 bg-surface-sunken border rounded-field text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
     hasError
       ? "border-danger focus:border-danger focus:ring-danger/20"
-      : "border-border focus:border-primary-accent focus:ring-primary/25"
+      : "border-border focus:border-foreground focus:ring-primary/40"
   }`;
 
-const labelClass = "block text-xs font-bold uppercase tracking-wider text-foreground-accent mb-2";
+const labelClass = "block text-sm font-semibold text-foreground mb-2";
 
 const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message }) =>
   message ? (
@@ -142,7 +142,7 @@ const StepHeading: React.FC<{ step: number; title: string; hint?: string }> = ({
       {step}
     </span>
     <div>
-      <h3 className="font-display text-lg font-bold uppercase tracking-wide text-foreground leading-none">{title}</h3>
+      <h3 className="font-display text-xl font-bold text-foreground leading-none">{title}</h3>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   </div>
@@ -518,7 +518,7 @@ export default function DaftarForm({
       form="formDaftar"
       disabled={loading || isFormClosed}
       aria-busy={loading}
-      className={`w-full bg-primary hover:bg-primary-accent text-on-primary font-extrabold text-sm uppercase tracking-wider rounded-full shadow-rest hover:shadow-hover transition-all disabled:bg-surface-sunken disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center gap-3 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
+      className={`w-full bg-primary hover:bg-primary-accent text-on-primary font-bold text-base rounded-full shadow-rest hover:shadow-hover transition-all disabled:bg-surface-sunken disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center gap-3 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
     >
       <span>{loading ? labelStatus : label}</span>
       {loading && (
@@ -540,11 +540,9 @@ export default function DaftarForm({
       <div className="mx-auto w-full max-w-5xl">
         <div className="text-center mb-8">
           <p className="font-display text-3xl font-bold uppercase text-foreground">
-            SMADARUN <span className="text-primary-accent">2027</span>
+            SMADARUN <span className="accent-mark">2027</span>
           </p>
-          <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            Portal Pendaftaran Resmi
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Portal pendaftaran resmi</p>
         </div>
 
         {isFormClosed && (
@@ -662,7 +660,7 @@ export default function DaftarForm({
                   return (
                     <div key={raw.key} className="rounded-field border border-border bg-surface-sunken/60 p-5">
                       <div className="mb-4 flex items-center justify-between gap-3">
-                        <p className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
+                        <p className="font-display text-base font-bold text-foreground">
                           Peserta {index + 1}
                           {identitasDariPemesan && (
                             <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-on-primary">
@@ -900,9 +898,7 @@ export default function DaftarForm({
                 {/* Rincian inline — di desktop informasi yang sama tampil di kartu sticky. */}
                 {PENDAFTARAN_DIBUKA && (
                   <div className="rounded-field border border-border bg-surface-sunken p-5 lg:hidden">
-                    <p className="mb-3 text-xs font-black uppercase tracking-widest text-muted-foreground">
-                      Rincian biaya
-                    </p>
+                    <p className="mb-3 text-sm font-semibold text-foreground">Rincian biaya</p>
                     {RincianBiaya}
                   </div>
                 )}
@@ -969,9 +965,7 @@ export default function DaftarForm({
           <aside className="hidden lg:block">
             <div className="sticky top-28 rounded-card border border-border bg-card p-6 shadow-rest">
               <div className="mb-4 flex items-baseline justify-between gap-2">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                  Ringkasan pesanan
-                </p>
+                <p className="text-sm font-semibold text-foreground">Ringkasan pesanan</p>
                 {PENDAFTARAN_DIBUKA && (
                   <span className="text-xs font-bold text-foreground-accent">
                     {pesertaList.length} tiket
@@ -1005,7 +999,7 @@ export default function DaftarForm({
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md lg:hidden">
           <div className="mx-auto flex max-w-xl items-center gap-4 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
             <div className="min-w-0">
-              <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 Total · {pesertaList.length} tiket
               </div>
               <div className="font-display text-xl font-bold leading-none text-foreground tabular-nums">
@@ -1039,7 +1033,7 @@ export default function DaftarForm({
               className="mx-auto mb-4 block h-8 w-8 animate-spin rounded-full border-[3px] border-border border-t-primary-accent"
               aria-hidden="true"
             />
-            <p className="font-display text-base font-bold uppercase tracking-wide text-foreground">
+            <p className="font-display text-lg font-bold text-foreground">
               {status === "redirecting" ? "Mengalihkan ke pembayaran" : "Mengirim data pendaftaran"}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
@@ -1092,7 +1086,7 @@ export default function DaftarForm({
             >
               {modal.success ? "✓" : "✕"}
             </div>
-            <DialogTitle className="mb-2 font-display text-xl font-black text-foreground">{modal.title}</DialogTitle>
+            <DialogTitle className="mb-2 font-display text-xl font-bold text-foreground">{modal.title}</DialogTitle>
             <p className="mb-6 text-sm leading-relaxed text-foreground-accent">{modal.message}</p>
             <div className="flex flex-col gap-2">
               {modal.success && (

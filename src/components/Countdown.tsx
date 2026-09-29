@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   eventDate: string | null;
+  /** Rata tengah — dipakai kalau panel tidak punya kolom fakta di sebelahnya. */
+  centered?: boolean;
 }
 
 interface TimeLeft {
@@ -30,7 +32,7 @@ const UNITS: { key: keyof TimeLeft; label: string }[] = [
   { key: "seconds", label: "Detik" },
 ];
 
-const Countdown: React.FC<Props> = ({ eventDate }) => {
+const Countdown: React.FC<Props> = ({ eventDate, centered = false }) => {
   const targetMs = useMemo(() => {
     if (!eventDate) return null;
     const t = new Date(eventDate).getTime();
@@ -47,25 +49,25 @@ const Countdown: React.FC<Props> = ({ eventDate }) => {
 
   if (!targetMs || !timeLeft) {
     return (
-      <div className="text-center">
-        <p className="font-display text-2xl sm:text-3xl font-semibold text-on-secondary">
-          Tanggal Hari-H Akan Segera Diumumkan
+      <div>
+        <p className="font-display text-2xl font-semibold leading-tight text-on-secondary sm:text-3xl">
+          Tanggal hari-H segera diumumkan
         </p>
         <p className="mt-2 text-sm text-on-secondary-muted">
-          Pantau terus info resmi panitia SMADARUN 2027 untuk update jadwal.
+          Pantau info resmi panitia untuk kabar terbarunya.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center gap-4 sm:gap-10">
+    <div className={`flex items-center gap-6 sm:gap-8 ${centered ? "justify-center" : ""}`}>
       {UNITS.map((u) => (
         <div key={u.key} className="text-center">
-          <div className="font-display text-4xl sm:text-6xl font-bold text-primary tabular-nums leading-none">
+          <div className="font-display text-4xl font-bold leading-none text-primary tabular-nums sm:text-5xl">
             {String(timeLeft[u.key]).padStart(2, "0")}
           </div>
-          <div className="mt-2 text-xs sm:text-sm uppercase tracking-wider text-on-secondary-muted">{u.label}</div>
+          <div className="mt-2 text-sm text-on-secondary-muted">{u.label}</div>
         </div>
       ))}
     </div>

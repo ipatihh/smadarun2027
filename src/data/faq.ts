@@ -1,14 +1,12 @@
 import { IFAQ } from "@/types";
 import { siteDetails } from "./siteDetails";
 
+// Isi race pack sengaja tidak dijadikan pertanyaan di sini — daftarnya sudah tampil di
+// seksi Tiket, dan dua salinan teks yang sama cepat atau lambat akan saling berbeda.
 export const faqs: IFAQ[] = [
     {
         question: `Kapan dan di mana ${siteDetails.siteName} dilaksanakan?`,
         answer: 'Informasi mengenai tanggal pelaksanaan resmi, lokasi pengambilan race pack, serta rute start/finish dapat Anda pantau secara berkala melalui halaman utama website ini atau akun Instagram resmi kami.',
-    },
-    {
-        question: 'Fasilitas apa saja yang didapatkan oleh peserta?',
-        answer: 'Setiap peserta yang terdaftar akan mendapatkan Slot Lari resmi, Jersey Eksklusif SMADARUN 2027, Nomor Dada (BIB), Konsumsi/Hidrasi di rute lomba, Proteksi Medis/Asuransi, serta Medali Finisher bagi yang berhasil mencapai garis finish sebelum batas waktu.',
     },
     {
         question: 'Apakah ada batas waktu (Cut Off Time) untuk kategori 5K?',

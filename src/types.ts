@@ -8,14 +8,12 @@ export interface IMenuItem {
 export interface IBenefit {
     title: string;
     description: string;
-    imageSrc: string;
-    bullets: IBenefitBullet[]
+    icon: ReactElement;
 }
 
-export interface IBenefitBullet {
-    title: string;
-    description: string;
-    icon: ReactElement;
+export interface IGalleryPhoto {
+    src: string;
+    alt: string;
 }
 
 export interface IPricing {
@@ -38,7 +36,6 @@ export interface ITestimonial {
 
 export interface IStats {
     title: string;
-    icon: ReactElement;
     description: string;
 }
 

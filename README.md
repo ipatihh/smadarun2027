@@ -54,20 +54,20 @@ berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
 | `src/app/daftar/status/page.tsx` | Halaman tujuan balik setelah pembayaran DOKU. Sengaja **informasional saja**, bukan pengecek status asli — kembarin-v2 belum menyediakan endpoint publik untuk itu; mengarang tampilan "berhasil/gagal" tanpa data asli justru menyesatkan. |
 | `src/app/api/daftar/route.ts` | Proxy internal: validasi ketat tiap peserta (termasuk persetujuan kesehatan & privasi di server, bukan cuma checkbox), hitung ulang harga & biaya layanan per tiket dari data live, teruskan sebagai pesanan `{ buyer, participants[] }`. Log dan double-submit map dibersihkan dari NIK mentah (di-hash). |
 | `src/data/tiket.ts` | **Hanya** metadata marketing (nama tampilan, fasilitas, `badge`, `highlight`) — bukan harga/ketersediaan. |
-| `src/components/Tiket/Tiket.tsx` + `TiketGrid.tsx` + `TiketColumn.tsx` | Server Component homepage — gabungkan data live + metadata marketing. `Tiket.tsx` juga memisahkan fasilitas yang sama di semua kategori ke satu baris ringkas di bawah grid, supaya pembeda asli (harga) tidak tenggelam. |
-| `src/components/CountdownSection.tsx` + `Countdown.tsx` | Panel hitung mundur ke `live.eventDate`. Client Component kecil (`Countdown.tsx`) yang di-tick tiap detik; fallback teks kalau tanggal belum diisi panitia. |
-| `src/components/Timeline.tsx` + `TimelineItems.tsx` | Seksi "Susunan Acara" — RPC (jadwal/lokasi pengambilan race pack) dan gun-start per kategori jarak, semua dari `event_config` live. Otomatis tidak render apa pun kalau datanya kosong. |
+| `src/components/Tiket/Tiket.tsx` + `TiketGrid.tsx` + `TiketColumn.tsx` | Server Component homepage — gabungkan data live + metadata marketing. `Tiket.tsx` juga memisahkan fasilitas yang sama di semua kategori ke satu baris ringkas di bawah grid, supaya pembeda asli (harga) tidak tenggelam. Ini satu-satunya tempat isi race pack ditampilkan. |
+| `src/components/EventInfo.tsx` + `Countdown.tsx` | Panel "Menuju hari lomba" (`#jadwal`): hitung mundur ke `live.eventDate` plus fakta hari-H — tanggal, lokasi, gun-start per kategori jarak, dan RPC — semua dari data live. Tiap fakta hanya muncul kalau datanya ada. `Countdown.tsx` adalah Client Component kecil yang di-tick tiap detik, dengan fallback teks kalau tanggal belum diisi panitia. |
+| `src/data/gallery.ts` + `src/components/Gallery.tsx` | Galeri "momen tahun lalu" — slot foto dokumentasi event sebelumnya. Foto pertama tampil besar; 3 atau 5 foto memberi susunan paling rapi. Array kosong = seksi disembunyikan. |
 | `src/components/FooterLive.tsx` + `Footer.tsx` | `FooterLive` membungkus fetch data live (biaya layanan untuk teks Syarat & Ketentuan) dalam `Suspense` miliknya sendiri — **jangan pindahkan fetch ini ke root layout**, itu pernah membuat SELURUH halaman (bukan cuma footer) ikut menunggu kembar.in sebelum tampil apa pun. |
 | `src/data/sponsors.ts` | Daftar sponsor bertingkat (`title` / `community` / `media`) + spesifikasi aset logo. |
 | `src/components/Logos.tsx` | Galeri sponsor — seluruh isinya digerakkan `sponsors.ts`, tidak ada logo yang di-hardcode. |
-| `src/app/globals.css` + `tailwind.config.ts` | Sistem token warna/radius/bayangan (41 custom property, termasuk pasangan mode gelap). Satu-satunya tempat warna mentah boleh ditulis. |
+| `src/app/globals.css` + `tailwind.config.ts` | Sistem token warna/radius/bayangan, termasuk pasangan mode gelap. Satu-satunya tempat warna mentah boleh ditulis. Nilai ditulis sebagai kanal RGB supaya kelas opacity (`bg-card/90`) bekerja. |
 
 ## Halaman & Bagian Situs
 
-**Beranda (`/`)** — urutan section mengikuti alur pertanyaan pengunjung: `Hero` → `CountdownSection`
-(hitung mundur ke hari-H, live dari `event_date`) → `Stats` → `Benefits` → `Tiket` (kartu
-kategori, live) → `Timeline` (susunan acara/RPC, live, otomatis tersembunyi kalau datanya
-kosong) → `Testimonials` → `FAQ` → `Logos` (sponsor) → `CTA`.
+**Beranda (`/`)** — urutan section mengikuti alur pertanyaan pengunjung: `Hero` → `EventInfo`
+(hitung mundur + tanggal, lokasi, gun start, RPC — live) → `Benefits` (grid fasilitas di
+rute) → `Gallery` (foto tahun lalu) → `Tiket` (kartu kategori, live) → `Testimonials`
+(termasuk angka statistik) → `FAQ` → `Logos` (sponsor) → `CTA`.
 
 **Form pendaftaran (`/daftar`)** — form kolektif: satu pemesan bisa mendaftarkan beberapa
 peserta sekaligus (kalau `multi_ticket_enabled` aktif di kembarin-v2), tiap peserta boleh beda

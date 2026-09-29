@@ -9,41 +9,52 @@
   text-on-primary / text-on-secondary / bg-warning-surface, dst.
   Alasannya: sebelum ini permukaan abu-abu di form punya 3 nuansa berbeda tanpa alasan
   (gray-50, gray-100, zinc-50) dan tidak ada satu titik pun untuk mengganti tema.
+
+  FORMAT NILAI: tulis sebagai kanal RGB tanpa koma ("254 216 53"), BUKAN hex. Tailwind
+  memetakannya jadi rgb(var(--x) / <alpha-value>), dan hanya dengan format ini kelas
+  opacity seperti bg-card/90 atau ring-primary/25 ikut di-generate. Dengan hex, kelas-kelas
+  itu diam-diam tidak pernah ada (tanpa error): header & bar bayar jadi tembus pandang dan
+  cincin fokus input jatuh ke biru bawaan Tailwind. Di CSS biasa pakai rgb(var(--x)).
+  Pengecualian: --overlay sudah berupa warna utuh karena alfanya beda per mode.
 */
 :root {
   /* Permukaan berjenjang */
-  --background: #FDFDFB;
-  --card: #FFFFFF;
-  --surface-sunken: #F5F5F3;
-  --hero-background: #F3F3F2;
+  --background: 253 253 251; /* #FDFDFB */
+  --card: 255 255 255; /* #FFFFFF */
+  --surface-sunken: 245 245 243; /* #F5F5F3 */
+  --hero-background: 243 243 242; /* #F3F3F2 */
 
   /* Teks */
-  --foreground: #171717;
-  --foreground-accent: #454545;
-  --muted-foreground: #6B6B68;
+  --foreground: 23 23 23; /* #171717 */
+  --foreground-accent: 69 69 69; /* #454545 */
+  --muted-foreground: 107 107 104; /* #6B6B68 */
 
   /* Garis */
-  --border: #E5E5E2;
-  --border-strong: #D2D2CE;
+  --border: 229 229 226; /* #E5E5E2 */
+  --border-strong: 210 210 206; /* #D2D2CE */
 
   /* Brand — kuning HANYA untuk permukaan/aksen, bukan warna teks di latar terang */
-  --primary: #FED835;
-  --primary-accent: #E5C230;
-  --on-primary: #171717;
+  --primary: 254 216 53; /* #FED835 */
+  --primary-accent: 229 194 48; /* #E5C230 */
+  --on-primary: 23 23 23; /* #171717 */
 
   /* Panel gelap (countdown, CTA, portal pendaftaran) */
-  --secondary: #1A1D21;
-  --secondary-accent: #2E3238;
-  --on-secondary: #FFFFFF;
-  --on-secondary-muted: #C7C9CC;
+  --secondary: 26 29 33; /* #1A1D21 */
+  --secondary-accent: 46 50 56; /* #2E3238 */
+  --on-secondary: 255 255 255; /* #FFFFFF */
+  --on-secondary-muted: 199 201 204; /* #C7C9CC */
 
   /* Semantik */
-  --success: #16794C;
-  --success-surface: #E7F4EE;
-  --warning: #8A6100;
-  --warning-surface: #FFF6DF;
-  --danger: #B3261E;
-  --danger-surface: #FCEBEA;
+  --success: 22 121 76; /* #16794C */
+  --success-surface: 231 244 238; /* #E7F4EE */
+  --warning: 138 97 0; /* #8A6100 */
+  --warning-surface: 255 246 223; /* #FFF6DF */
+  --danger: 179 38 30; /* #B3261E */
+  --danger-surface: 252 235 234; /* #FCEBEA */
+
+  /* Kotak logo sponsor — tetap terang di mode gelap, karena hampir semua logo sponsor
+     dibuat untuk latar putih (logo hitam di kotak gelap praktis hilang). */
+  --logo-surface: 255 255 255; /* #FFFFFF */
 
   /* Lapisan overlay modal */
   --overlay: rgb(0 0 0 / 0.6);
@@ -56,27 +67,29 @@
 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #121316;
-    --card: #1A1D21;
-    --surface-sunken: #212429;
-    --hero-background: #17191D;
+    --background: 18 19 22; /* #121316 */
+    --card: 26 29 33; /* #1A1D21 */
+    --surface-sunken: 33 36 41; /* #212429 */
+    --hero-background: 23 25 29; /* #17191D */
 
-    --foreground: #F4F4F2;
-    --foreground-accent: #C9C9C6;
-    --muted-foreground: #9A9A97;
+    --foreground: 244 244 242; /* #F4F4F2 */
+    --foreground-accent: 201 201 198; /* #C9C9C6 */
+    --muted-foreground: 154 154 151; /* #9A9A97 */
 
-    --border: #2E3238;
-    --border-strong: #43474E;
+    --border: 46 50 56; /* #2E3238 */
+    --border-strong: 67 71 78; /* #43474E */
 
-    --secondary: #22262B;
-    --secondary-accent: #2E3238;
+    --secondary: 34 38 43; /* #22262B */
+    --secondary-accent: 46 50 56; /* #2E3238 */
 
-    --success: #6FD3A4;
-    --success-surface: #143A2A;
-    --warning: #F2C862;
-    --warning-surface: #3A2F12;
-    --danger: #F1948C;
-    --danger-surface: #3D1F1C;
+    --success: 111 211 164; /* #6FD3A4 */
+    --success-surface: 20 58 42; /* #143A2A */
+    --warning: 242 200 98; /* #F2C862 */
+    --warning-surface: 58 47 18; /* #3A2F12 */
+    --danger: 241 148 140; /* #F1948C */
+    --danger-surface: 61 31 28; /* #3D1F1C */
+
+    --logo-surface: 236 236 233; /* #ECECE9 — sedikit diredupkan supaya tidak menyilaukan */
 
     --overlay: rgb(0 0 0 / 0.72);
   }
@@ -91,8 +104,8 @@ html {
 body {
   @apply text-lg;
 
-  color: var(--foreground);
-  background: var(--background);
+  color: rgb(var(--foreground));
+  background: rgb(var(--background));
   font-family: var(--font-plus-jakarta), sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
@@ -154,8 +167,13 @@ h1, h2, h3, h4, h5, h6 {
   @apply w-fit h-10 sm:h-12;
 }
 
-.benefit-section:last-of-type > div {
-  @apply mb-10;
+/*
+  Penanda angka tahun ("2027") di logotype. Kuning dipakai sebagai PERMUKAAN dengan teks
+  gelap di atasnya — sebelumnya angka ini berwarna kuning di atas latar terang (kontras
+  ±1,6:1). Kemiringannya mengikuti motif garis kecepatan di latar hero.
+*/
+.accent-mark {
+  @apply inline-block -skew-x-6 bg-primary px-[0.12em] text-on-primary;
 }
 
 /* Hormati preferensi sistem: animasi reveal tidak boleh jadi syarat konten terlihat. */

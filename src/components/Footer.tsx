@@ -11,7 +11,7 @@ import { getPlatformIconByName } from '@/utils';
 
 interface FooterProps {
     /**
-     * Biaya layanan platform per transaksi — live dari kembarin-v2 lewat layout.tsx.
+     * Biaya layanan platform per tiket — live dari kembarin-v2 lewat FooterLive.tsx.
      * WAJIB dari data live: nominal ini pernah di-hardcode "Rp3.000" di Syarat & Ketentuan
      * padahal admin sudah mengubahnya jadi Rp2.000, sehingga dokumen yang disetujui peserta
      * menyebut angka yang berbeda dengan yang benar-benar ditagihkan.
@@ -25,48 +25,51 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
     const adminFeeLabel = `Rp${adminFee.toLocaleString('id-ID')}`;
 
     return (
-        <footer className="bg-hero-background text-foreground py-10 relative">
-            <div className="max-w-7xl w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
-                <div>
-                    <Link href="/" className="flex items-center gap-2">
-                        <FaRunning className="min-w-fit w-5 h-5 md:w-7 md:h-7 text-primary-accent" />
-                        <h3 className="font-display text-xl font-semibold cursor-pointer">
+        <footer className="bg-hero-background text-foreground py-12 relative">
+            <div className="max-w-7xl w-full mx-auto px-6 flex flex-col gap-10 md:flex-row md:justify-between">
+                <div className="max-w-sm">
+                    <Link href="/" className="inline-flex items-center gap-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        <FaRunning className="min-w-fit w-6 h-6 text-foreground" aria-hidden="true" />
+                        <span className="font-display text-xl font-semibold">
                             {siteDetails.siteName}
-                        </h3>
+                        </span>
                     </Link>
-                    <p className="mt-3.5 text-foreground-accent">
+                    <p className="mt-3.5 text-base text-foreground-accent">
                         {footerDetails.subheading}
                     </p>
                 </div>
+
+                {/* Tautan navigasi sengaja tidak diulang di sini — semuanya sudah ada di header. */}
                 <div>
-                    <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-                    <ul className="text-foreground-accent">
-                        {footerDetails.quickLinks.map(link => (
-                            <li key={link.text} className="mb-2">
-                                <Link href={link.url} className="hover:text-foreground">{link.text}</Link>
+                    <h2 className="text-lg font-semibold mb-3">Kontak panitia</h2>
+                    <ul className="space-y-1 text-base text-foreground-accent">
+                        {footerDetails.email && (
+                            <li>
+                                <a href={`mailto:${footerDetails.email}`} className="hover:text-foreground">{footerDetails.email}</a>
                             </li>
-                        ))}
+                        )}
+                        {footerDetails.telephone && (
+                            <li>
+                                <a href={`tel:${footerDetails.telephone.replace(/[^\d+]/g, '')}`} className="hover:text-foreground">{footerDetails.telephone}</a>
+                            </li>
+                        )}
                     </ul>
-                </div>
-                <div>
-                    <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-
-                    {footerDetails.email && <a href={`mailto:${footerDetails.email}`}  className="block text-foreground-accent hover:text-foreground">Email: {footerDetails.email}</a>}
-
-                    {footerDetails.telephone && <a href={`tel:${footerDetails.telephone}`} className="block text-foreground-accent hover:text-foreground">Phone: {footerDetails.telephone}</a>}
 
                     {footerDetails.socials && (
-                        <div className="mt-5 flex items-center gap-5 flex-wrap">
+                        <div className="mt-5 flex items-center gap-5 flex-wrap text-foreground-accent">
                             {Object.keys(footerDetails.socials).map(platformName => {
                                 if (platformName && footerDetails.socials[platformName]) {
                                     return (
-                                        <Link
+                                        <a
                                             href={footerDetails.socials[platformName]}
                                             key={platformName}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             aria-label={platformName}
+                                            className="rounded transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                         >
                                             {getPlatformIconByName(platformName)}
-                                        </Link>
+                                        </a>
                                     )
                                 }
                             })}
@@ -75,37 +78,38 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                 </div>
             </div>
 
-            <div className="mt-8 text-center text-foreground-accent px-6 border-t border-border pt-6">
-                <p>Copyright &copy; {siteDetails.siteName}. All rights reserved.</p>
-                
-                {/* 🟢 BLOK MODIFIKASI: Tombol Pemicu Pop-up Legalitas */}
-                <div className="flex justify-center items-center gap-4 mt-2 text-sm text-muted-foreground">
-                    <button 
-                        onClick={() => setModalType('privacy')} 
-                        className="hover:text-foreground flex items-center gap-1.5 transition outline-none"
-                    >
-                        <FaShieldAlt className="w-3.5 h-3.5 text-primary-accent" /> Kebijakan Privasi
-                    </button>
-                    <span>•</span>
-                    <button 
-                        onClick={() => setModalType('terms')} 
-                        className="hover:text-foreground flex items-center gap-1.5 transition outline-none"
-                    >
-                        <FaFileContract className="w-3.5 h-3.5 text-primary-accent" /> Syarat & Ketentuan
-                    </button>
-                </div>
+            <div className="max-w-7xl mx-auto mt-10 px-6">
+                <div className="flex flex-col items-center gap-3 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row md:justify-between">
+                    <p>&copy; {siteDetails.siteName}. Hak cipta dilindungi.</p>
 
-                <p className="text-sm mt-3 text-muted-foreground">
-                    Developed by{' '}
-                    <a 
-                        href="https://kembar.in" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-secondary hover:underline font-medium"
-                    >
-                        kembar.in
-                    </a>
-                </p>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => setModalType('privacy')}
+                            className="rounded transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                            Kebijakan Privasi
+                        </button>
+                        <span aria-hidden="true">·</span>
+                        <button
+                            onClick={() => setModalType('terms')}
+                            className="rounded transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                            Syarat &amp; Ketentuan
+                        </button>
+                    </div>
+
+                    <p>
+                        Dikembangkan oleh{' '}
+                        <a
+                            href="https://kembar.in"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-foreground hover:underline underline-offset-4"
+                        >
+                            kembar.in
+                        </a>
+                    </p>
+                </div>
             </div>
 
             {/*
@@ -128,8 +132,8 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                         {/* Konten Kebijakan Privasi */}
                         {modalType === 'privacy' && (
                             <div>
-                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-xl font-black tracking-tight uppercase">
-                                    <FaShieldAlt className="w-6 h-6 text-primary-accent shrink-0" aria-hidden="true" />
+                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-2xl font-bold">
+                                    <FaShieldAlt className="w-6 h-6 text-foreground-accent shrink-0" aria-hidden="true" />
                                     Kebijakan Privasi
                                 </DialogTitle>
                                 <div className="text-sm text-foreground-accent space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">
@@ -146,8 +150,8 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                         {/* Konten Syarat & Ketentuan */}
                         {modalType === 'terms' && (
                             <div>
-                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-xl font-black tracking-tight uppercase">
-                                    <FaFileContract className="w-6 h-6 text-primary-accent shrink-0" aria-hidden="true" />
+                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-2xl font-bold">
+                                    <FaFileContract className="w-6 h-6 text-foreground-accent shrink-0" aria-hidden="true" />
                                     Syarat &amp; Ketentuan
                                 </DialogTitle>
                                 <div className="text-sm text-foreground-accent space-y-3 max-h-[60vh] overflow-y-auto pr-2 leading-relaxed">

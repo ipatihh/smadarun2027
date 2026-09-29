@@ -8,52 +8,45 @@ import { faqs } from "@/data/faq";
 const FAQ: React.FC = () => {
     return (
         <section id="faq" className="py-10 lg:py-20">
-            <div
-                className="flex flex-col lg:flex-row gap-10"
-            >
-                <div className="">
-                    <p className="hidden lg:block text-foreground-accent font-semibold tracking-wide">FAQ</p>
+            <div className="flex flex-col lg:flex-row gap-10">
+                <div className="lg:w-80 lg:shrink-0">
                     <SectionTitle>
-                        {/* Judul diubah ke Bahasa Indonesia agar serasi dengan isi pertanyaannya */}
-                        <h2 className="my-3 !leading-snug lg:max-w-sm text-center lg:text-left text-3xl lg:text-4xl font-bold">
+                        <h2 className="mb-3 text-center lg:text-left">
                             Pertanyaan Populer
                         </h2>
                     </SectionTitle>
-                    <p className="lg:mt-10 text-foreground-accent text-center lg:text-left">
+                    <p className="lg:mt-8 text-foreground-accent text-center lg:text-left">
                         Punya pertanyaan lain? Hubungi kami melalui:
                     </p>
-                    {/* Email diubah ke info@kembar.in sesuai permintaan */}
-                    <a 
-                        href="mailto:info@kembar.in" 
-                        className="mt-3 block text-xl lg:text-3xl text-secondary font-semibold hover:underline text-center lg:text-left break-all"
+                    <a
+                        href="mailto:info@kembar.in"
+                        className="mt-2 block text-xl font-semibold text-foreground underline-offset-4 hover:underline text-center lg:text-left break-all rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                         info@kembar.in
                     </a>
                 </div>
 
-                <div className="w-full lg:max-w-2xl mx-auto border-b">
+                <div className="w-full lg:max-w-2xl mx-auto border-b border-border">
                     {faqs.map((faq, index) => (
-                        <div key={index} className="mb-7">
-                            <Disclosure>
-                                {({ open }) => (
-                                    <>
-                                        <DisclosureButton className="flex items-center justify-between w-full px-4 pt-7 text-lg text-left border-t group">
-                                            <span className="text-xl lg:text-2xl font-semibold text-foreground group-hover:text-secondary transition-colors duration-200">
-                                                {faq.question}
-                                            </span>
-                                            {open ? (
-                                                <BiMinus className="w-6 h-6 text-secondary flex-shrink-0 ml-4" />
-                                            ) : (
-                                                <BiPlus className="w-6 h-6 text-secondary flex-shrink-0 ml-4" />
-                                            )}
-                                        </DisclosureButton>
-                                        <DisclosurePanel className="px-4 pt-4 pb-2 text-foreground-accent text-base leading-relaxed">
-                                            {faq.answer}
-                                        </DisclosurePanel>
-                                    </>
-                                )}
-                            </Disclosure>
-                        </div>
+                        <Disclosure key={index} as="div" className="border-t border-border">
+                            {({ open }) => (
+                                <>
+                                    <DisclosureButton className="flex items-center justify-between w-full gap-4 px-1 py-6 text-left group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                        <span className="text-lg lg:text-xl font-semibold text-foreground group-hover:text-foreground-accent transition-colors duration-200">
+                                            {faq.question}
+                                        </span>
+                                        {open ? (
+                                            <BiMinus className="w-6 h-6 text-foreground-accent flex-shrink-0" aria-hidden="true" />
+                                        ) : (
+                                            <BiPlus className="w-6 h-6 text-foreground-accent flex-shrink-0" aria-hidden="true" />
+                                        )}
+                                    </DisclosureButton>
+                                    <DisclosurePanel className="px-1 pb-6 -mt-2 text-foreground-accent text-base leading-relaxed">
+                                        {faq.answer}
+                                    </DisclosurePanel>
+                                </>
+                            )}
+                        </Disclosure>
                     ))}
                 </div>
             </div>

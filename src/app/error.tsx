@@ -32,7 +32,7 @@ export default function ErrorHalaman({
           <FiAlertTriangle className="h-7 w-7" />
         </div>
 
-        <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-foreground">
+        <h1 className="font-display text-2xl font-bold text-foreground">
           Halaman gagal dimuat
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
@@ -43,7 +43,7 @@ export default function ErrorHalaman({
         <div className="mt-7 flex flex-col gap-3">
           <button
             onClick={reset}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-extrabold uppercase tracking-wider text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
           >
             <FiRefreshCw className="h-4 w-4" aria-hidden="true" />
             Coba lagi

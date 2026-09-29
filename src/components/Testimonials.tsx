@@ -2,17 +2,37 @@
 import React from 'react';
 import Image from 'next/image';
 import { testimonials } from '@/data/testimonials';
+import { stats } from '@/data/stats';
 import SectionTitle from './SectionTitle';
 
 const Testimonials: React.FC = () => {
     return (
         <section id="testimonials" className="scroll-mt-24 py-10 lg:py-20">
-            <SectionTitle>
-                <h2 className="text-center mb-4">Apa Kata Mereka?</h2>
-            </SectionTitle>
-            <p className="mb-12 text-center text-foreground-accent">
-                Kesan dan cerita seru dari para pelari yang telah bergabung di event kami sebelumnya.
-            </p>
+            {/*
+               Angka statistik menumpang di kepala seksi ini, bukan seksi sendiri: keduanya
+               sama-sama bukti sosial, dan satu seksi penuh untuk tiga angka (salah satunya
+               "5K" yang sudah jadi nama kategori tiket) hanya menambah panjang halaman.
+            */}
+            <div className="mb-12 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-xl">
+                    <SectionTitle>
+                        <h2 className="mb-4">Apa Kata Mereka?</h2>
+                    </SectionTitle>
+                    <p className="text-foreground-accent">
+                        Kesan dan cerita dari para pelari yang sudah pernah bergabung.
+                    </p>
+                </div>
+                {stats.length > 0 && (
+                    <ul className="flex gap-10">
+                        {stats.map(stat => (
+                            <li key={stat.title}>
+                                <p className="font-display text-5xl font-bold leading-none text-foreground">{stat.title}</p>
+                                <p className="mt-2 max-w-[10rem] text-sm text-foreground-accent">{stat.description}</p>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
             {/*
                Mobile: carousel geser dengan snap; desktop: grid 3 kolom.
                scrollbar-hide kini benar-benar ada (didefinisikan di globals.css).
@@ -32,7 +52,7 @@ const Testimonials: React.FC = () => {
                     */
                     className={`min-w-[85%] md:min-w-[45%] lg:min-w-full snap-center bg-card border border-border p-6 rounded-card shadow-rest hover:shadow-hover transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${index % 2 !== 0 ? "lg:translate-y-6" : ""}`}
                 >
-                    <span className="font-display absolute -top-3 right-4 text-7xl text-primary/25 select-none leading-none" aria-hidden="true">&rdquo;</span>
+                    <span className="font-display absolute top-3 right-5 text-6xl text-primary-accent/40 select-none leading-none" aria-hidden="true">&rdquo;</span>
                     <div>
                         <div className="flex items-center mb-4 w-full justify-start">
                             <Image
@@ -43,7 +63,7 @@ const Testimonials: React.FC = () => {
                                 className="rounded-full shadow-rest object-cover"
                             />
                             <div className="ml-4 text-left">
-                                <h3 className="text-lg font-semibold text-secondary">{testimonial.name}</h3>
+                                <h3 className="text-lg font-semibold text-foreground">{testimonial.name}</h3>
                                 <p className="text-sm text-foreground-accent">{testimonial.role}</p>
                             </div>
                         </div>

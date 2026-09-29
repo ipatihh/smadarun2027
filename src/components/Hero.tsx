@@ -25,10 +25,7 @@ const Hero: React.FC = () => {
                 </div>
             </div>
 
-            <div className="absolute left-0 right-0 bottom-0 h-40 backdrop-blur-[2px] bg-gradient-to-b from-transparent via-[rgba(26,29,33,0.06)] to-[rgba(26,29,33,0.12)]" aria-hidden="true">
-            </div>
-
-            <div className="text-center">
+            <div className="w-full text-center">
                 {/* Kicker: penyelenggara event */}
                 <p className="reveal text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-sm sm:tracking-wider">
                     {heroDetails.kicker}
@@ -36,7 +33,7 @@ const Hero: React.FC = () => {
 
                 {/* Nama event — langsung menyambung kalimat "…mempersembahkan" di atasnya */}
                 <h1 className="reveal reveal-1 mt-3 font-display text-5xl font-bold uppercase leading-[0.95] tracking-tight text-foreground sm:text-7xl md:text-8xl md:leading-none">
-                    {heroDetails.heading} <span className="text-primary-accent">{heroDetails.headingAccent}</span>
+                    {heroDetails.heading} <span className="accent-mark">{heroDetails.headingAccent}</span>
                 </h1>
 
                 {/* Tagline: kalimat ajakannya, berdiri sebagai barisnya sendiri */}
@@ -68,17 +65,23 @@ const Hero: React.FC = () => {
                     </Link>
                 </div>
 
-                {/* Gambar Utama Event (Poster/Jersey) */}
+                {/*
+                   Gambar utama event. Bingkainya berasio tetap (4:3 di ponsel, 16:9 mulai sm)
+                   dan gambarnya object-cover, jadi poster/foto/ilustrasi apa pun yang dipasang
+                   panitia di hero.ts tidak mengubah tinggi hero. Subjek utama sebaiknya di
+                   tengah karena sisi kiri-kanan terpotong di ponsel.
+                */}
                 {heroDetails.centerImageSrc && (
-                    <div className="reveal reveal-4">
+                    <div className="reveal reveal-4 relative z-10 mx-auto mt-10 aspect-[4/3] w-full max-w-5xl overflow-hidden rounded-panel bg-surface-sunken shadow-hover sm:aspect-video md:mt-14">
                         <Image
                             src={heroDetails.centerImageSrc}
-                            width={768}
-                            height={600}
-                            sizes="(max-width: 768px) 100vw, 768px"
+                            alt={heroDetails.centerImageAlt}
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 1024px"
                             priority
-                            alt="Poster utama SMADARUN 2027"
-                            className="relative z-10 mx-auto mt-10 h-auto w-full max-w-3xl rounded-panel shadow-hover md:mt-16"
+                            // Image optimizer Next menolak SVG secara default — sajikan langsung.
+                            unoptimized={heroDetails.centerImageSrc.toLowerCase().endsWith('.svg')}
+                            className="object-cover"
                         />
                     </div>
                 )}

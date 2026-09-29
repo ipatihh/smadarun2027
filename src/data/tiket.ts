@@ -9,6 +9,9 @@
 // categoryKey apa adanya sebagai nama, tanpa daftar fasilitas) — jadi kategori
 // baru yang admin tambahkan di kembarin-v2 tidak akan pernah hilang dari
 // tampilan, walau belum sempat ditulis teks marketing-nya di sini.
+// Tulis di `features` hanya yang benar-benar isi paket. Jangan ulangi nama kategori
+// ("Slot Lari Kategori 5K Pelajar") — kartu sudah menampilkannya sebagai judul, dan butir
+// seperti itu membuat fasilitas yang sama di semua kategori tidak bisa digabung jadi satu.
 export interface ITiketMarketing {
   categoryKey: string;
   name: string;
@@ -26,7 +29,6 @@ export const tiketMarketing: ITiketMarketing[] = [
     name: '5K - Pelajar',
     badge: 'Khusus pelajar',
     features: [
-      'Slot Lari Kategori 5K Pelajar',
       'Jersey Eksklusif SMADARUN 2027',
       'Medali Finisher (Bagi yang mencapai finish)',
       'Nomor Dada / BIB Berwarna',
@@ -39,7 +41,6 @@ export const tiketMarketing: ITiketMarketing[] = [
     categoryKey: '5K Umum',
     name: '5K - Umum',
     features: [
-      'Slot Lari Kategori 5K Umum',
       'Jersey Eksklusif SMADARUN 2027',
       'Medali Finisher (Bagi yang mencapai finish)',
       'Nomor Dada / BIB Berwarna',

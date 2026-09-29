@@ -47,15 +47,13 @@ export default function StatusPendaftaranPage() {
       <div className="mx-auto w-full max-w-2xl">
         <div className="text-center">
           <p className="font-display text-3xl font-bold uppercase text-foreground">
-            SMADARUN <span className="text-primary-accent">2027</span>
+            SMADARUN <span className="accent-mark">2027</span>
           </p>
-          <p className="mt-1 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            Status Pendaftaran
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Status pendaftaran</p>
         </div>
 
         <div className="mt-8 rounded-card border border-border bg-card p-6 shadow-rest md:p-9">
-          <h1 className="font-display text-2xl font-bold uppercase tracking-wide text-foreground">
+          <h1 className="font-display text-2xl font-bold text-foreground">
             Terima kasih, pendaftaran Anda sedang diproses
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
@@ -66,7 +64,7 @@ export default function StatusPendaftaranPage() {
           <ol className="mt-8 space-y-6">
             {langkah.map((item, index) => (
               <li key={item.judul} className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-primary-accent">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
                   <item.icon className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
@@ -81,7 +79,7 @@ export default function StatusPendaftaranPage() {
 
           <div className="mt-8 rounded-field border border-border bg-surface-sunken p-5">
             <div className="flex items-start gap-3">
-              <FiHelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary-accent" aria-hidden="true" />
+              <FiHelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-foreground-accent" aria-hidden="true" />
               <div>
                 <p className="text-sm font-bold text-foreground">Belum menerima email konfirmasi?</p>
                 <p className="mt-1 text-sm leading-relaxed text-foreground-accent">
@@ -101,7 +99,7 @@ export default function StatusPendaftaranPage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/"
-              className="w-full rounded-full bg-primary px-6 py-3.5 text-center text-sm font-extrabold uppercase tracking-wider text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              className="w-full rounded-full bg-primary px-6 py-3.5 text-center text-sm font-bold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
             >
               Kembali ke beranda
             </Link>

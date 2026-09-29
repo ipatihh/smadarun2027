@@ -6,7 +6,7 @@ import { ResolvedTicketTier } from "@/lib/kembarinEvents";
 
 interface PricingColumnProps {
   tier: ResolvedTicketTier;
-  /** Biaya layanan platform per transaksi (live dari kembarin-v2). */
+  /** Biaya layanan platform per tiket (live dari kembarin-v2). */
   adminFee: number;
 }
 
@@ -65,19 +65,14 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
         </div>
 
         {tier.features.length > 0 && (
-          <div className="mt-8 border-t-2 border-dashed border-border pt-6">
-            <p className="text-left text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Khusus kategori ini:
-            </p>
-            <ul className="mt-4 space-y-3">
-              {tier.features.map((feature) => (
-                <li key={feature} className="flex items-start">
-                  <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-secondary" aria-hidden="true" />
-                  <p className="ml-3 text-left text-sm text-muted-foreground">{feature}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className="mt-8 space-y-3 border-t-2 border-dashed border-border pt-6">
+            {tier.features.map((feature) => (
+              <li key={feature} className="flex items-start">
+                <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-foreground" aria-hidden="true" />
+                <p className="ml-3 text-left text-sm text-foreground-accent">{feature}</p>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

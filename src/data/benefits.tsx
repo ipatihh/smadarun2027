@@ -1,76 +1,44 @@
-// PERBAIKAN IMPOR: Memasukkan FiDroplet dan FiCamera, serta menghapus FiHeart dan FiUsers yang sudah tidak terpakai
-import { FiAward, FiMapPin, FiClock, FiShield, FiMap, FiCheckCircle, FiDroplet, FiCamera } from "react-icons/fi";
-import { FaTshirt } from "react-icons/fa"; 
+import { FiDroplet, FiMap, FiClock, FiShield, FiCamera, FiMapPin } from "react-icons/fi";
 
-import { IBenefit } from "@/types"
+import { IBenefit } from "@/types";
 
+export const benefitsIntro = {
+    title: "Disiapkan dari Start sampai Finish",
+    description: "Kamu cukup fokus berlari. Keamanan rute, hidrasi, sampai dokumentasi sudah diurus panitia.",
+};
+
+// Isi race pack (jersey, medali, BIB, refreshment) SENGAJA tidak ditulis di sini: daftar
+// itu sudah tampil di seksi Tiket ("Semua kategori sudah termasuk", dari src/data/tiket.ts).
+// Sebelumnya fasilitas yang sama diulang di tiga tempat sekaligus.
 export const benefits: IBenefit[] = [
     {
-        title: "Fasilitas & Race Pack Peserta",
-        description: "Paket lomba eksklusif untuk kenyamanan dan performa terbaikmu.",
-        bullets: [
-            {
-                title: "Jersey Eksklusif SMADARUN 2027",
-                description: "Bahan premium yang nyaman, ringan, dan cepat kering (dry-fit).",
-                icon: <FaTshirt size={26} /> 
-            },
-            {
-                title: "Medali Finisher Khusus",
-                description: "Apresiasi logam eksklusif bagi semua pelari yang berhasil menyelesaikan rute.",
-                icon: <FiAward size={26} />
-            },
-            {
-                title: "Nomor Dada (BIB) & Refreshment",
-                description: "Nomor pelari resmi beserta paket hidrasi di rute dan garis finish.",
-                icon: <FiCheckCircle size={26} />
-            }
-        ],
-        imageSrc: "/images/pocari-1.jpg"
+        title: "Water Station Terjadwal",
+        description: "Pos hidrasi berkala supaya stamina dan cairan tubuhmu tetap terjaga.",
+        icon: <FiDroplet size={20} />,
     },
     {
-        title: "Rute Steril & Penuh Semangat",
-        description: "Jalur aman dengan dukungan penuh di sepanjang rute.",
-        bullets: [
-            {
-                title: "Water Station Terjadwal",
-                description: "Pos hidrasi berkala untuk memastikan stamina dan cairan tubuhmu terjaga.",
-                // 1. UBAH IKON WATER STATION MENJADI TETESAN AIR DI SINI
-                icon: <FiDroplet size={26} /> 
-            },
-            {
-                title: "Rute Terarah & Steril",
-                description: "Dipandu oleh marshal profesional dan penanda rute yang sangat jelas.",
-                icon: <FiMap size={26} />
-            },
-            {
-                title: "Pencatatan Waktu Akurat",
-                description: "Sistem pencatatan waktu yang siap mengukur pencapaian lari terbaikmu.",
-                icon: <FiClock size={26} />
-            }
-        ],
-        imageSrc: "/images/pocari-1.jpg"
+        title: "Rute Terarah & Steril",
+        description: "Dipandu marshal dan penanda rute yang jelas di setiap belokan.",
+        icon: <FiMap size={20} />,
     },
     {
-        title: "Aman & Didukung Komunitas",
-        description: "Keselamatan pelari adalah prioritas utama kami.",
-        bullets: [
-            {
-                title: "Tim Medis & Ambulans Standby",
-                description: "Tim medis bergerak cepat dan pos kesehatan siap siaga di area strategis.",
-                icon: <FiShield size={26} />
-            },
-            {
-                title: "Fotografer di Berbagai Titik",
-                description: "Abadikan momen terbaikmu saat berlari oleh tim fotografer official.",
-                // 2. UBAH IKON FOTOGRAFER MENJADI KAMERA DI SINI
-                icon: <FiCamera size={26} /> 
-            },
-            {
-                title: "Lokasi Strategis",
-                description: "Titik start dan finish yang mudah diakses dengan area parkir luas.",
-                icon: <FiMapPin size={26} />
-            }
-        ],
-        imageSrc: "/images/pocari-1.jpg"
+        title: "Pencatatan Waktu Akurat",
+        description: "Sistem pencatatan waktu yang siap mengukur pencapaian terbaikmu.",
+        icon: <FiClock size={20} />,
     },
-]
+    {
+        title: "Tim Medis & Ambulans Standby",
+        description: "Pos kesehatan siaga di titik-titik strategis sepanjang rute.",
+        icon: <FiShield size={20} />,
+    },
+    {
+        title: "Fotografer di Berbagai Titik",
+        description: "Momen terbaikmu diabadikan oleh tim fotografer resmi.",
+        icon: <FiCamera size={20} />,
+    },
+    {
+        title: "Lokasi Mudah Dijangkau",
+        description: "Titik start dan finish yang mudah diakses, lengkap dengan area parkir.",
+        icon: <FiMapPin size={20} />,
+    },
+];

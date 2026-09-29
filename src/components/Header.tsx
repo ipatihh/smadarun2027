@@ -75,7 +75,7 @@ const Header: React.FC = () => {
                         {!isDaftarPage && (
                             <Link
                                 href="/daftar"
-                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-6 py-2.5 text-sm uppercase tracking-wide shadow-rest hover:shadow-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-6 py-2.5 text-sm shadow-rest hover:shadow-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>
@@ -87,7 +87,7 @@ const Header: React.FC = () => {
                         {!isDaftarPage && (
                             <Link
                                 href="/daftar"
-                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-4 py-2 text-xs uppercase tracking-wide shadow-rest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-4 py-2 text-sm shadow-rest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>

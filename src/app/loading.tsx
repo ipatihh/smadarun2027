@@ -1,6 +1,6 @@
 /**
  * Kerangka beranda selagi Server Component menunggu data live kembarin-v2.
- * Bentuknya sengaja meniru tata letak asli (hero → panel countdown → kartu tiket)
+ * Bentuknya sengaja meniru tata letak asli (hero → panel hari lomba → kartu tiket)
  * supaya perpindahan ke konten sungguhan tidak terasa melompat.
  *
  * Tanpa file ini, Next.js tidak menampilkan apa pun sampai render server selesai —
@@ -27,11 +27,11 @@ export default function LoadingBeranda() {
         <Baris className="mt-4 h-14 w-full max-w-xs" />
       </div>
 
-      {/* Gambar utama */}
-      <div className="mx-auto mt-10 h-56 w-full max-w-3xl animate-pulse rounded-panel bg-surface-sunken sm:h-80" />
+      {/* Gambar utama — rasio sama dengan bingkai asli di Hero */}
+      <div className="mx-auto mt-10 aspect-[4/3] w-full max-w-5xl animate-pulse rounded-panel bg-surface-sunken sm:aspect-video md:mt-14" />
 
-      {/* Panel hitung mundur */}
-      <div className="mx-auto mt-8 h-40 w-full max-w-4xl animate-pulse rounded-panel bg-surface-sunken" />
+      {/* Panel hari lomba, menumpuk di tepi bawah gambar */}
+      <div className="relative mx-auto -mt-10 h-40 w-full max-w-4xl rounded-panel bg-secondary sm:-mt-16" />
 
       {/* Kartu tiket */}
       <div className="mx-auto mt-10 flex w-full max-w-4xl flex-col gap-6 md:flex-row">

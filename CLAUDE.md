@@ -81,7 +81,16 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   `text-on-primary`, `text-on-secondary`, `bg-warning-surface`, `rounded-card|field|panel`,
   `shadow-rest|hover`. Sebelum ini permukaan abu-abu di form punya 3 nuansa berbeda tanpa
   alasan dan mode gelap mustahil ditambahkan. Kuning `--primary` adalah warna PERMUKAAN,
-  bukan warna teks di latar terang (kontrasnya ±1.6:1).
+  bukan warna teks di latar terang (kontrasnya ±1.6:1) — angka "2027" di logotype memakai
+  kelas `.accent-mark` (blok kuning, teks gelap). Begitu juga `--secondary`: itu warna
+  panel gelap, BUKAN warna teks — `text-secondary` sempat dipakai di 9 tempat dan semuanya
+  nyaris hilang di mode gelap. Untuk teks pakai `text-foreground`/`text-foreground-accent`.
+- **Nilai token ditulis sebagai kanal RGB (`254 216 53`), bukan hex.** Tailwind memetakannya
+  jadi `rgb(var(--x) / <alpha-value>)`; hanya dengan format ini kelas opacity seperti
+  `bg-card/90` atau `ring-primary/25` ikut di-generate. Waktu token masih hex, 8 kelas
+  semacam itu diam-diam tidak pernah ada (tanpa error): header & bar bayar `/daftar` jadi
+  tembus pandang dan cincin fokus input jatuh ke biru bawaan Tailwind. Di CSS biasa tulis
+  `rgb(var(--x))`.
 - **Mode gelap otomatis ikut setelan sistem** — tidak ada toggle. Setiap warna baru wajib
   punya pasangan di blok `@media (prefers-color-scheme: dark)`, kalau tidak akan hilang
   kontras di mode gelap.
@@ -91,7 +100,7 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   (rAF di-throttle) formulir pendaftaran pernah benar-benar tidak terlihat. Reveal CSS
   jalan tanpa JS dan otomatis mati lewat `prefers-reduced-motion`.
 - **`src/data/**` HARUS tetap ada di daftar `content` Tailwind.** File data di sini ikut
-  menulis kelas Tailwind (ukuran kotak logo di `sponsors.ts`, warna ikon di `stats.tsx`).
+  menulis kelas Tailwind (ukuran kotak logo di `sponsors.ts`).
   Waktu folder itu belum masuk `content`, kelasnya diam-diam tidak ikut di-generate:
   tidak ada error, tidak ada peringatan, elemennya hanya tampil tanpa ukuran (kotak logo
   sponsor ikut ukuran gambar asli, bukan ukuran tier-nya). Kalau menambah folder data
@@ -102,13 +111,22 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   punya `StickyDaftarBar` (harga termurah + tombol daftar) dan itu dicopot: header sudah
   memuat tombol "Daftar" yang selalu terlihat, jadi bar itu CTA kedua yang menutupi
   konten tanpa menambah jalan menuju pendaftaran.
+- **Satu informasi, satu tempat.** Isi race pack hanya di seksi Tiket (`tiket.ts`), jadwal
+  hari-H (tanggal, lokasi, gun start, RPC) hanya di panel `EventInfo.tsx`. Sebelumnya isi race
+  pack diulang di Benefits, kotak fasilitas Tiket, dan FAQ sekaligus — itu yang membuat
+  halaman terasa panjang dan tidak sederhana. Jangan menambah seksi/FAQ yang mengulangnya.
 
 ## Gotcha operasional
 
 - **Sebagian besar konten masih SAMPLE dan memang disengaja** (per Agustus 2026): testimoni
-  beserta avatarnya, angka di seksi statistik, nomor telepon & tautan sosial media di
-  `src/data/footer.ts`, logo sponsor di `public/images/sponsors/`, foto hero & benefit, dan
-  gambar panduan ukuran jersey. Event-nya sendiri belum berjalan. Jangan "membetulkan" isinya
+  beserta avatarnya, angka statistik (`stats.ts`, tampil di kepala seksi testimoni), nomor
+  telepon & tautan sosial media di `src/data/footer.ts`, logo sponsor di
+  `public/images/sponsors/`, ilustrasi hero (`public/images/hero-illustration.svg`, dibuat
+  lewat skrip, bukan aset panitia), foto galeri "momen tahun lalu" (`src/data/gallery.ts`),
+  dan gambar panduan ukuran jersey. **Slot foto adalah bagian dari wadah**: panitia
+  merencanakannya untuk foto event tahun lalu, jadi saat menyederhanakan tata letak jangan
+  menghapus tempat foto walau isinya jelas contoh (pernah terjadi di Benefits; fotonya
+  kemudian dipindah ke galeri). Event-nya sendiri belum berjalan. Jangan "membetulkan" isinya
   atau menganggapnya data nyata — yang harus dijaga adalah wadahnya (struktur data, tata
   letak, aksesibilitas). Sebelum go-live, semua itu wajib diganti aset/teks asli panitia.
 - `.env` di repo ini **tidak ter-track git** (sengaja dikeluarkan, lihat `.gitignore`).
