@@ -25,7 +25,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
     const adminFeeLabel = `Rp${adminFee.toLocaleString('id-ID')}`;
 
     return (
-        <footer className="bg-hero-background text-foreground py-12 relative">
+        <footer className="bg-hero-background text-foreground pt-12 pb-36 md:py-12 relative">
             <div className="max-w-7xl w-full mx-auto px-6 flex flex-col gap-10 md:flex-row md:justify-between">
                 <div className="max-w-sm">
                     <Link href="/" className="inline-flex items-center gap-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -106,7 +106,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                             rel="noopener noreferrer"
                             className="font-medium text-foreground hover:underline underline-offset-4"
                         >
-                            PT KEMBAR INOVASI INDONESIA
+                            PT KEMBAR INOVASI
                         </a>
                     </p>
                 </div>
@@ -140,7 +140,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                                     <p>Panitia <strong>SMADARUN 2027</strong> berkomitmen menjaga keamanan dan kerahasiaan data pribadi Anda, sesuai UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.</p>
                                     <p><strong>1. Data yang dikumpulkan:</strong> Nama lengkap, alamat email, NIK, nomor WhatsApp, jenis kelamin, kota domisili, dan ukuran jersey. Data ini dipakai untuk validasi kepesertaan, pendataan asuransi/keselamatan, dan distribusi Race Pack.</p>
                                     <p><strong>2. Dasar pemrosesan:</strong> Persetujuan Anda, yang diberikan lewat kotak centang di formulir pendaftaran. Anda boleh menolak, dengan konsekuensi pendaftaran tidak dapat diproses.</p>
-                                    <p><strong>3. Pihak yang ikut memproses:</strong> Data pendaftaran dan transaksi diproses secara terintegrasi oleh <strong><a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a></strong> selaku <i>ticketing partner</i> resmi event ini. Panitia tidak pernah menerima atau menyimpan data kartu/rekening Anda.</p>
+                                    <p><strong>3. Pihak yang ikut memproses:</strong> Data pendaftaran dan transaksi diproses secara terintegrasi oleh <strong><a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a></strong> selaku <i>ticketing partner</i> resmi event ini. Panitia tidak pernah menerima atau menyimpan data kartu/rekening Anda.</p>
                                     <p><strong>4. Penyebarluasan:</strong> Data peserta tidak diperjualbelikan dan tidak dibagikan ke pihak lain di luar keperluan operasional resmi event dan kewajiban hukum yang berlaku.</p>
                                     <p><strong>5. Penyimpanan & hak Anda:</strong> Data disimpan selama penyelenggaraan event dan keperluan administrasi setelahnya. Anda berhak meminta akses, koreksi, atau penghapusan data dengan menghubungi <a className="font-semibold underline underline-offset-2" href={`mailto:${footerDetails.email}`}>{footerDetails.email}</a>.</p>
                                 </div>

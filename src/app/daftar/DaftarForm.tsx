@@ -978,7 +978,7 @@ export default function DaftarForm({
                   {ringkasanError && <div className="mt-4">{KotakRingkasanError}</div>}
                   <div className="mt-6">{submitButton()}</div>
                   <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-                    Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a>. Anda akan diarahkan ke halaman pembayaran resmi.{" "}
+                    Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Anda akan diarahkan ke halaman pembayaran resmi.{" "}
                     <Link href="/daftar/status" className="font-semibold underline underline-offset-2 hover:text-foreground-accent">
                       Sudah bayar?
                     </Link>
@@ -1011,7 +1011,12 @@ export default function DaftarForm({
                 </div>
               )}
             </div>
-            <div className="ml-auto w-36 shrink-0 sm:w-44">{submitButton("Bayar", "py-3.5")}</div>
+            <div className="ml-auto flex w-36 shrink-0 flex-col items-center gap-1.5 sm:w-44">
+              <div className="w-full">{submitButton("Bayar", "py-3")}</div>
+              <div className="text-center text-[9px] leading-tight text-muted-foreground">
+                Powered by <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-foreground">PT KEMBAR INOVASI</a>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1038,7 +1043,7 @@ export default function DaftarForm({
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               {status === "redirecting"
-                ? <>Anda sedang dibawa ke halaman pembayaran resmi <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a>. Jangan tutup halaman ini.</>
+                ? <>Anda sedang dibawa ke halaman pembayaran resmi <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Jangan tutup halaman ini.</>
                 : "Mohon tunggu sebentar dan jangan tutup halaman ini."}
             </p>
           </div>
