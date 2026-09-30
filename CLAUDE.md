@@ -21,17 +21,17 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   `registration_open_at` sudah lewat, dan ada minimal satu `ticket_types[].is_active`.
   Tiga gerbang terakhir sempat tidak dibaca sama sekali — akibatnya admin bisa menutup
   pendaftaran atau menonaktifkan kategori di dasbor, tapi partner site ini tetap menjual
-  tiket dan tetap membuat transaksi DOKU. Kalau menambah gerbang baru, tambahkan di sini,
+  tiket dan tetap membuat transaksi payment gateway. Kalau menambah gerbang baru, tambahkan di sini,
   jangan di UI.
 - **Biaya layanan dihitung PER TIKET, bukan per pesanan.** Core memakai
   `calculateAdminFee(... , ticketCount)` = `feePerTicket * ticketCount`, jadi pesanan 5
   tiket ditagih 5 × `admin_fee_amount`. Semua tempat yang menampilkan/menghitung nominal
   di project ini WAJIB mengalikan dengan jumlah peserta — kalau tidak, angka di layar
-  lebih kecil daripada yang ditagihkan DOKU.
+  lebih kecil daripada yang ditagihkan payment gateway.
 - **Pendaftaran memakai kontrak pesanan kolektif** `{ buyer, participants[] }` ke
   `POST /api/participants/register`. Kalau payload memuat array `participants`,
   `ParticipantService` langsung menyerahkannya ke `RegistrationOrderService` (hitung ulang
-  harga zero-trust, kuota atomik, satu order + satu pembayaran DOKU). Payload gaya lama
+  harga zero-trust, kuota atomik, satu order + satu pembayaran payment gateway). Payload gaya lama
   (field datar satu peserta) masih diterima core tapi dinormalisasi jadi pesanan 1 tiket —
   jangan kembali ke bentuk itu. Batasnya dibaca live dari `multi_ticket_enabled` dan
   `max_tickets_per_order`, dengan rumus penjepit yang sama seperti core (DEFAULT 5,
