@@ -272,7 +272,7 @@ export async function POST(req: NextRequest) {
     // BIAYA LAYANAN DIHITUNG PER TIKET, BUKAN PER PESANAN — sama seperti
     // calculateAdminFee() di kembarin-v2 (feePerTicket * ticketCount). Pesanan 5 tiket
     // berarti 5 x biaya layanan. Kalau di sini dihitung per pesanan, total yang tampil
-    // di layar akan lebih kecil daripada yang ditagihkan DOKU.
+    // di layar akan lebih kecil daripada yang ditagihkan oleh PT KEMBAR INOVASI.
     const expectedSubtotal = pesertaTervalidasi.reduce((sum, p) => sum + p.harga, 0);
     const expectedAdminFee = live.adminFee * pesertaTervalidasi.length;
     const expectedTotal = expectedSubtotal + expectedAdminFee;

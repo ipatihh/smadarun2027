@@ -152,7 +152,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
     let maxTicketsPerOrder = 1;
     // Toggle "tutup pendaftaran" di dasbor admin. Admin bisa menutup pendaftaran TANPA
     // mengubah status event jadi non-active — kalau flag ini diabaikan, partner site
-    // tetap menjual tiket dan tetap membuat transaksi DOKU padahal panitia sudah menutup.
+    // tetap menjual tiket dan tetap membuat transaksi padahal panitia sudah menutup.
     let registrationClosed = false;
     if (isRecord(event.event_config)) {
       const cfg = event.event_config;

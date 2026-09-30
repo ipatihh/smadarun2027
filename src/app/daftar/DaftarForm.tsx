@@ -29,7 +29,7 @@ interface PesertaState {
 type BuyerField = keyof BuyerState;
 type PesertaField = Exclude<keyof PesertaState, "key">;
 
-// Hanya domain resmi gateway DOKU yang boleh dituju saat redirect otomatis ke halaman pembayaran.
+// Hanya domain resmi gateway pembayaran yang boleh dituju saat redirect otomatis ke halaman pembayaran.
 // Mencegah open-redirect/phishing seandainya respons backend core suatu saat tidak sesuai ekspektasi.
 const ALLOWED_PAYMENT_HOSTS = ["doku.com", "sandbox.doku.com", "checkout.doku.com"];
 
@@ -170,7 +170,7 @@ export default function DaftarForm({
   maxTicketsPerOrder,
 }: DaftarFormProps) {
   const WEBHOOK_URL = "/api/daftar";
-  const imageSrc = "/images/ivan-1.jpg";
+  const imageSrc = "/images/pocari-1.jpg";
 
   // Kategori & harga live dari kembarin-v2 (props dari Server Component page.tsx).
   const KATEGORI_TIKET: Record<string, { label: string; price: number }> = useMemo(
@@ -206,7 +206,7 @@ export default function DaftarForm({
 
   /**
    * 'redirecting' penting dan bukan sekadar kosmetik: setelah paymentUrl diterima,
-   * browser butuh waktu berpindah ke DOKU. Sebelumnya blok `finally` mengembalikan
+   * browser butuh waktu berpindah ke halaman pembayaran. Sebelumnya blok `finally` mengembalikan
    * tombol ke keadaan diam SEBELUM perpindahan itu terjadi, sehingga di detik-detik
    * terakhir halaman tampak menganggur — persis kesan "stuck".
    */
@@ -405,10 +405,10 @@ export default function DaftarForm({
           result.paymentUrl || result.payment_url || result.data?.paymentUrl || result.data?.payment_url;
 
         if (paymentUrl) {
-          // Redirect hanya diizinkan ke domain resmi DOKU untuk mencegah open-redirect/phishing.
+          // Redirect hanya diizinkan ke domain resmi payment gateway untuk mencegah open-redirect/phishing.
           if (!isTrustedPaymentUrl(paymentUrl)) {
             throw new Error(
-              "Tautan pembayaran yang diterima tidak berasal dari domain resmi DOKU. Pendaftaran dibatalkan demi keamanan Anda."
+              "Tautan pembayaran yang diterima tidak valid. Pendaftaran dibatalkan demi keamanan Anda."
             );
           }
           // Tandai supaya blok `finally` TIDAK mengembalikan tombol ke keadaan diam
@@ -978,7 +978,7 @@ export default function DaftarForm({
                   {ringkasanError && <div className="mt-4">{KotakRingkasanError}</div>}
                   <div className="mt-6">{submitButton()}</div>
                   <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-                    Pembayaran diproses oleh DOKU. Anda akan diarahkan ke halaman pembayaran resmi.{" "}
+                    Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a>. Anda akan diarahkan ke halaman pembayaran resmi.{" "}
                     <Link href="/daftar/status" className="font-semibold underline underline-offset-2 hover:text-foreground-accent">
                       Sudah bayar?
                     </Link>
@@ -1038,7 +1038,7 @@ export default function DaftarForm({
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               {status === "redirecting"
-                ? "Anda sedang dibawa ke halaman pembayaran resmi DOKU. Jangan tutup halaman ini."
+                ? <>Anda sedang dibawa ke halaman pembayaran resmi <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a>. Jangan tutup halaman ini.</>
                 : "Mohon tunggu sebentar dan jangan tutup halaman ini."}
             </p>
           </div>

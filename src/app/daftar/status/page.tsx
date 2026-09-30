@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Tujuan balik setelah pembayaran. Sebelumnya peserta yang menutup halaman DOKU
+ * Tujuan balik setelah pembayaran. Sebelumnya peserta yang menutup halaman pembayaran
  * tidak punya tempat kembali sama sekali di situs ini.
  *
  * Halaman ini sengaja INFORMASIONAL, bukan pengecek status: kembarin-v2 belum
@@ -21,8 +21,12 @@ export const metadata: Metadata = {
 const langkah = [
   {
     icon: FiCheckCircle,
-    judul: "Pembayaran selesai di DOKU",
-    isi: "Setelah pembayaran berhasil, DOKU mengonfirmasi transaksi ke sistem pendaftaran secara otomatis.",
+    judul: "Pembayaran telah selesai",
+    isi: (
+      <>
+        Setelah pembayaran berhasil, <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a> mengonfirmasi transaksi ke sistem pendaftaran secara otomatis.
+      </>
+    ),
   },
   {
     icon: FiMail,
