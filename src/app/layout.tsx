@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteDetails.siteUrl),
   title: siteDetails.metadata.title,
   description: siteDetails.metadata.description,
+  keywords: ["smada run", "smadarun", "lomba lari", "lomba lari nganjuk", "smada run nganjuk", "sma negeri 2 nganjuk", "event lari nganjuk", "smadarun.id"],
+  alternates: {
+    canonical: siteDetails.siteUrl,
+  },
   openGraph: {
     title: siteDetails.metadata.title,
     description: siteDetails.metadata.description,
