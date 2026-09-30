@@ -21,7 +21,7 @@ export const galleryIntro = {
 
 export const galleryPhotos: IGalleryPhoto[] = [
     {
-        src: "/images/ivan-1.jpg",
+        src: "/images/pocari-1.jpg",
         alt: "Pelari tersenyum saat melintas di rute malam",
     },
     {
