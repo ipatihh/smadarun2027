@@ -391,7 +391,7 @@ export default function DaftarForm({
           size: p.size,
         };
       }),
-      paymentGateway: "doku",
+      paymentGateway: "midtrans",
 
       // Persetujuan ikut dikirim dan divalidasi ulang di server, bukan cuma mengunci tombol.
       health_declaration: true,

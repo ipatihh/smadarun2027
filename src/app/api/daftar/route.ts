@@ -334,7 +334,7 @@ export async function POST(req: NextRequest) {
     const kembarInUrl = process.env.KEMBAR_IN_API_URL || "https://kembar.in/api/participants/register";
 
     const gatewayName =
-      typeof paymentGateway === "string" && /^[a-z0-9_-]{2,20}$/i.test(paymentGateway) ? paymentGateway : "doku";
+      typeof paymentGateway === "string" && /^[a-z0-9_-]{2,20}$/i.test(paymentGateway) ? paymentGateway : "midtrans";
 
     // PENTING: payload dibangun EKSPLISIT dari field yang sudah divalidasi.
     // Jangan pernah menyebar body mentah dari klien ke sini — endpoint ini mengirim
