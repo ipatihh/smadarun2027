@@ -10,6 +10,7 @@ import {
   rapikanNomorIdentitas,
   validasiIdentitas,
 } from "@/lib/identitas";
+import { pesanPenolakanCore } from "@/lib/pesanPenolakanCore";
 
 // Sederhana in-memory cache untuk Rate Limiting & Proteksi Double Submit
 // Catatan: Karena Vercel adalah serverless environment, in-memory cache ini berjalan per instance/container.
@@ -54,19 +55,6 @@ function getClientIp(req: NextRequest): string {
 /** Buang deretan angka panjang (NIK, no. WhatsApp) sebelum sesuatu masuk log. */
 function redact(text: string): string {
   return text.replace(/\d{8,}/g, "[redacted]");
-}
-
-/**
- * Pesan error dari core hanya diteruskan ke pengguna kalau memang terlihat sebagai pesan
- * untuk manusia (mis. "NIK sudah terdaftar"). Sebelumnya potongan respons apa pun
- * diteruskan mentah, termasuk yang berpotensi membocorkan detail internal.
- */
-function isSafeUserFacingMessage(message: string): boolean {
-  if (message.length === 0 || message.length > 200) return false;
-  if (/[\n\r<>{}]/.test(message)) return false;
-  return !/(error:|exception|stack|at\s+\w+\s*\(|\/var\/|\/home\/|node_modules|select\s|insert\s|update\s\w+\sset|prisma|sqlstate|econn|undefined is not)/i.test(
-    message
-  );
 }
 
 // Pembersihan cache memori berkala dilakukan secara pasif di dalam request handler
@@ -431,25 +419,9 @@ export async function POST(req: NextRequest) {
         lepasKunci();
 
         // Teruskan pesan validasi dari core HANYA kalau bentuknya memang pesan untuk
-        // pengguna (mis. "NIK sudah terdaftar"), bukan potongan error internal.
-        let customMessage =
-          response.status >= 500
-            ? "Sistem pendaftaran pusat sedang bermasalah. Silakan coba beberapa saat lagi."
-            : "Data pendaftaran Anda ditolak sistem pendaftaran pusat. Periksa kembali isian Anda.";
-        try {
-          const parsedErr = JSON.parse(errText);
-          const candidate =
-            parsedErr && typeof parsedErr.message === "string"
-              ? parsedErr.message
-              : parsedErr && typeof parsedErr.error === "string"
-                ? parsedErr.error
-                : null;
-          if (candidate && isSafeUserFacingMessage(candidate)) {
-            customMessage = candidate;
-          }
-        } catch {
-          // Respons bukan JSON — pakai pesan generik di atas, jangan pantulkan isinya.
-        }
+        // pengguna (mis. "NIK sudah terdaftar"), bukan potongan error internal. Gagal
+        // membuat halaman pembayaran punya pesan sendiri — lihat pesanPenolakanCore.
+        const customMessage = pesanPenolakanCore(response.status, errText);
 
         return NextResponse.json({ success: false, message: customMessage }, { status: response.status });
       }
