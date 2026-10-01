@@ -82,7 +82,12 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   dipastikan — 16 pasti muat karena NIK sendiri 16. Core menyimpan keduanya di kolom
   `nik` yang sama, jadi `api/daftar` ikut mengirim `customFields.jenis_identitas`
   ("NIK"/"Kartu Pelajar") supaya panitia tahu mana yang dipakai.
-- **Domisili wajib dikirim sebagai KODE wilayah**, bukan cuma teks. `api/daftar` meneruskan
+- **Dropdown wilayah mengikuti toggle core**, bukan keputusan project ini. `kembarinEvents.ts`
+  membaca `event_config.enable_wilayah_dropdown` (hanya nilai tepat `true` = menyala, sama
+  seperti formulir kembar.in); menyala = `WilayahSelect`, mati = isian teks bebas tanpa kode.
+  `api/daftar` menerima kedua bentuk apa pun kondisi toggle-nya, karena tab yang dibuka
+  sebelum toggle berubah masih mengirim bentuk lama.
+- **Saat dropdown menyala, domisili wajib dikirim sebagai KODE wilayah**, bukan cuma teks. `api/daftar` meneruskan
   `customFields.__wilayah_prov` / `__wilayah_kota` (kontrak `RegistrationOrderService` core);
   tanpa itu core hanya menyimpan teks `kota` dan `prov_code/kota_code` di dasbor kosong —
   dropdown di form jadi sia-sia (pernah terjadi: provinsi pilihan peserta dibuang).

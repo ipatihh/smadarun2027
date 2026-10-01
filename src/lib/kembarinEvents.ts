@@ -69,6 +69,11 @@ export interface LiveEventData {
   // longgar daripada core, peserta baru ditolak setelah mengisi formulir panjang —
   // jadi keduanya harus dihitung dengan rumus yang sama.
   maxTicketsPerOrder: number;
+  // Domisili lewat dropdown Provinsi -> Kabupaten/Kota resmi atau teks bebas.
+  // Mengikuti toggle "Dropdown Wilayah Hierarkis" di dasbor Super Admin kembarin-v2
+  // (event_config.enable_wilayah_dropdown): hanya nilai tepat true yang menyalakan,
+  // sama seperti formulir kembar.in sendiri.
+  wilayahDropdown: boolean;
   // Jadwal pendaftaran dibuka (registration_open_at), apa adanya dari kembarin-v2.
   // Diisi hanya kalau tanggalnya masih di masa depan — dipakai UI untuk memberi tahu
   // pengunjung KAPAN bisa daftar, bukan sekadar "belum dibuka".
@@ -92,6 +97,7 @@ const CLOSED: LiveEventData = {
   adminFee: 0,
   multiTicketEnabled: false,
   maxTicketsPerOrder: 1,
+  wilayahDropdown: false,
   opensAt: null,
 };
 
@@ -150,6 +156,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
     let adminFee = 0;
     let multiTicketEnabled = false;
     let maxTicketsPerOrder = 1;
+    let wilayahDropdown = false;
     // Toggle "tutup pendaftaran" di dasbor admin. Admin bisa menutup pendaftaran TANPA
     // mengubah status event jadi non-active — kalau flag ini diabaikan, partner site
     // tetap menjual tiket dan tetap membuat transaksi padahal panitia sudah menutup.
@@ -183,6 +190,8 @@ export async function getLiveEventData(): Promise<LiveEventData> {
             Math.max(2, Number.isFinite(configuredMax) ? Math.floor(configuredMax) : DEFAULT_MAX_TICKETS)
           )
         : 1;
+
+      wilayahDropdown = cfg.enable_wilayah_dropdown === true;
     }
 
     // Jadwal pembukaan pendaftaran. Bisa berada di kolom event maupun di event_config.
@@ -218,6 +227,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       adminFee,
       multiTicketEnabled,
       maxTicketsPerOrder,
+      wilayahDropdown,
       timeline,
       opensAt,
     };

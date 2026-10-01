@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, ChangeEvent, FocusEvent, FormEvent } from "react";
+import React, { useMemo, useRef, useState, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/WilayahSelect";
@@ -99,6 +99,17 @@ const VALIDATOR_PESERTA: Record<PesertaField, (v: any, p: PesertaState) => strin
   size: (v) => (v ? null : "Pilih Ukuran jersey."),
 };
 
+// Domisili teks bebas, dipakai saat dropdown wilayah dimatikan di kembarin-v2.
+// Cermin cabang tanpa provinsi di api/daftar/route.ts (maksimal 100 karakter).
+const validasiKotaBebas = (v: string) => {
+  const t = v.trim();
+  if (!t) return "Kota domisili wajib diisi.";
+  if (t.length < 2) return "Nama kota minimal 2 karakter.";
+  if (t.length > 100) return "Nama kota maksimal 100 karakter.";
+  if (!KOTA_MANUAL_PATTERN.test(t)) return "Hanya huruf, spasi, titik, strip, dan tanda kutip yang diperbolehkan.";
+  return null;
+};
+
 // Urutan ini menentukan field mana yang difokuskan lebih dulu saat submit gagal.
 const URUTAN_BUYER: BuyerField[] = ["nama", "email", "whatsapp"];
 const URUTAN_PESERTA: PesertaField[] = ["nama", "nik", "gender", "wilayah", "kategori", "size", "email", "whatsapp"];
@@ -115,6 +126,8 @@ interface DaftarFormProps {
   multiTicketEnabled: boolean;
   /** Batas tiket per pesanan (event_config.max_tickets_per_order). */
   maxTicketsPerOrder: number;
+  /** Dropdown wilayah resmi atau teks bebas (event_config.enable_wilayah_dropdown). */
+  wilayahDropdown: boolean;
 }
 
 const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
@@ -147,9 +160,12 @@ const StepHeading: React.FC<{ step: number; title: string; hint?: string }> = ({
   </div>
 );
 
-let pesertaCounter = 0;
-const pesertaBaru = (kategoriDefault: string): PesertaState => ({
-  key: `peserta-${++pesertaCounter}`,
+// Key dibuat pemanggil, bukan penghitung tingkat modul: penghitung modul bertahan
+// antar-request di server, sehingga HTML server bisa bernama `peserta-4` sementara
+// browser memulai dari `peserta-1` (hydration mismatch pada `name` radio identitas,
+// dan nama server itu bisa bertabrakan dengan peserta yang ditambah belakangan).
+const pesertaBaru = (key: string, kategoriDefault: string): PesertaState => ({
+  key,
   nama: "",
   email: "",
   whatsapp: "",
@@ -168,6 +184,7 @@ export default function DaftarForm({
   opensAtLabel,
   multiTicketEnabled,
   maxTicketsPerOrder,
+  wilayahDropdown,
 }: DaftarFormProps) {
   const WEBHOOK_URL = "/api/daftar";
   const imageSrc = "/images/pocari-1.jpg";
@@ -197,7 +214,13 @@ export default function DaftarForm({
   // nama/email/WhatsApp peserta pertama mengikuti pemesan supaya tidak diketik dua kali.
   const [pemesanIkut, setPemesanIkut] = useState(true);
 
-  const [pesertaList, setPesertaList] = useState<PesertaState[]>([pesertaBaru(KATEGORI_KEYS[0] || "")]);
+  // Peserta awal selalu `peserta-0` supaya render server dan browser identik. Peserta
+  // berikutnya hanya dibuat di browser, nomornya dari ref milik komponen ini.
+  const nomorKeyBerikut = useRef(1);
+  const keyPesertaBaru = () => `peserta-${nomorKeyBerikut.current++}`;
+  const [pesertaList, setPesertaList] = useState<PesertaState[]>(() => [
+    pesertaBaru("peserta-0", KATEGORI_KEYS[0] || ""),
+  ]);
   const [pesertaErrors, setPesertaErrors] = useState<Record<string, Partial<Record<PesertaField, string>>>>({});
 
   const [isHealthyChecked, setIsHealthyChecked] = useState(false);
@@ -214,6 +237,9 @@ export default function DaftarForm({
   const loading = status !== "idle";
   const [ringkasanError, setRingkasanError] = useState<{ jumlah: number; targetId: string } | null>(null);
   const [isImgOpen, setIsImgOpen] = useState(false);
+  // Kartu peserta yang baru dituju dari tombol "Ubah" di ringkasan, disorot sebentar
+  // supaya pengguna tahu sedang berada di kartu peserta yang mana.
+  const [kartuDisorot, setKartuDisorot] = useState<string | null>(null);
   const [modal, setModal] = useState<{ show: boolean; success: boolean; title: string; message: string }>({
     show: false,
     success: false,
@@ -259,10 +285,15 @@ export default function DaftarForm({
     }
   };
 
+  const validasiPeserta = (field: PesertaField, value: any, p: PesertaState) =>
+    field === "wilayah" && !wilayahDropdown
+      ? validasiKotaBebas((value as WilayahValue).display)
+      : VALIDATOR_PESERTA[field](value, p);
+
   const handlePesertaBlur = (key: string, field: PesertaField, value: any) => {
     const peserta = pesertaList.find((p) => p.key === key);
     if (!peserta) return;
-    const message = VALIDATOR_PESERTA[field](value, peserta);
+    const message = validasiPeserta(field, value, peserta);
     setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: message ?? undefined } }));
   };
 
@@ -279,7 +310,8 @@ export default function DaftarForm({
 
   const tambahPeserta = () => {
     if (!bolehTambahPeserta) return;
-    setPesertaList((prev) => [...prev, pesertaBaru(KATEGORI_KEYS[0] || "")]);
+    const baru = pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || "");
+    setPesertaList((prev) => [...prev, baru]);
   };
 
   const hapusPeserta = (key: string) => {
@@ -304,6 +336,18 @@ export default function DaftarForm({
     }
   };
 
+  // Dari ringkasan kembali ke kartu peserta untuk memperbaiki isiannya. Yang difokuskan
+  // kartunya, bukan isian pertama: di ponsel fokus ke input teks memunculkan keyboard,
+  // padahal yang ingin diubah sering kali pilihan (ukuran jersey, kategori).
+  const ubahPeserta = (key: string, index: number) => {
+    const kartu = document.getElementById(`kartu-peserta-${index}`);
+    if (!kartu) return;
+    kartu.focus({ preventScroll: true });
+    kartu.scrollIntoView({ block: "start", behavior: "smooth" });
+    setKartuDisorot(key);
+    window.setTimeout(() => setKartuDisorot((k) => (k === key ? null : k)), 1600);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (loading || isFormClosed) return;
@@ -326,7 +370,7 @@ export default function DaftarForm({
         // Nama/email/WA peserta pertama mengikuti pemesan; kesalahannya sudah
         // dilaporkan di bagian pemesan, jangan dilaporkan dua kali.
         if (index === 0 && pemesanIkut && (field === "nama" || field === "email" || field === "whatsapp")) continue;
-        const message = VALIDATOR_PESERTA[field](p[field], p);
+        const message = validasiPeserta(field, p[field], p);
         if (message) errorsPeserta[field] = message;
       }
       // Dibandingkan dalam bentuk kunci (tanpa titik/strip/spasi), sama seperti server & core.
@@ -390,9 +434,10 @@ export default function DaftarForm({
           gender: p.gender,
           // Kode wilayah ikut dikirim supaya core menyimpan provinsi & kabupaten/kota
           // resmi (prov_code/kota_code), bukan sekadar teks. Server menurunkan ulang
-          // nama dari kode; `kota` hanya dipakai untuk isian manual.
-          provCode: p.wilayah.provCode,
-          kotaCode: p.wilayah.manual ? "" : p.wilayah.kotaCode,
+          // nama dari kode; `kota` hanya dipakai untuk isian manual. Saat dropdown
+          // dimatikan di kembarin-v2 hanya teks yang dikirim.
+          provCode: wilayahDropdown ? p.wilayah.provCode : "",
+          kotaCode: wilayahDropdown && !p.wilayah.manual ? p.wilayah.kotaCode : "",
           kota: p.wilayah.display.trim(),
           kategori: p.kategori,
           size: p.size,
@@ -452,7 +497,7 @@ export default function DaftarForm({
         });
 
         setBuyer({ nama: "", email: "", whatsapp: "" });
-        setPesertaList([pesertaBaru(KATEGORI_KEYS[0] || "")]);
+        setPesertaList([pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || "")]);
         setPesertaErrors({});
         setBuyerErrors({});
         setIsHealthyChecked(false);
@@ -501,19 +546,39 @@ export default function DaftarForm({
     </div>
   ) : null;
 
-  // Rincian biaya — dipakai dua kali: inline (mobile) & di kartu ringkasan sticky (desktop).
+  // Ringkasan pesanan — dipakai dua kali: inline (mobile) & di kartu sticky (desktop).
+  // Tiap peserta menampilkan nama, kategori, dan ukuran jersey supaya bisa dicek ulang
+  // sebelum membayar; isian yang belum diisi ditulis terang-terangan, bukan dikosongkan.
   const RincianBiaya = (
-    <dl className="space-y-2.5 text-sm">
+    <dl className="space-y-3 text-sm">
       {pesertaList.map((raw, index) => {
         const nama = dataPesertaEfektif(raw, index).nama.trim();
         const kategori = KATEGORI_TIKET[raw.kategori];
         return (
           <div key={raw.key} className="flex justify-between gap-4 text-foreground-accent font-medium">
             <dt className="min-w-0">
-              <span className="block truncate">{nama || `Peserta ${index + 1}`}</span>
-              <span className="text-xs text-muted-foreground">{kategori?.label ?? "-"}</span>
+              <span className="block truncate">
+                {nama || (
+                  <>
+                    Peserta {index + 1} <span className="text-warning">· nama belum diisi</span>
+                  </>
+                )}
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                {kategori?.label ?? "-"} ·{" "}
+                {raw.size ? `Jersey ${raw.size}` : <span className="text-warning">jersey belum dipilih</span>}
+              </span>
             </dt>
-            <dd className="tabular-nums">{rupiah(hargaPeserta(raw))}</dd>
+            <dd className="shrink-0 text-right">
+              <span className="block tabular-nums">{rupiah(hargaPeserta(raw))}</span>
+              <button
+                type="button"
+                onClick={() => ubahPeserta(raw.key, index)}
+                className="rounded text-xs font-bold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                Ubah<span className="sr-only"> data peserta {index + 1}</span>
+              </button>
+            </dd>
           </div>
         );
       })}
@@ -681,7 +746,14 @@ export default function DaftarForm({
                   const identitasDariPemesan = index === 0 && pemesanIkut;
 
                   return (
-                    <div key={raw.key} className="rounded-field border border-border bg-surface-sunken/60 p-5">
+                    <div
+                      key={raw.key}
+                      id={`kartu-peserta-${index}`}
+                      tabIndex={-1}
+                      className={`scroll-mt-28 rounded-field border bg-surface-sunken/60 p-5 transition-shadow duration-300 focus:outline-none ${
+                        kartuDisorot === raw.key ? "border-foreground ring-4 ring-primary/40" : "border-border"
+                      }`}
+                    >
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <p className="font-display text-base font-bold text-foreground">
                           Peserta {index + 1}
@@ -844,16 +916,35 @@ export default function DaftarForm({
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div>
                             <label htmlFor={`peserta-${index}-wilayah`} className={labelClass}>Kota Domisili</label>
-                            <WilayahSelect
-                              id={`peserta-${index}-wilayah`}
-                              value={p.wilayah}
-                              onChange={(val) => {
-                                handlePesertaChange(raw.key, "wilayah", val);
-                                handlePesertaBlur(raw.key, "wilayah", val);
-                              }}
-                              invalid={!!errs.wilayah}
-                              describedBy={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
-                            />
+                            {wilayahDropdown ? (
+                              <WilayahSelect
+                                id={`peserta-${index}-wilayah`}
+                                value={p.wilayah}
+                                onChange={(val) => {
+                                  handlePesertaChange(raw.key, "wilayah", val);
+                                  handlePesertaBlur(raw.key, "wilayah", val);
+                                }}
+                                invalid={!!errs.wilayah}
+                                describedBy={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
+                              />
+                            ) : (
+                              <input
+                                id={`peserta-${index}-wilayah`}
+                                type="text"
+                                autoComplete="address-level2"
+                                value={p.wilayah.display}
+                                onChange={(e) =>
+                                  handlePesertaChange(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
+                                }
+                                onBlur={(e) =>
+                                  handlePesertaBlur(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
+                                }
+                                placeholder="Contoh: Nganjuk"
+                                aria-invalid={!!errs.wilayah}
+                                aria-describedby={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
+                                className={fieldClass(!!errs.wilayah)}
+                              />
+                            )}
                             <FieldError id={`peserta-${index}-wilayah-error`} message={errs.wilayah} />
                           </div>
                           <div>
@@ -933,14 +1024,14 @@ export default function DaftarForm({
 
               {/* LANGKAH 3 — KONFIRMASI */}
               <section className="space-y-5">
-                <StepHeading step={3} title="Konfirmasi & Bayar" hint="Periksa rincian biaya sebelum melanjutkan ke pembayaran." />
+                <StepHeading step={3} title="Konfirmasi & Bayar" hint="Periksa data peserta dan rincian biaya sebelum melanjutkan ke pembayaran." />
 
                 {KotakRingkasanError}
 
-                {/* Rincian inline — di desktop informasi yang sama tampil di kartu sticky. */}
+                {/* Ringkasan inline — di desktop informasi yang sama tampil di kartu sticky. */}
                 {PENDAFTARAN_DIBUKA && (
                   <div className="rounded-field border border-border bg-surface-sunken p-5 lg:hidden">
-                    <p className="mb-3 text-sm font-semibold text-foreground">Rincian biaya</p>
+                    <p className="mb-3 text-sm font-semibold text-foreground">Ringkasan pesanan</p>
                     {RincianBiaya}
                   </div>
                 )}

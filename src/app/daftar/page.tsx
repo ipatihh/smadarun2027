@@ -25,6 +25,7 @@ export default async function DaftarPage() {
       opensAtLabel={formatJadwalBuka(live.opensAt)}
       multiTicketEnabled={live.multiTicketEnabled}
       maxTicketsPerOrder={live.maxTicketsPerOrder}
+      wilayahDropdown={live.wilayahDropdown}
     />
   );
 }

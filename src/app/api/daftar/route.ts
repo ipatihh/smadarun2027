@@ -263,9 +263,11 @@ export async function POST(req: NextRequest) {
           if (!provinsi) return gagal(`Provinsi domisili peserta ${nomor} tidak valid. Silakan pilih ulang.`);
           provCode = provinsi.c;
         }
-        // Tanpa provCode sama sekali = payload dari tab yang dibuka sebelum dropdown
-        // wilayah ada. Tetap diterima sebagai teks bebas (core juga menerimanya untuk
-        // event partner) supaya peserta tidak kehilangan isian form yang panjang.
+        // Tanpa provCode sama sekali = dropdown wilayah dimatikan di kembarin-v2
+        // (event_config.enable_wilayah_dropdown), atau payload dari tab yang dibuka
+        // sebelum toggle itu dinyalakan. Tetap diterima sebagai teks bebas (core juga
+        // menerimanya untuk event partner) supaya peserta tidak kehilangan isian form
+        // yang panjang.
         if (kotaTeks.length < 2 || kotaTeks.length > (provCode ? KOTA_MANUAL_MAX_LENGTH : 100) || !KOTA_MANUAL_PATTERN.test(kotaTeks)) {
           return gagal(`Format kota domisili peserta ${nomor} tidak valid. Hanya huruf, spasi, titik, strip, dan kutip.`);
         }
