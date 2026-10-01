@@ -36,7 +36,7 @@ smadarun2027 (Next.js, project ini)
         kembarin-v2 (core system): validasi ulang harga & kategori dari database-nya
         sendiri (zero-trust — tidak pernah percaya nominal/kategori dari client manapun),
         hitung biaya layanan per tiket, kunci kuota per kategori, buat SATU order untuk
-        seluruh peserta, buat transaksi payment gateway, kembalikan paymentUrl.
+        seluruh peserta, pilih gateway ("auto"), buat transaksinya, kembalikan paymentUrl.
 ```
 
 **Pembelian kolektif:** satu pemesan dapat mendaftarkan beberapa peserta dalam satu
@@ -151,7 +151,8 @@ diaudit bersih, tidak ada secret asli yang pernah bocor.
 - Status buka/tutup pendaftaran menghormati `registration_closed`, `registration_open_at`, dan `ticket_types[].is_active` dari kembarin-v2 — bukan hanya status event.
 - Harga & kategori tiket divalidasi ulang di server terhadap data live kembarin-v2 sebelum diteruskan — mencegah manipulasi nominal dari client, walau kembarin-v2 sendiri juga sudah zero-trust terhadap ini. Biaya layanan ikut dihitung ulang **per tiket** (`fee × jumlah peserta`).
 - Pesanan kolektif divalidasi per peserta: jumlah tiket tidak boleh melebihi `max_tickets_per_order` live, dan satu NIK tidak boleh muncul dua kali dalam satu pesanan (mencegah satu orang memakan kuota kategori berkali-kali). Proteksi double-submit mengunci seluruh NIK dalam pesanan, bukan hanya satu.
-- Redirect otomatis ke halaman pembayaran payment gateway divalidasi domainnya (`*.doku.com` via HTTPS saja) sebelum browser diarahkan — mencegah open-redirect kalau respons backend tidak sesuai ekspektasi.
+- Redirect otomatis ke halaman pembayaran payment gateway divalidasi domainnya (`*.doku.com` / `*.midtrans.com` via HTTPS saja, `ALLOWED_PAYMENT_HOSTS` di `DaftarForm.tsx`) sebelum browser diarahkan — mencegah open-redirect kalau respons backend tidak sesuai ekspektasi.
+- Gateway pembayaran tidak dipilih di sini: `api/daftar` selalu mengirim `paymentGateway: "auto"` dan core memilih gateway yang sedang diizinkan dasbor. Mengaktifkan/mematikan gateway cukup dari dasbor kembarin-v2, tanpa deploy ulang situs ini.
 - Security headers (CSP, HSTS, X-Frame-Options, dst) diatur di `next.config.mjs`.
 - Rate limiting & proteksi double-submit di sisi server (`api/daftar/route.ts`), plus header trusted-proxy opsional supaya rate limiter kembarin-v2 tidak salah tembak pengunjung berbeda sebagai satu sumber (lihat env var di atas). IP pengunjung dibaca dari `x-vercel-forwarded-for` atau entri paling kanan `x-forwarded-for` — bukan seluruh string, yang bisa dikarang klien untuk memecah kunci rate limiter.
 - Pesan error dari core hanya diteruskan ke pengguna kalau lolos saringan "pesan untuk manusia"; respons non-JSON tidak dipantulkan, dan log dibersihkan dari deretan angka panjang (NIK/WhatsApp).

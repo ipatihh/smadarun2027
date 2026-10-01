@@ -42,6 +42,14 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   header trusted-proxy, jadi field liar dari klien akan sampai ke core sebagai request
   tepercaya. Persetujuan kesehatan & privasi juga wajib divalidasi di server (bukan cuma
   checkbox di browser) dan dicatat dengan timestamp buatan server.
+- **Gateway pembayaran dipilih core, bukan situs ini.** `api/daftar` selalu mengirim
+  `paymentGateway: "auto"` (nilai dari browser diabaikan); core memilih gateway otomatis
+  yang diizinkan `allowed_payment_gateways` event + saklar global + batas QRIS-only, dan
+  tidak pernah memilih transfer manual. JANGAN menamai gateway di sini lagi — hardcode
+  `"doku"` lalu `"midtrans"` dua kali membuat SELURUH pendaftaran gagal (500) begitu
+  panitia mematikan gateway itu di dasbor. Kalau gateway baru dipakai, cukup tambahkan
+  domainnya ke `ALLOWED_PAYMENT_HOSTS` di `DaftarForm.tsx`. Core yang belum mengenal
+  `"auto"` menolak dengan "Metode pembayaran tidak valid" — deploy kembarin-v2 lebih dulu.
 - IP pengunjung dibaca lewat `getClientIp()`: `x-vercel-forwarded-for` dulu, lalu entri
   PALING KANAN dari `x-forwarded-for`. Memakai seluruh string `x-forwarded-for` (perilaku
   lama) membuat rate limiter bisa dilewati cukup dengan mengarang header.

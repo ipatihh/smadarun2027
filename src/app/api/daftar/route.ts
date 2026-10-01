@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
       return gagal("Format JSON tidak valid.");
     }
 
-    const { eventCode, buyer, participants, paymentGateway, health_declaration, privacy_consent, subtotal, total_amount } = body;
+    const { eventCode, buyer, participants, health_declaration, privacy_consent, subtotal, total_amount } = body;
 
     // 4. Validasi & sanitasi ketat
 
@@ -333,9 +333,6 @@ export async function POST(req: NextRequest) {
     // 6. Payload ke core (kembarin-v2)
     const kembarInUrl = process.env.KEMBAR_IN_API_URL || "https://kembar.in/api/participants/register";
 
-    const gatewayName =
-      typeof paymentGateway === "string" && /^[a-z0-9_-]{2,20}$/i.test(paymentGateway) ? paymentGateway : "midtrans";
-
     // PENTING: payload dibangun EKSPLISIT dari field yang sudah divalidasi.
     // Jangan pernah menyebar body mentah dari klien ke sini — endpoint ini mengirim
     // header trusted-proxy, jadi field liar akan sampai ke core sebagai request tepercaya.
@@ -367,7 +364,11 @@ export async function POST(req: NextRequest) {
           ...(p.provCode ? { __wilayah_prov: p.provCode, __wilayah_kota: p.kotaCode ?? "" } : {}),
         },
       })),
-      paymentGateway: gatewayName,
+      // Situs ini tidak menawarkan pilihan metode pembayaran, jadi gateway dipilih core
+      // dari saklar per-event & global di dasbor kembarin-v2. Nilai dari browser SENGAJA
+      // diabaikan: menamai gateway di sini pernah membuat seluruh pendaftaran gagal saat
+      // panitia mematikan gateway itu di dasbor.
+      paymentGateway: "auto",
 
       // Jejak persetujuan peserta. Timestamp sengaja dibuat di server, bukan diambil
       // dari klien, supaya tidak bisa dikarang.
