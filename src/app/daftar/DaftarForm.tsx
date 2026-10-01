@@ -33,7 +33,7 @@ type PesertaField = Exclude<keyof PesertaState, "key">;
 
 // Hanya domain resmi gateway pembayaran yang boleh dituju saat redirect otomatis ke halaman pembayaran.
 // Mencegah open-redirect/phishing seandainya respons backend core suatu saat tidak sesuai ekspektasi.
-const ALLOWED_PAYMENT_HOSTS = ["doku.com", "sandbox.doku.com", "checkout.doku.com"];
+const ALLOWED_PAYMENT_HOSTS = ["doku.com", "sandbox.doku.com", "checkout.doku.com", "midtrans.com", "sandbox.midtrans.com"];
 
 function isTrustedPaymentUrl(url: string): boolean {
   try {
