@@ -17,6 +17,7 @@ import {
   rapikanNomorIdentitas,
   validasiIdentitas,
 } from "@/lib/identitas";
+import { isTrustedPaymentUrl } from "@/lib/paymentUrl";
 
 interface BuyerState {
   nama: string;
@@ -41,22 +42,6 @@ interface PesertaState {
 type BuyerField = keyof BuyerState;
 // `jenisIdentitas` bukan isian yang divalidasi sendiri — ia menentukan aturan untuk `nik`.
 type PesertaField = Exclude<keyof PesertaState, "key" | "jenisIdentitas">;
-
-// Hanya domain resmi gateway pembayaran yang boleh dituju saat redirect otomatis ke halaman pembayaran.
-// Mencegah open-redirect/phishing seandainya respons backend core suatu saat tidak sesuai ekspektasi.
-const ALLOWED_PAYMENT_HOSTS = ["doku.com", "sandbox.doku.com", "checkout.doku.com", "midtrans.com", "sandbox.midtrans.com"];
-
-function isTrustedPaymentUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url, window.location.origin);
-    if (parsed.protocol !== "https:") return false;
-    return ALLOWED_PAYMENT_HOSTS.some(
-      (host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)
-    );
-  } catch {
-    return false;
-  }
-}
 
 // Cermin dari validasi server di api/daftar/route.ts. Tujuannya UX: pengguna tahu
 // kesalahan format SEBELUM menekan bayar, bukan lewat modal setelah request bolak-balik.
@@ -444,7 +429,7 @@ export default function DaftarForm({
 
         if (paymentUrl) {
           // Redirect hanya diizinkan ke domain resmi payment gateway untuk mencegah open-redirect/phishing.
-          if (!isTrustedPaymentUrl(paymentUrl)) {
+          if (!isTrustedPaymentUrl(paymentUrl, window.location.origin)) {
             throw new Error(
               "Tautan pembayaran yang diterima tidak valid. Pendaftaran dibatalkan demi keamanan Anda."
             );

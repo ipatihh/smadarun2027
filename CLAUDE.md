@@ -48,7 +48,7 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   tidak pernah memilih transfer manual. JANGAN menamai gateway di sini lagi — hardcode
   `"doku"` lalu `"midtrans"` dua kali membuat SELURUH pendaftaran gagal (500) begitu
   panitia mematikan gateway itu di dasbor. Kalau gateway baru dipakai, cukup tambahkan
-  domainnya ke `ALLOWED_PAYMENT_HOSTS` di `DaftarForm.tsx`. Core yang belum mengenal
+  domain induknya ke `ALLOWED_PAYMENT_DOMAINS` di `src/lib/paymentUrl.ts` (mode sandbox/produksi tidak perlu diubah — subdomain ikut diterima). Core yang belum mengenal
   `"auto"` menolak dengan "Metode pembayaran tidak valid" — deploy kembarin-v2 lebih dulu.
 - IP pengunjung dibaca lewat `getClientIp()`: `x-vercel-forwarded-for` dulu, lalu entri
   PALING KANAN dari `x-forwarded-for`. Memakai seluruh string `x-forwarded-for` (perilaku
