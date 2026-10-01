@@ -50,7 +50,7 @@ const Countdown: React.FC<Props> = ({ eventDate, centered = false }) => {
   if (!targetMs || !timeLeft) {
     return (
       <div>
-        <p className="font-display text-2xl font-semibold leading-tight text-on-secondary sm:text-3xl">
+        <p className="font-display text-xl sm:text-2xl md:text-3xl font-semibold leading-tight text-on-secondary">
           Tanggal hari-H segera diumumkan
         </p>
         <p className="mt-2 text-sm text-on-secondary-muted">
@@ -64,7 +64,7 @@ const Countdown: React.FC<Props> = ({ eventDate, centered = false }) => {
     <div className={`flex items-center gap-6 sm:gap-8 ${centered ? "justify-center" : ""}`}>
       {UNITS.map((u) => (
         <div key={u.key} className="text-center">
-          <div className="font-display text-4xl font-bold leading-none text-primary tabular-nums sm:text-5xl">
+          <div className="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-none text-primary tabular-nums">
             {String(timeLeft[u.key]).padStart(2, "0")}
           </div>
           <div className="mt-2 text-sm text-on-secondary-muted">{u.label}</div>

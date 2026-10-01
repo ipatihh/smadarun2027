@@ -25,27 +25,14 @@ export interface ITiketMarketing {
 
 export const tiketMarketing: ITiketMarketing[] = [
   {
-    categoryKey: '5K Pelajar',
-    name: '5K - Pelajar',
-    badge: 'Khusus pelajar',
+    categoryKey: '5 KM  Reguler',
+    name: '5 KM Reguler',
     features: [
       'Jersey Eksklusif SMADARUN 2027',
-      'Medali Finisher (Bagi yang mencapai finish)',
-      'Nomor Dada / BIB Berwarna',
-      'Refreshment / Hidrasi Lomba',
-      'Asuransi & Proteksi Medis',
-    ],
-    url: '/daftar',
-  },
-  {
-    categoryKey: '5K Umum',
-    name: '5K - Umum',
-    features: [
-      'Jersey Eksklusif SMADARUN 2027',
-      'Medali Finisher (Bagi yang mencapai finish)',
-      'Nomor Dada / BIB Berwarna',
-      'Refreshment / Hidrasi Lomba',
-      'Asuransi & Proteksi Medis',
+      'Medali Finisher',
+      'Nomor BIB',
+      'Goodie Bag',
+      'Photo Tagging',
     ],
     url: '/daftar',
   },

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
-import { FaRunning, FaShieldAlt, FaFileContract } from 'react-icons/fa'; 
+import { FaShieldAlt, FaFileContract } from 'react-icons/fa'; 
 
 import { siteDetails } from '@/data/siteDetails';
 import { footerDetails } from '@/data/footer';
@@ -29,7 +29,6 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
             <div className="max-w-7xl w-full mx-auto px-6 flex flex-col gap-10 md:flex-row md:justify-between">
                 <div className="max-w-sm">
                     <Link href="/" className="inline-flex items-center gap-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                        <FaRunning className="min-w-fit w-6 h-6 text-foreground" aria-hidden="true" />
                         <span className="font-display text-xl font-semibold">
                             {siteDetails.siteName}
                         </span>
@@ -41,7 +40,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
 
                 {/* Tautan navigasi sengaja tidak diulang di sini — semuanya sudah ada di header. */}
                 <div>
-                    <h2 className="text-lg font-semibold mb-3">Kontak panitia</h2>
+                    <h2 className="text-base sm:text-lg font-semibold mb-3">Kontak Panitia</h2>
                     <ul className="space-y-1 text-base text-foreground-accent">
                         {footerDetails.email && (
                             <li>
@@ -80,7 +79,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
 
             <div className="max-w-7xl mx-auto mt-10 px-6">
                 <div className="flex flex-col items-center gap-3 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row md:justify-between">
-                    <p>&copy; {siteDetails.siteName}. Hak cipta dilindungi.</p>
+                    <p>&copy; {siteDetails.siteName}. Hak Cipta Dilindungi.</p>
 
                     <div className="flex items-center gap-4">
                         <button
@@ -99,7 +98,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                     </div>
 
                     <p>
-                        Dikembangkan oleh{' '}
+                        Dikembangkan Oleh{' '}
                         <a
                             href="https://kembar.in"
                             target="_blank"
@@ -132,7 +131,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                         {/* Konten Kebijakan Privasi */}
                         {modalType === 'privacy' && (
                             <div>
-                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-2xl font-bold">
+                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-xl sm:text-2xl font-bold">
                                     <FaShieldAlt className="w-6 h-6 text-foreground-accent shrink-0" aria-hidden="true" />
                                     Kebijakan Privasi
                                 </DialogTitle>
@@ -150,7 +149,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                         {/* Konten Syarat & Ketentuan */}
                         {modalType === 'terms' && (
                             <div>
-                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-2xl font-bold">
+                                <DialogTitle className="flex items-center gap-2 mb-4 text-foreground text-xl sm:text-2xl font-bold">
                                     <FaFileContract className="w-6 h-6 text-foreground-accent shrink-0" aria-hidden="true" />
                                     Syarat &amp; Ketentuan
                                 </DialogTitle>

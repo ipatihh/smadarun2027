@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Transition } from '@headlessui/react';
 import { HiOutlineXMark, HiBars3 } from 'react-icons/hi2';
-import { FaRunning } from 'react-icons/fa';
 
 import Container from './Container';
 import { siteDetails } from '@/data/siteDetails';
@@ -50,7 +49,6 @@ const Header: React.FC = () => {
             <Container className="!px-0">
                 <nav aria-label="Navigasi utama" className="mx-auto flex justify-between items-center gap-4 py-3 px-5 md:py-4">
                     <Link href="/" className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-                        <FaRunning className="text-foreground min-w-fit w-7 h-7" />
                         <span className="font-display text-xl font-semibold text-foreground">
                             {siteDetails.siteName}
                         </span>

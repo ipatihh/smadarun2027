@@ -10,10 +10,12 @@ const Benefits: React.FC = () => {
     return (
         <section id="fasilitas" aria-labelledby="fasilitas-judul" className="py-16 lg:py-24">
             <div className="grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16">
-                <SectionTitle>
-                    <h2 id="fasilitas-judul" className="max-w-md">{benefitsIntro.title}</h2>
-                </SectionTitle>
-                <p className="max-w-md text-foreground-accent lg:justify-self-end">
+                <div className="reveal-left">
+                    <SectionTitle>
+                        <h2 id="fasilitas-judul" className="max-w-md">{benefitsIntro.title}</h2>
+                    </SectionTitle>
+                </div>
+                <p className="reveal-right max-w-md text-foreground-accent lg:justify-self-end">
                     {benefitsIntro.description}
                 </p>
             </div>

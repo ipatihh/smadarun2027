@@ -3,6 +3,7 @@
 import React, { useMemo, useState, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/WilayahSelect";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { tiketMarketing } from "@/data/tiket";
@@ -21,7 +22,7 @@ interface PesertaState {
   whatsapp: string;
   nik: string;
   gender: string;
-  kota: string;
+  wilayah: WilayahValue;
   kategori: string;
   size: string;
 }
@@ -72,12 +73,12 @@ const validasiWhatsapp = (v: string, wajib: boolean) => {
 };
 
 const VALIDATOR_BUYER: Record<BuyerField, (v: string) => string | null> = {
-  nama: (v) => validasiNama(v, "Nama pemesan"),
+  nama: (v) => validasiNama(v, "Nama Pemesan"),
   email: (v) => validasiEmail(v, true),
   whatsapp: (v) => validasiWhatsapp(v, true),
 };
 
-const VALIDATOR_PESERTA: Record<PesertaField, (v: string) => string | null> = {
+const VALIDATOR_PESERTA: Record<PesertaField, (v: any) => string | null> = {
   nama: (v) => validasiNama(v, "Nama peserta"),
   email: (v) => validasiEmail(v, false),
   whatsapp: (v) => validasiWhatsapp(v, false),
@@ -87,22 +88,20 @@ const VALIDATOR_PESERTA: Record<PesertaField, (v: string) => string | null> = {
     if (!/^\d{16}$/.test(t)) return `NIK harus 16 digit angka (sekarang ${t.length} karakter).`;
     return null;
   },
-  gender: (v) => (v ? null : "Pilih jenis kelamin."),
-  kota: (v) => {
-    const t = v.trim();
-    if (!t) return "Kota domisili wajib diisi.";
-    if (t.length < 2) return "Nama kota minimal 2 karakter.";
-    if (t.length > 100) return "Nama kota maksimal 100 karakter.";
-    if (!/^[a-zA-Z\s.'-]+$/.test(t)) return "Hanya huruf, spasi, titik, strip, dan tanda kutip yang diperbolehkan.";
+  gender: (v) => (v ? null : "Pilih Jenis Kelamin."),
+  wilayah: (v: WilayahValue) => {
+    if (!v.provCode) return "Provinsi domisili wajib dipilih.";
+    if (!v.kotaCode && !v.manual) return "Kota / Kabupaten domisili wajib dipilih.";
+    if (v.manual && !v.display.trim()) return "Kota / Kabupaten domisili wajib diisi.";
     return null;
   },
   kategori: (v) => (v ? null : "Pilih kategori lomba."),
-  size: (v) => (v ? null : "Pilih ukuran jersey."),
+  size: (v) => (v ? null : "Pilih Ukuran jersey."),
 };
 
 // Urutan ini menentukan field mana yang difokuskan lebih dulu saat submit gagal.
 const URUTAN_BUYER: BuyerField[] = ["nama", "email", "whatsapp"];
-const URUTAN_PESERTA: PesertaField[] = ["nama", "nik", "gender", "kota", "kategori", "size", "email", "whatsapp"];
+const URUTAN_PESERTA: PesertaField[] = ["nama", "nik", "gender", "wilayah", "kategori", "size", "email", "whatsapp"];
 
 interface DaftarFormProps {
   ticketTypes: LiveTicketType[];
@@ -156,7 +155,7 @@ const pesertaBaru = (kategoriDefault: string): PesertaState => ({
   whatsapp: "",
   nik: "",
   gender: "",
-  kota: "",
+  wilayah: createEmptyWilayah(),
   kategori: kategoriDefault,
   size: "",
 });
@@ -251,7 +250,7 @@ export default function DaftarForm({
     setBuyerErrors((prev) => ({ ...prev, [name]: VALIDATOR_BUYER[name](e.target.value) ?? undefined }));
   };
 
-  const handlePesertaChange = (key: string, field: PesertaField, value: string) => {
+  const handlePesertaChange = (key: string, field: PesertaField, value: any) => {
     setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, [field]: value } : p)));
     setRingkasanError(null);
     if (pesertaErrors[key]?.[field]) {
@@ -259,7 +258,7 @@ export default function DaftarForm({
     }
   };
 
-  const handlePesertaBlur = (key: string, field: PesertaField, value: string) => {
+  const handlePesertaBlur = (key: string, field: PesertaField, value: any) => {
     const message = VALIDATOR_PESERTA[field](value);
     setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: message ?? undefined } }));
   };
@@ -368,7 +367,7 @@ export default function DaftarForm({
           whatsapp: p.whatsapp.trim(),
           nik: p.nik.trim(),
           gender: p.gender,
-          kota: p.kota.trim(),
+          kota: p.wilayah.display.trim(),
           kategori: p.kategori,
           size: p.size,
         };
@@ -496,7 +495,7 @@ export default function DaftarForm({
       })}
       <div className="flex justify-between gap-4 border-t border-border pt-2.5 text-foreground-accent font-medium">
         <dt>
-          Biaya layanan platform
+          Biaya Layanan Platform
           <span className="block text-xs text-muted-foreground">
             {rupiah(adminFee)} × {pesertaList.length} tiket
           </span>
@@ -504,7 +503,7 @@ export default function DaftarForm({
         <dd className="tabular-nums">{rupiah(totalAdminFee)}</dd>
       </div>
       <div className="flex justify-between gap-4 border-t border-border pt-2.5 font-black text-base text-foreground">
-        <dt>Total pembayaran</dt>
+        <dt>Total Pembayaran</dt>
         <dd className="tabular-nums">{rupiah(totalAmount)}</dd>
       </div>
     </dl>
@@ -573,7 +572,7 @@ export default function DaftarForm({
                   hint="Penanggung jawab pesanan. Tautan pembayaran & bukti pendaftaran dikirim ke sini."
                 />
                 <div>
-                  <label htmlFor="buyer-nama" className={labelClass}>Nama pemesan</label>
+                  <label htmlFor="buyer-nama" className={labelClass}>Nama Pemesan</label>
                   <input
                     id="buyer-nama"
                     name="nama"
@@ -582,7 +581,7 @@ export default function DaftarForm({
                     value={buyer.nama}
                     onChange={handleBuyerChange}
                     onBlur={handleBuyerBlur}
-                    placeholder="Nama lengkap"
+                    placeholder="Nama Lengkap"
                     aria-invalid={!!buyerErrors.nama}
                     aria-describedby={buyerErrors.nama ? "buyer-nama-error" : undefined}
                     className={fieldClass(!!buyerErrors.nama)}
@@ -591,7 +590,7 @@ export default function DaftarForm({
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="buyer-email" className={labelClass}>Alamat email</label>
+                    <label htmlFor="buyer-email" className={labelClass}>Alamat Email</label>
                     <input
                       id="buyer-email"
                       name="email"
@@ -689,7 +688,7 @@ export default function DaftarForm({
                         ) : (
                           <>
                             <div>
-                              <label htmlFor={`peserta-${index}-nama`} className={labelClass}>Nama lengkap</label>
+                              <label htmlFor={`peserta-${index}-nama`} className={labelClass}>Nama Lengkap</label>
                               <input
                                 id={`peserta-${index}-nama`}
                                 type="text"
@@ -769,7 +768,7 @@ export default function DaftarForm({
                             )}
                           </div>
                           <div>
-                            <label htmlFor={`peserta-${index}-gender`} className={labelClass}>Jenis kelamin</label>
+                            <label htmlFor={`peserta-${index}-gender`} className={labelClass}>Jenis Kelamin</label>
                             <select
                               id={`peserta-${index}-gender`}
                               value={p.gender}
@@ -779,7 +778,7 @@ export default function DaftarForm({
                               aria-describedby={errs.gender ? `peserta-${index}-gender-error` : undefined}
                               className={fieldClass(!!errs.gender)}
                             >
-                              <option value="" disabled>Pilih jenis kelamin</option>
+                              <option value="" disabled>Pilih Jenis Kelamin</option>
                               <option value="Laki-laki">Laki-laki</option>
                               <option value="Perempuan">Perempuan</option>
                             </select>
@@ -789,23 +788,30 @@ export default function DaftarForm({
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div>
-                            <label htmlFor={`peserta-${index}-kota`} className={labelClass}>Kota domisili</label>
-                            <input
-                              id={`peserta-${index}-kota`}
-                              type="text"
-                              autoComplete="address-level2"
-                              value={p.kota}
-                              onChange={(e) => handlePesertaChange(raw.key, "kota", e.target.value)}
-                              onBlur={(e) => handlePesertaBlur(raw.key, "kota", e.target.value)}
-                              placeholder="Contoh: Nganjuk"
-                              aria-invalid={!!errs.kota}
-                              aria-describedby={errs.kota ? `peserta-${index}-kota-error` : undefined}
-                              className={fieldClass(!!errs.kota)}
+                            <label htmlFor={`peserta-${index}-wilayah`} className={labelClass}>Kota Domisili</label>
+                            <WilayahSelect
+                              id={`peserta-${index}-wilayah`}
+                              value={p.wilayah}
+                              onChange={(val) => {
+                                handlePesertaChange(raw.key, "wilayah", val);
+                                handlePesertaBlur(raw.key, "wilayah", val);
+                              }}
+                              invalid={!!errs.wilayah}
+                              describedBy={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
                             />
-                            <FieldError id={`peserta-${index}-kota-error`} message={errs.kota} />
+                            <FieldError id={`peserta-${index}-wilayah-error`} message={errs.wilayah} />
                           </div>
                           <div>
-                            <label htmlFor={`peserta-${index}-size`} className={labelClass}>Ukuran jersey (unisex)</label>
+                            <div className="mb-2 flex items-center justify-between">
+                              <label htmlFor={`peserta-${index}-size`} className="block text-sm font-semibold text-foreground">Ukuran Jersey (Unisex)</label>
+                              <button
+                                type="button"
+                                onClick={() => setIsImgOpen(true)}
+                                className="text-xs font-bold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground rounded"
+                              >
+                                Lihat Size Chart
+                              </button>
+                            </div>
                             <select
                               id={`peserta-${index}-size`}
                               value={p.size}
@@ -815,7 +821,7 @@ export default function DaftarForm({
                               aria-describedby={errs.size ? `peserta-${index}-size-error` : undefined}
                               className={fieldClass(!!errs.size)}
                             >
-                              <option value="" disabled>Pilih ukuran</option>
+                              <option value="" disabled>Pilih Ukuran</option>
                               {["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map((s) => (
                                 <option key={s} value={s}>{s}</option>
                               ))}
@@ -826,7 +832,7 @@ export default function DaftarForm({
 
                         {PENDAFTARAN_DIBUKA && (
                           <div>
-                            <label htmlFor={`peserta-${index}-kategori`} className={labelClass}>Kategori lomba</label>
+                            <label htmlFor={`peserta-${index}-kategori`} className={labelClass}>Kategori Lomba</label>
                             <select
                               id={`peserta-${index}-kategori`}
                               value={p.kategori}
@@ -859,7 +865,7 @@ export default function DaftarForm({
                       className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-border-strong px-5 py-3 text-sm font-bold text-foreground transition hover:border-primary-accent hover:text-primary-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       <FiPlus className="h-4 w-4" aria-hidden="true" />
-                      Tambah peserta
+                      Tambah Peserta
                     </button>
                     <p className="text-xs text-muted-foreground" aria-live="polite">
                       {pesertaList.length} dari {batasTiket} tiket dalam pesanan ini
@@ -867,26 +873,7 @@ export default function DaftarForm({
                   </div>
                 )}
 
-                <div>
-                  <span className={labelClass}>Panduan ukuran</span>
-                  <button
-                    type="button"
-                    onClick={() => setIsImgOpen(true)}
-                    className="block w-full overflow-hidden rounded-field border border-border bg-surface-sunken p-2 transition hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-                  >
-                    <Image
-                      src={imageSrc}
-                      alt="Tabel panduan ukuran jersey"
-                      width={1994}
-                      height={1387}
-                      sizes="(max-width: 1024px) 100vw, 560px"
-                      className="h-auto w-full rounded-lg"
-                    />
-                    <span className="mt-2 block text-xs font-semibold text-muted-foreground">
-                      Ketuk untuk memperbesar
-                    </span>
-                  </button>
-                </div>
+
               </section>
 
               {/* LANGKAH 3 — KONFIRMASI */}
@@ -1055,7 +1042,7 @@ export default function DaftarForm({
         <div className="fixed inset-0 bg-overlay backdrop-blur-sm" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <DialogPanel className="relative w-full max-w-2xl">
-            <DialogTitle className="sr-only">Panduan ukuran jersey</DialogTitle>
+            <DialogTitle className="sr-only">Panduan Ukuran Jersey</DialogTitle>
             <button
               onClick={() => setIsImgOpen(false)}
               className="absolute -top-11 right-0 rounded-full px-3 text-3xl font-bold text-on-secondary/80 transition hover:text-on-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -1065,7 +1052,7 @@ export default function DaftarForm({
             </button>
             <Image
               src={imageSrc}
-              alt="Tabel panduan ukuran jersey diperbesar"
+              alt="Tabel Panduan Ukuran Jersey diperbesar"
               width={1994}
               height={1387}
               className="max-h-[80vh] w-full rounded-card object-contain shadow-hover"

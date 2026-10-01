@@ -26,7 +26,7 @@ const TiketGrid: React.FC<Props> = ({ tiers, sharedFeatures, adminFee }) => {
           className="mt-8 rounded-card border border-dashed border-border-strong bg-card p-6"
         >
           <p className="text-center text-sm font-semibold text-foreground">
-            Semua kategori sudah termasuk
+            Semua Kategori Sudah Termasuk
           </p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {sharedFeatures.map((feature) => (

@@ -25,7 +25,7 @@
 //   - Tinggi minimal 200px, idealnya 400px, supaya tajam di layar retina.
 //   - Pangkas dulu ruang kosong di sekeliling logo agar tinggi optisnya rata dengan
 //     logo lain.
-//   - Kalau ada, kirim juga versi monokrom untuk dipakai di tier "Media & mitra".
+//   - Kalau ada, kirim juga versi monokrom untuk dipakai di tier "Media & Mitra".
 //
 // ============================================================================
 
@@ -60,23 +60,23 @@ export interface ISponsorTierConfig {
 export const sponsorTiers: ISponsorTierConfig[] = [
   {
     tier: "title",
-    label: "Sponsor utama",
-    boxHeight: "h-24 sm:h-28",
-    boxWidth: "w-52 sm:w-60",
+    label: "Sponsor Utama",
+    boxHeight: "h-20 sm:h-24 md:h-28",
+    boxWidth: "w-36 sm:w-48 md:w-60",
     muted: false,
   },
   {
     tier: "community",
-    label: "Mitra komunitas",
-    boxHeight: "h-16 sm:h-20",
-    boxWidth: "w-40 sm:w-48",
+    label: "Mitra Komunitas",
+    boxHeight: "h-14 sm:h-16 md:h-20",
+    boxWidth: "w-28 sm:w-36 md:w-48",
     muted: false,
   },
   {
     tier: "media",
-    label: "Media & mitra",
-    boxHeight: "h-12 sm:h-14",
-    boxWidth: "w-32 sm:w-40",
+    label: "Media & Mitra",
+    boxHeight: "h-11 sm:h-12 md:h-14",
+    boxWidth: "w-24 sm:w-28 md:w-40",
     muted: true,
   },
 ];

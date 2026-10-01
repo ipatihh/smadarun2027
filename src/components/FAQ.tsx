@@ -9,7 +9,7 @@ const FAQ: React.FC = () => {
     return (
         <section id="faq" className="py-10 lg:py-20">
             <div className="flex flex-col lg:flex-row gap-10">
-                <div className="lg:w-80 lg:shrink-0">
+                <div className="reveal-left lg:w-80 lg:shrink-0">
                     <SectionTitle>
                         <h2 className="mb-3 text-center lg:text-left">
                             Pertanyaan Populer
@@ -20,19 +20,19 @@ const FAQ: React.FC = () => {
                     </p>
                     <a
                         href="mailto:info@kembar.in"
-                        className="mt-2 block text-xl font-semibold text-foreground underline-offset-4 hover:underline text-center lg:text-left break-all rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="mt-2 block text-base sm:text-xl font-semibold text-foreground underline-offset-4 hover:underline text-center lg:text-left break-all rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                         info@kembar.in
                     </a>
                 </div>
 
-                <div className="w-full lg:max-w-2xl mx-auto border-b border-border">
+                <div className="reveal-right w-full lg:max-w-2xl mx-auto border-b border-border">
                     {faqs.map((faq, index) => (
                         <Disclosure key={index} as="div" className="border-t border-border">
                             {({ open }) => (
                                 <>
                                     <DisclosureButton className="flex items-center justify-between w-full gap-4 px-1 py-6 text-left group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                                        <span className="text-lg lg:text-xl font-semibold text-foreground group-hover:text-foreground-accent transition-colors duration-200">
+                                        <span className="text-base sm:text-lg lg:text-xl font-semibold text-foreground group-hover:text-foreground-accent transition-colors duration-200">
                                             {faq.question}
                                         </span>
                                         {open ? (

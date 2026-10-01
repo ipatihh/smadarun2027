@@ -14,7 +14,7 @@ const Testimonials: React.FC = () => {
                "5K" yang sudah jadi nama kategori tiket) hanya menambah panjang halaman.
             */}
             <div className="mb-12 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-                <div className="max-w-xl">
+                <div className="reveal-left max-w-xl">
                     <SectionTitle>
                         <h2 className="mb-4">Apa Kata Mereka?</h2>
                     </SectionTitle>
@@ -23,10 +23,10 @@ const Testimonials: React.FC = () => {
                     </p>
                 </div>
                 {stats.length > 0 && (
-                    <ul className="flex gap-10">
+                    <ul className="reveal-right flex gap-10">
                         {stats.map(stat => (
                             <li key={stat.title}>
-                                <p className="font-display text-5xl font-bold leading-none text-foreground">{stat.title}</p>
+                                <p className="font-display text-4xl sm:text-5xl font-bold leading-none text-foreground">{stat.title}</p>
                                 <p className="mt-2 max-w-[10rem] text-sm text-foreground-accent">{stat.description}</p>
                             </li>
                         ))}
@@ -63,7 +63,7 @@ const Testimonials: React.FC = () => {
                                 className="rounded-full shadow-rest object-cover"
                             />
                             <div className="ml-4 text-left">
-                                <h3 className="text-lg font-semibold text-foreground">{testimonial.name}</h3>
+                                <h3 className="text-base sm:text-lg font-semibold text-foreground">{testimonial.name}</h3>
                                 <p className="text-sm text-foreground-accent">{testimonial.role}</p>
                             </div>
                         </div>

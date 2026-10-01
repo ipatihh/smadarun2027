@@ -13,7 +13,7 @@ const CTA: React.FC = () => {
                     </div>
 
                     <div className="h-full flex flex-col items-center justify-center text-on-secondary text-center px-5">
-                        <h2 className="reveal text-4xl sm:text-5xl md:text-6xl md:leading-tight font-bold mb-4 max-w-3xl">
+                        <h2 className="reveal text-3xl sm:text-4xl md:text-5xl lg:text-6xl md:leading-tight font-bold mb-4 max-w-3xl">
                             {ctaDetails.heading}
                         </h2>
 
@@ -24,7 +24,7 @@ const CTA: React.FC = () => {
                         <div className="reveal reveal-2 w-full max-w-sm mx-auto">
                             <Link
                                 href="/daftar"
-                                className="block w-full text-center bg-primary hover:bg-primary-accent text-on-primary font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 hover:-translate-y-1 shadow-rest hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+                                className="block w-full text-center bg-primary hover:bg-primary-accent text-on-primary font-bold py-3.5 px-6 rounded-full text-base transition-all duration-300 hover:-translate-y-1 shadow-rest hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary sm:text-lg sm:py-4 sm:px-8"
                             >
                                 Daftar SMADARUN 2027 Sekarang
                             </Link>

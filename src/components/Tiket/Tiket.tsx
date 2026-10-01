@@ -38,10 +38,12 @@ async function Tiket() {
 
   return (
     <section id="tiket" className="scroll-mt-24 py-10 lg:py-20">
-      <SectionTitle>
-        <h2 className="text-center mb-4">Kategori Tiket</h2>
-      </SectionTitle>
-      <p className="mb-12 text-center text-foreground-accent">
+      <div className="reveal-left">
+        <SectionTitle>
+          <h2 className="text-center mb-4">Kategori Tiket</h2>
+        </SectionTitle>
+      </div>
+      <p className="reveal-right mb-12 text-center text-foreground-accent">
         Amankan slot sekarang sebelum kehabisan!
       </p>
 

@@ -6,10 +6,10 @@ import { IStats } from "@/types";
 export const stats: IStats[] = [
     {
         title: "1.000+",
-        description: "pelari lintas komunitas & pelajar",
+        description: "Pelari Lintas Komunitas & Pelajar",
     },
     {
         title: "5.0",
-        description: "rating kepuasan peserta",
+        description: "Rating Kepuasan Peserta",
     },
 ];

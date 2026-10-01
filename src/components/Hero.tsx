@@ -53,7 +53,7 @@ const Hero: React.FC = () => {
                 <div className="reveal reveal-3 mt-7 flex flex-col items-center justify-center gap-3 sm:mt-8 sm:flex-row sm:gap-4">
                     <Link
                         href="/daftar"
-                        className="w-full rounded-full bg-primary px-10 py-4 text-lg font-bold text-on-primary shadow-rest transition-colors hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-hero-background sm:w-auto"
+                        className="w-full rounded-full bg-primary px-8 py-3.5 text-base font-bold text-on-primary shadow-rest transition-colors hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-hero-background sm:w-auto sm:px-10 sm:py-4 sm:text-lg"
                     >
                         Daftar Sekarang
                     </Link>

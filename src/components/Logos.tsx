@@ -60,14 +60,14 @@ const Logos: React.FC = () => {
   return (
     <section id="logos" className="scroll-mt-24 bg-background px-5 py-12 lg:py-16">
       <div className="mx-auto max-w-5xl">
-        <h2 className="text-center text-2xl font-bold text-foreground">Didukung oleh</h2>
+        <h2 className="reveal-left text-center text-xl sm:text-2xl font-bold text-foreground">Didukung oleh</h2>
 
         <div className="mt-8 space-y-10">
           {tiersWithSponsors.map((tier) => (
             <div key={tier.tier}>
               <p className="mb-4 text-center text-sm text-muted-foreground">{tier.label}</p>
               {/* flex-wrap: berapa pun jumlah logonya otomatis turun baris, tetap rata tengah */}
-              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6">
                 {tier.items.map((sponsor) =>
                   sponsor.url ? (
                     <a

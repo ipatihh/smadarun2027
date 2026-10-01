@@ -102,13 +102,15 @@ html {
 }
 
 body {
-  @apply text-lg;
+  @apply text-base sm:text-lg;
 
   color: rgb(var(--foreground));
   background: rgb(var(--background));
   font-family: var(--font-plus-jakarta), sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
+  /* Cegah horizontal scrollbar dari animasi reveal-left / reveal-right. */
+  overflow-x: clip;
 }
 
 @layer utilities {
@@ -148,6 +150,47 @@ body {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes reveal-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reveal-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+  Scroll-reveal dari samping — animasi terikat posisi scroll, bukan waktu.
+  Elemen yang sudah terlihat saat load langsung tampil normal.
+  Dibungkus @supports supaya browser yang belum mendukung animation-timeline
+  tetap menampilkan konten apa adanya (tanpa opacity 0 permanen).
+*/
+@supports (animation-timeline: view()) {
+  .reveal-left {
+    animation: reveal-slide-left 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+  .reveal-right {
+    animation: reveal-slide-right 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
   }
 }
 
