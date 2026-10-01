@@ -6,8 +6,7 @@ import {
   PROVINCES,
   getRegenciesByProvince,
   DEFAULT_PROVINCE_CODE,
-  WilayahProvince,
-  WilayahRegency,
+  KOTA_MANUAL_MAX_LENGTH,
 } from "@/lib/wilayah";
 
 export interface WilayahValue {
@@ -311,7 +310,7 @@ export default function WilayahSelect({
           }
           required={required}
           disabled={!value.provCode}
-          maxLength={50}
+          maxLength={KOTA_MANUAL_MAX_LENGTH}
           aria-invalid={invalid || undefined}
           aria-describedby={describedBy}
           placeholder={value.provCode ? "Tulis kota / kabupaten domisili" : "Pilih provinsi terlebih dahulu"}

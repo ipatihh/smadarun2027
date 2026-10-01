@@ -4,6 +4,7 @@ import React, { useMemo, useState, ChangeEvent, FocusEvent, FormEvent } from "re
 import Image from "next/image";
 import Link from "next/link";
 import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/WilayahSelect";
+import { KOTA_MANUAL_MAX_LENGTH, KOTA_MANUAL_PATTERN } from "@/lib/wilayah";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { tiketMarketing } from "@/data/tiket";
@@ -92,7 +93,15 @@ const VALIDATOR_PESERTA: Record<PesertaField, (v: any) => string | null> = {
   wilayah: (v: WilayahValue) => {
     if (!v.provCode) return "Provinsi domisili wajib dipilih.";
     if (!v.kotaCode && !v.manual) return "Kota / Kabupaten domisili wajib dipilih.";
-    if (v.manual && !v.display.trim()) return "Kota / Kabupaten domisili wajib diisi.";
+    if (v.manual) {
+      // Disamakan dengan validasi server — tanpa ini isian seperti "Kota Batu, Malang"
+      // baru ditolak setelah tombol bayar ditekan.
+      const t = v.display.trim();
+      if (!t) return "Kota / Kabupaten domisili wajib diisi.";
+      if (t.length < 2) return "Nama kota / kabupaten minimal 2 karakter.";
+      if (t.length > KOTA_MANUAL_MAX_LENGTH) return `Nama kota / kabupaten maksimal ${KOTA_MANUAL_MAX_LENGTH} karakter.`;
+      if (!KOTA_MANUAL_PATTERN.test(t)) return "Hanya huruf, spasi, titik, strip, dan tanda kutip yang diperbolehkan.";
+    }
     return null;
   },
   kategori: (v) => (v ? null : "Pilih kategori lomba."),
@@ -278,7 +287,12 @@ export default function DaftarForm({
   };
 
   const focusField = (id: string) => {
-    const el = document.getElementById(id);
+    let el = document.getElementById(id);
+    // Isian kota manual masih disabled selama provinsi belum dipilih — fokus ke
+    // tombol aktif pertama di grupnya (pemilih provinsi), bukan ke elemen mati.
+    if (el?.matches(":disabled")) {
+      el = el.parentElement?.querySelector<HTMLElement>("button:not(:disabled)") ?? el;
+    }
     if (el) {
       el.focus();
       el.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -367,6 +381,11 @@ export default function DaftarForm({
           whatsapp: p.whatsapp.trim(),
           nik: p.nik.trim(),
           gender: p.gender,
+          // Kode wilayah ikut dikirim supaya core menyimpan provinsi & kabupaten/kota
+          // resmi (prov_code/kota_code), bukan sekadar teks. Server menurunkan ulang
+          // nama dari kode; `kota` hanya dipakai untuk isian manual.
+          provCode: p.wilayah.provCode,
+          kotaCode: p.wilayah.manual ? "" : p.wilayah.kotaCode,
           kota: p.wilayah.display.trim(),
           kategori: p.kategori,
           size: p.size,

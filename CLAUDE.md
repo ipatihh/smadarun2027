@@ -66,6 +66,13 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   `LiveTicketType.id` dikirim sebagai `ticketTypeId` ke core, yang mencoba match by ID lebih
   dulu sebelum jatuh ke match by nama kategori — jadi kalau admin ganti nama kategori di
   tengah jalan, peserta yang sudah pilih kategori itu di form tetap match dengan benar.
+- **Domisili wajib dikirim sebagai KODE wilayah**, bukan cuma teks. `api/daftar` meneruskan
+  `customFields.__wilayah_prov` / `__wilayah_kota` (kontrak `RegistrationOrderService` core);
+  tanpa itu core hanya menyimpan teks `kota` dan `prov_code/kota_code` di dasbor kosong —
+  dropdown di form jadi sia-sia (pernah terjadi: provinsi pilihan peserta dibuang).
+  Nama kota diturunkan server dari kode, teks dari browser hanya dipakai untuk isian manual.
+  `public/data/wilayah/*.json` adalah salinan persis milik kembarin-v2 — kalau core
+  memperbarui datasetnya, salin ulang, kalau tidak kabupaten baru ditolak core.
 - **`FooterLive.tsx` sengaja membungkus fetch live-nya sendiri dalam `Suspense` terpisah** —
   JANGAN pindahkan `getLiveEventData()` balik ke root layout (`layout.tsx`) yang `async`.
   Itu pernah membuat SATU fetch (buat teks biaya layanan di footer) menahan render SELURUH

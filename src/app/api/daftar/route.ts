@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getLiveEventData } from "@/lib/kembarinEvents";
+import { KOTA_MANUAL_MAX_LENGTH, KOTA_MANUAL_PATTERN, resolveProvince, resolveWilayah } from "@/lib/wilayah";
 
 // Sederhana in-memory cache untuk Rate Limiting & Proteksi Double Submit
 // Catatan: Karena Vercel adalah serverless environment, in-memory cache ini berjalan per instance/container.
@@ -76,7 +77,6 @@ function bersihkanCacheMundur(now: number) {
 
 // ─── Validator satuan ────────────────────────────────────────────────────────
 const NAMA_PATTERN = /^[a-zA-Z\s\.\']+$/;
-const KOTA_PATTERN = /^[a-zA-Z\s\.\'\-]+$/;
 const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const WHATSAPP_PATTERN = /^\+?\d{8,15}$/;
 const NIK_PATTERN = /^\d{16}$/;
@@ -98,6 +98,8 @@ interface PesertaTervalidasi {
   nik: string;
   gender: string;
   kota: string;
+  provCode: string | null;
+  kotaCode: string | null;
   kategori: string;
   size: string;
   harga: number;
@@ -232,9 +234,37 @@ export async function POST(req: NextRequest) {
         return gagal(`Pilihan ukuran jersey peserta ${nomor} tidak valid.`);
       }
 
-      const kota = typeof p.kota === "string" ? p.kota.trim() : "";
-      if (kota.length < 2 || kota.length > 100 || !KOTA_PATTERN.test(kota)) {
-        return gagal(`Format kota domisili peserta ${nomor} tidak valid. Hanya huruf, spasi, titik, strip, dan kutip.`);
+      // Domisili. Jalur dropdown: nama kota DITURUNKAN dari kode (teks dari browser
+      // diabaikan), dan kabupaten wajib anak dari provinsinya. Jalur manual: provinsi
+      // tetap wajib dari daftar resmi, kota boleh diketik. Core memvalidasi ulang
+      // keduanya dengan dataset yang sama (lihat src/lib/wilayah.ts).
+      const provCodeRaw = typeof p.provCode === "string" ? p.provCode.trim() : "";
+      const kotaCodeRaw = typeof p.kotaCode === "string" ? p.kotaCode.trim() : "";
+      const kotaTeks = typeof p.kota === "string" ? p.kota.trim().toUpperCase() : "";
+      let kota: string;
+      let provCode: string | null = null;
+      let kotaCode: string | null = null;
+      if (kotaCodeRaw) {
+        const wilayah = resolveWilayah(provCodeRaw, kotaCodeRaw);
+        if (!wilayah) {
+          return gagal(`Kota/kabupaten domisili peserta ${nomor} tidak sesuai dengan provinsinya. Silakan pilih ulang.`);
+        }
+        kota = wilayah.display;
+        provCode = wilayah.prov.c;
+        kotaCode = wilayah.kota.c;
+      } else {
+        if (provCodeRaw) {
+          const provinsi = resolveProvince(provCodeRaw);
+          if (!provinsi) return gagal(`Provinsi domisili peserta ${nomor} tidak valid. Silakan pilih ulang.`);
+          provCode = provinsi.c;
+        }
+        // Tanpa provCode sama sekali = payload dari tab yang dibuka sebelum dropdown
+        // wilayah ada. Tetap diterima sebagai teks bebas (core juga menerimanya untuk
+        // event partner) supaya peserta tidak kehilangan isian form yang panjang.
+        if (kotaTeks.length < 2 || kotaTeks.length > (provCode ? KOTA_MANUAL_MAX_LENGTH : 100) || !KOTA_MANUAL_PATTERN.test(kotaTeks)) {
+          return gagal(`Format kota domisili peserta ${nomor} tidak valid. Hanya huruf, spasi, titik, strip, dan kutip.`);
+        }
+        kota = kotaTeks;
       }
 
       const kategori = typeof p.kategori === "string" ? p.kategori : "";
@@ -261,6 +291,8 @@ export async function POST(req: NextRequest) {
         nik,
         gender,
         kota,
+        provCode,
+        kotaCode,
         kategori,
         size,
         harga: tiket.price,
@@ -327,6 +359,12 @@ export async function POST(req: NextRequest) {
           kota: p.kota,
           kategori: p.kategori,
           size: p.size,
+          // Kontrak wilayah core (RegistrationOrderService): core menyelesaikan ulang
+          // kode ini dan menyimpan prov_code/prov_name/kota_code/kota_name, sehingga
+          // dasbor panitia menampilkan "JAWA TIMUR · KAB. NGANJUK". Key ini SENGAJA
+          // ditaruh SETELAH `kota` — core versi lama mencari domisili dengan pola
+          // /kota/ pada urutan key, dan `__wilayah_kota` ikut cocok.
+          ...(p.provCode ? { __wilayah_prov: p.provCode, __wilayah_kota: p.kotaCode ?? "" } : {}),
         },
       })),
       paymentGateway: gatewayName,
