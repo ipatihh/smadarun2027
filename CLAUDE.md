@@ -74,6 +74,14 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   `LiveTicketType.id` dikirim sebagai `ticketTypeId` ke core, yang mencoba match by ID lebih
   dulu sebelum jatuh ke match by nama kategori — jadi kalau admin ganti nama kategori di
   tengah jalan, peserta yang sudah pilih kategori itu di form tetap match dengan benar.
+- **Isian `nik` menampung NIK ATAU nomor kartu pelajar** (pilihan per peserta,
+  `jenisIdentitas`). Aturannya hanya di `src/lib/identitas.ts` — form dan `api/daftar`
+  sama-sama memakainya; jangan menulis regex NIK lagi di salah satunya. NIK tetap tepat
+  16 digit (salah ketik tetap tertangkap); kartu pelajar 4–16 karakter. Batas 16 itu
+  disengaja: core menerima sampai 32, tapi panjang kolom `nik` di database belum
+  dipastikan — 16 pasti muat karena NIK sendiri 16. Core menyimpan keduanya di kolom
+  `nik` yang sama, jadi `api/daftar` ikut mengirim `customFields.jenis_identitas`
+  ("NIK"/"Kartu Pelajar") supaya panitia tahu mana yang dipakai.
 - **Domisili wajib dikirim sebagai KODE wilayah**, bukan cuma teks. `api/daftar` meneruskan
   `customFields.__wilayah_prov` / `__wilayah_kota` (kontrak `RegistrationOrderService` core);
   tanpa itu core hanya menyimpan teks `kota` dan `prov_code/kota_code` di dasbor kosong —

@@ -2,6 +2,14 @@ import { createHash, randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getLiveEventData } from "@/lib/kembarinEvents";
 import { KOTA_MANUAL_MAX_LENGTH, KOTA_MANUAL_PATTERN, resolveProvince, resolveWilayah } from "@/lib/wilayah";
+import {
+  isJenisIdentitas,
+  JenisIdentitas,
+  kunciIdentitas,
+  LABEL_JENIS_IDENTITAS,
+  rapikanNomorIdentitas,
+  validasiIdentitas,
+} from "@/lib/identitas";
 
 // Sederhana in-memory cache untuk Rate Limiting & Proteksi Double Submit
 // Catatan: Karena Vercel adalah serverless environment, in-memory cache ini berjalan per instance/container.
@@ -79,7 +87,6 @@ function bersihkanCacheMundur(now: number) {
 const NAMA_PATTERN = /^[a-zA-Z\s\.\']+$/;
 const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const WHATSAPP_PATTERN = /^\+?\d{8,15}$/;
-const NIK_PATTERN = /^\d{16}$/;
 const GENDER_WHITELIST = ["Laki-laki", "Perempuan"];
 const SIZE_WHITELIST = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
@@ -96,6 +103,7 @@ interface PesertaTervalidasi {
   email: string | null;
   whatsapp: string | null;
   nik: string;
+  jenisIdentitas: JenisIdentitas;
   gender: string;
   kota: string;
   provCode: string | null;
@@ -213,16 +221,25 @@ export async function POST(req: NextRequest) {
         return gagal(`Format nama peserta ${nomor} tidak valid. Hanya huruf, spasi, titik (.), atau kutip (').`);
       }
 
-      const nik = typeof p.nik === "string" ? p.nik.trim() : "";
-      if (!NIK_PATTERN.test(nik)) {
-        return gagal(`NIK peserta ${nomor} harus berupa angka dengan panjang tepat 16 digit.`);
+      // NIK atau nomor kartu pelajar. Jenis yang tidak dikirim dianggap NIK — itu
+      // perilaku form sebelum pilihan kartu pelajar ada (tab yang dibuka sebelum deploy).
+      const jenisIdentitas = p.jenisIdentitas ?? "nik";
+      if (!isJenisIdentitas(jenisIdentitas)) {
+        return gagal(`Jenis nomor identitas peserta ${nomor} tidak valid.`);
       }
-      // Satu NIK hanya boleh muncul sekali dalam satu pesanan — kalau tidak, satu orang
-      // bisa terdaftar berkali-kali dalam satu order dan memakan kuota kategori.
-      if (nikTerpakai.has(nik)) {
-        return gagal(`NIK peserta ${nomor} sama dengan peserta lain dalam pesanan ini.`);
+      const nik = typeof p.nik === "string" ? rapikanNomorIdentitas(p.nik) : "";
+      const pesanIdentitas = validasiIdentitas(jenisIdentitas, nik);
+      if (pesanIdentitas) {
+        return gagal(`Peserta ${nomor}: ${pesanIdentitas}`);
       }
-      nikTerpakai.add(nik);
+      // Satu identitas hanya boleh muncul sekali dalam satu pesanan — kalau tidak, satu
+      // orang bisa terdaftar berkali-kali dalam satu order dan memakan kuota kategori.
+      // Dibandingkan dalam bentuk kunci (tanpa pemisah), sama seperti core menilainya.
+      const kunci = kunciIdentitas(nik);
+      if (nikTerpakai.has(kunci)) {
+        return gagal(`Nomor identitas peserta ${nomor} sama dengan peserta lain dalam pesanan ini.`);
+      }
+      nikTerpakai.add(kunci);
 
       const gender = typeof p.gender === "string" ? p.gender : "";
       if (!GENDER_WHITELIST.includes(gender)) {
@@ -289,6 +306,7 @@ export async function POST(req: NextRequest) {
         email: emailPeserta,
         whatsapp: waPeserta,
         nik,
+        jenisIdentitas,
         gender,
         kota,
         provCode,
@@ -318,14 +336,14 @@ export async function POST(req: NextRequest) {
       return gagal("Total nominal pembayaran tidak sesuai.");
     }
 
-    // 5. Proteksi double-submit — mengunci SEMUA NIK dalam pesanan
-    const nikKeys = pesertaTervalidasi.map((p) => hashNik(p.nik));
+    // 5. Proteksi double-submit — mengunci SEMUA nomor identitas dalam pesanan
+    const nikKeys = pesertaTervalidasi.map((p) => hashNik(kunciIdentitas(p.nik)));
     const terkunci = nikKeys.find((key) => {
       const last = doubleSubmitMap.get(key);
       return last && now - last < DOUBLE_SUBMIT_WINDOW;
     });
     if (terkunci) {
-      return gagal("Pendaftaran dengan NIK ini sedang diproses. Silakan tunggu beberapa detik.", 409);
+      return gagal("Pendaftaran dengan nomor identitas ini sedang diproses. Silakan tunggu beberapa detik.", 409);
     }
     nikKeys.forEach((key) => doubleSubmitMap.set(key, now));
     const lepasKunci = () => nikKeys.forEach((key) => doubleSubmitMap.delete(key));
@@ -351,6 +369,10 @@ export async function POST(req: NextRequest) {
         ticketTypeId: p.ticketTypeId ?? undefined,
         customFields: {
           nik: p.nik,
+          // Kolom `nik` core menampung NIK maupun nomor kartu pelajar; label ini yang
+          // memberi tahu panitia mana yang dipakai peserta. Namanya sengaja tidak cocok
+          // pola semantik core (nik/identity, kota, dst) supaya tidak terbaca sebagai field lain.
+          jenis_identitas: LABEL_JENIS_IDENTITAS[p.jenisIdentitas],
           whatsapp: p.whatsapp ?? buyerWhatsapp,
           gender: p.gender,
           kota: p.kota,

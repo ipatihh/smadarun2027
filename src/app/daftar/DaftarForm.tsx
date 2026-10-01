@@ -9,6 +9,14 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { tiketMarketing } from "@/data/tiket";
 import { LiveTicketType } from "@/lib/kembarinEvents";
+import {
+  JenisIdentitas,
+  kunciIdentitas,
+  LABEL_JENIS_IDENTITAS,
+  NOMOR_IDENTITAS_MAX,
+  rapikanNomorIdentitas,
+  validasiIdentitas,
+} from "@/lib/identitas";
 
 interface BuyerState {
   nama: string;
@@ -22,6 +30,8 @@ interface PesertaState {
   email: string;
   whatsapp: string;
   nik: string;
+  /** Jenis isian `nik`: NIK (16 digit) atau nomor kartu pelajar. */
+  jenisIdentitas: JenisIdentitas;
   gender: string;
   wilayah: WilayahValue;
   kategori: string;
@@ -29,7 +39,8 @@ interface PesertaState {
 }
 
 type BuyerField = keyof BuyerState;
-type PesertaField = Exclude<keyof PesertaState, "key">;
+// `jenisIdentitas` bukan isian yang divalidasi sendiri — ia menentukan aturan untuk `nik`.
+type PesertaField = Exclude<keyof PesertaState, "key" | "jenisIdentitas">;
 
 // Hanya domain resmi gateway pembayaran yang boleh dituju saat redirect otomatis ke halaman pembayaran.
 // Mencegah open-redirect/phishing seandainya respons backend core suatu saat tidak sesuai ekspektasi.
@@ -79,16 +90,11 @@ const VALIDATOR_BUYER: Record<BuyerField, (v: string) => string | null> = {
   whatsapp: (v) => validasiWhatsapp(v, true),
 };
 
-const VALIDATOR_PESERTA: Record<PesertaField, (v: any) => string | null> = {
+const VALIDATOR_PESERTA: Record<PesertaField, (v: any, p: PesertaState) => string | null> = {
   nama: (v) => validasiNama(v, "Nama peserta"),
   email: (v) => validasiEmail(v, false),
   whatsapp: (v) => validasiWhatsapp(v, false),
-  nik: (v) => {
-    const t = v.trim();
-    if (!t) return "NIK wajib diisi.";
-    if (!/^\d{16}$/.test(t)) return `NIK harus 16 digit angka (sekarang ${t.length} karakter).`;
-    return null;
-  },
+  nik: (v, p) => validasiIdentitas(p.jenisIdentitas, v),
   gender: (v) => (v ? null : "Pilih Jenis Kelamin."),
   wilayah: (v: WilayahValue) => {
     if (!v.provCode) return "Provinsi domisili wajib dipilih.";
@@ -163,6 +169,7 @@ const pesertaBaru = (kategoriDefault: string): PesertaState => ({
   email: "",
   whatsapp: "",
   nik: "",
+  jenisIdentitas: "nik",
   gender: "",
   wilayah: createEmptyWilayah(),
   kategori: kategoriDefault,
@@ -268,8 +275,21 @@ export default function DaftarForm({
   };
 
   const handlePesertaBlur = (key: string, field: PesertaField, value: any) => {
-    const message = VALIDATOR_PESERTA[field](value);
+    const peserta = pesertaList.find((p) => p.key === key);
+    if (!peserta) return;
+    const message = VALIDATOR_PESERTA[field](value, peserta);
     setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: message ?? undefined } }));
+  };
+
+  // Ganti NIK <-> kartu pelajar. Isian yang sudah diketik dinilai ulang dengan aturan
+  // jenis barunya, supaya pesan "harus 16 digit" tidak tertinggal setelah pindah jenis.
+  const gantiJenisIdentitas = (key: string, jenis: JenisIdentitas) => {
+    const peserta = pesertaList.find((p) => p.key === key);
+    if (!peserta || peserta.jenisIdentitas === jenis) return;
+    setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, jenisIdentitas: jenis } : p)));
+    setRingkasanError(null);
+    const message = peserta.nik.trim() ? validasiIdentitas(jenis, peserta.nik) : null;
+    setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], nik: message ?? undefined } }));
   };
 
   const tambahPeserta = () => {
@@ -321,16 +341,17 @@ export default function DaftarForm({
         // Nama/email/WA peserta pertama mengikuti pemesan; kesalahannya sudah
         // dilaporkan di bagian pemesan, jangan dilaporkan dua kali.
         if (index === 0 && pemesanIkut && (field === "nama" || field === "email" || field === "whatsapp")) continue;
-        const message = VALIDATOR_PESERTA[field](p[field]);
+        const message = VALIDATOR_PESERTA[field](p[field], p);
         if (message) errorsPeserta[field] = message;
       }
-      const nik = p.nik.trim();
-      if (nik && !errorsPeserta.nik) {
-        const sebelumnya = nikTerpakai.get(nik);
+      // Dibandingkan dalam bentuk kunci (tanpa titik/strip/spasi), sama seperti server & core.
+      const kunci = kunciIdentitas(p.nik);
+      if (kunci && !errorsPeserta.nik) {
+        const sebelumnya = nikTerpakai.get(kunci);
         if (sebelumnya !== undefined) {
-          errorsPeserta.nik = `NIK ini sama dengan Peserta ${sebelumnya + 1}.`;
+          errorsPeserta.nik = `Nomor identitas ini sama dengan Peserta ${sebelumnya + 1}.`;
         } else {
-          nikTerpakai.set(nik, index);
+          nikTerpakai.set(kunci, index);
         }
       }
       if (Object.keys(errorsPeserta).length > 0) nextPesertaErrors[raw.key] = errorsPeserta;
@@ -379,7 +400,8 @@ export default function DaftarForm({
           nama: p.nama.trim(),
           email: p.email.trim(),
           whatsapp: p.whatsapp.trim(),
-          nik: p.nik.trim(),
+          nik: rapikanNomorIdentitas(p.nik),
+          jenisIdentitas: p.jenisIdentitas,
           gender: p.gender,
           // Kode wilayah ikut dikirim supaya core menyimpan provinsi & kabupaten/kota
           // resmi (prov_code/kota_code), bukan sekadar teks. Server menurunkan ulang
@@ -761,17 +783,46 @@ export default function DaftarForm({
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div>
-                            <label htmlFor={`peserta-${index}-nik`} className={labelClass}>NIK (16 digit)</label>
+                            {/* Tinggi pemilih jenis = tinggi baris label (20px), dan label sengaja
+                                pendek: di lg kolom ini hanya ±234px — "Nomor Identitas" membuat baris
+                                ini patah dua dan input tidak lagi sejajar dengan Jenis Kelamin. */}
+                            <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                              <label htmlFor={`peserta-${index}-nik`} className="block text-sm font-semibold text-foreground">
+                                Identitas
+                              </label>
+                              <div
+                                role="radiogroup"
+                                aria-label={`Jenis nomor identitas peserta ${index + 1}`}
+                                className="flex rounded-full border border-border bg-card p-px"
+                              >
+                                {(Object.keys(LABEL_JENIS_IDENTITAS) as JenisIdentitas[]).map((jenis) => (
+                                  <label
+                                    key={jenis}
+                                    className="cursor-pointer rounded-full px-2.5 text-[11px] font-semibold leading-4 text-muted-foreground transition has-[:checked]:bg-primary has-[:checked]:text-on-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-foreground"
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`${raw.key}-jenis-identitas`}
+                                      value={jenis}
+                                      checked={p.jenisIdentitas === jenis}
+                                      onChange={() => gantiJenisIdentitas(raw.key, jenis)}
+                                      className="sr-only"
+                                    />
+                                    {LABEL_JENIS_IDENTITAS[jenis]}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
                             <input
                               id={`peserta-${index}-nik`}
                               type="text"
-                              inputMode="numeric"
-                              maxLength={16}
+                              inputMode={p.jenisIdentitas === "nik" ? "numeric" : "text"}
+                              maxLength={NOMOR_IDENTITAS_MAX}
                               autoComplete="off"
                               value={p.nik}
                               onChange={(e) => handlePesertaChange(raw.key, "nik", e.target.value)}
                               onBlur={(e) => handlePesertaBlur(raw.key, "nik", e.target.value)}
-                              placeholder="16 digit angka"
+                              placeholder={p.jenisIdentitas === "nik" ? "16 digit angka" : "Nomor di kartu pelajar"}
                               aria-invalid={!!errs.nik}
                               aria-describedby={errs.nik ? `peserta-${index}-nik-error` : `peserta-${index}-nik-hint`}
                               className={fieldClass(!!errs.nik)}
@@ -780,7 +831,9 @@ export default function DaftarForm({
                               <FieldError id={`peserta-${index}-nik-error`} message={errs.nik} />
                             ) : (
                               <p id={`peserta-${index}-nik-hint`} className="mt-1.5 text-xs text-muted-foreground">
-                                Pelajar: pakai NIK di KTP/Kartu Keluarga.
+                                {p.jenisIdentitas === "nik"
+                                  ? "Ada di KTP atau Kartu Keluarga."
+                                  : "NISN atau nomor induk, sesuai kartu pelajar."}
                               </p>
                             )}
                           </div>
