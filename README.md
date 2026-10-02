@@ -10,7 +10,17 @@ kembarin-v2: sebuah landing page mandiri (domain sendiri, deploy sendiri, boleh 
 berbeda) yang tetap memakai kembarin-v2 sebagai satu-satunya sumber kebenaran untuk harga,
 kategori tiket, status buka/tutup pendaftaran, dan pemrosesan pembayaran (payment gateway).
 
+## Dokumentasi untuk agent & pengembang
+
+Mulai dari [`docs/README.md`](docs/README.md): urutan baca, peta modul, kontrak dengan core
+([`docs/INTEGRASI_CORE.md`](docs/INTEGRASI_CORE.md)), cara menguji tanpa menyentuh core production
+([`docs/PENGUJIAN.md`](docs/PENGUJIAN.md)), dan riwayat keputusan
+([`docs/CATATAN_PERUBAHAN.md`](docs/CATATAN_PERUBAHAN.md)). Aturan wajib ada di `CLAUDE.md`
+(berlaku untuk semua agent; `AGENTS.md` menunjuk ke sana).
+
 ## Pembaruan Terkini (Recent Updates)
+- **Kontrak partner core (2 Okt 2026)**: halaman `/daftar/status` kini memeriksa status pesanan sungguhan, kode error baru core ditafsirkan, versi teks persetujuan ikut dikirim. Lihat `docs/CATATAN_PERUBAHAN.md`.
+- **Perbaikan audit (2 Okt 2026)**: integritas data peserta, idempotensi pendaftaran (`sessionId`), status "belum pasti", patch Next.js 16.3.8, hardening API, aksesibilitas.
 - **White-labeling Payment Gateway**: Semua referensi teks ke pihak ketiga (seperti DOKU) telah diganti menjadi **PT KEMBAR INOVASI** selaku *ticketing partner*.
 - **UI/UX Mobile**: Perbaikan `padding-bottom` pada komponen `Footer` di perangkat seluler agar tidak terpotong (overlap) oleh *sticky payment bar*.
 - **SEO & Discoverability**: Penambahan kata kunci meta (meta keywords) untuk pencarian "smada run" dan "smadarun.id", serta pengaturan URL kanonis di `layout.tsx`.
@@ -27,8 +37,11 @@ smadarun2027 (Next.js, project ini)
      ├─ GET  /api/public/events/smadarun    → baca harga/kategori/status LIVE
      │        (kembar.in, tanpa auth, dipanggil server-side, revalidate 30 detik)
      │
+     ├─ POST /api/status-pesanan → POST https://kembar.in/api/public/orders/status
+     │        ({ orderCode, statusToken } — token disimpan di sessionStorage tab pendaftar)
+     │
      └─ POST /api/daftar → proxy internal Next.js
-              │  (payload { buyer, participants[] } — 1 sampai N peserta per pesanan)
+              │  (payload { sessionId, buyer, participants[] } — 1 sampai N peserta per pesanan)
               ▼
         POST https://kembar.in/api/participants/register  (server-to-server)
               │
@@ -57,8 +70,14 @@ berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
 | `src/lib/kembarinEvents.ts` | Satu-satunya titik fetch data live (harga, kategori, status, jadwal RPC/gun-start, aturan kolektif) dari kembarin-v2. Fetch dibatasi timeout 8 detik — kalau kembar.in menggantung, halaman tetap jatuh ke keadaan "tertutup" dengan cepat, bukan ikut menggantung. |
 | `src/app/daftar/page.tsx` | Server Component — fetch data live, render `DaftarForm`. |
 | `src/app/daftar/DaftarForm.tsx` | Client Component — form pemesan + daftar peserta (kolektif, bisa tambah/hapus peserta), validasi sisi klien sebagai cermin validasi server (bukan pengganti), redirect ke payment gateway. |
-| `src/app/daftar/status/page.tsx` | Halaman tujuan balik setelah pembayaran payment gateway. Sengaja **informasional saja**, bukan pengecek status asli — kembarin-v2 belum menyediakan endpoint publik untuk itu; mengarang tampilan "berhasil/gagal" tanpa data asli justru menyesatkan. |
-| `src/app/api/daftar/route.ts` | Proxy internal: validasi ketat tiap peserta (termasuk persetujuan kesehatan & privasi di server, bukan cuma checkbox), hitung ulang harga & biaya layanan per tiket dari data live, teruskan sebagai pesanan `{ buyer, participants[] }`. Log dan double-submit map dibersihkan dari NIK mentah (di-hash). |
+| `src/app/daftar/status/page.tsx` + `PemeriksaStatus.tsx` | Halaman status. Pesanan terakhir yang dibuat dari tab yang sama diperiksa langsung ke core (kode + `statusToken` di `sessionStorage`); tanpa token, ditautkan ke halaman `payment-return` kembar.in. Teks lainnya sengaja bersyarat, tidak mengklaim hasil. |
+| `src/app/api/daftar/route.ts` | Proxy pendaftaran: validasi ketat tiap peserta (termasuk persetujuan di server), hitung ulang harga & biaya layanan per tiket dari data live, payload eksplisit `{ sessionId, buyer, participants[] }`, timeout 25 dtk termasuk body, tafsir respons core (berhasil / ditolak / belum pasti). |
+| `src/app/api/status-pesanan/route.ts` | Proxy status pesanan ke core (timeout 10 dtk, tanpa retry, allowlist field, token tidak dicatat). |
+| `src/lib/kontrakPendaftaran.ts` | Kontrak respons pendaftaran: allowlist respons sukses, klasifikasi kode error core, tafsir di browser. |
+| `src/lib/pesananPeserta.ts` | Logika murni pesanan: kaitan pemesan lewat key, tambah/hapus peserta, payload, kunci idempotensi per isi pesanan. |
+| `src/lib/proxyCore.ts` | Aturan bersama proxy ke core (IP, batas laju, Origin, batas body, header trusted-proxy, log tanpa PII). |
+| `src/lib/persetujuan.ts` | Label versi teks persetujuan yang dikirim ke core — naikkan saat teks persetujuan berubah. |
+| `tests/` + `scripts/mock-core.mjs` | Uji regresi vitest (`npm test`) dan mock core untuk uji browser. Lihat `docs/PENGUJIAN.md`. |
 | `src/data/tiket.ts` | **Hanya** metadata marketing (nama tampilan, fasilitas, `badge`, `highlight`) — bukan harga/ketersediaan. |
 | `src/components/Tiket/Tiket.tsx` + `TiketGrid.tsx` + `TiketColumn.tsx` | Server Component homepage — gabungkan data live + metadata marketing. `Tiket.tsx` juga memisahkan fasilitas yang sama di semua kategori ke satu baris ringkas di bawah grid, supaya pembeda asli (harga) tidak tenggelam. Ini satu-satunya tempat isi race pack ditampilkan. |
 | `src/components/EventInfo.tsx` + `Countdown.tsx` | Panel "Menuju hari lomba" (`#jadwal`): hitung mundur ke `live.eventDate` plus fakta hari-H — tanggal, lokasi, gun-start per kategori jarak, dan RPC — semua dari data live. Tiap fakta hanya muncul kalau datanya ada. `Countdown.tsx` adalah Client Component kecil yang di-tick tiap detik, dengan fallback teks kalau tanggal belum diisi panitia. |
@@ -126,7 +145,11 @@ Label dan ukuran tiap tier diatur di `sponsorTiers` pada file yang sama.
 npm install
 cp .env.example .env.local   # isi nilai sesuai kebutuhan, lihat tabel di bawah
 npm run dev
+npm test                     # uji regresi (tanpa jaringan)
 ```
+
+Menguji alur pendaftaran/pembayaran di browser: pakai mock core (`scripts/mock-core.mjs`) sesuai
+`docs/PENGUJIAN.md` — jangan mengirim pendaftaran valid ke core production.
 
 Buka [http://localhost:3000](http://localhost:3000).
 
@@ -155,8 +178,9 @@ diaudit bersih, tidak ada secret asli yang pernah bocor.
 - Redirect otomatis ke halaman pembayaran payment gateway divalidasi domainnya (`*.doku.com` / `*.midtrans.com` via HTTPS saja, `ALLOWED_PAYMENT_DOMAINS` di `src/lib/paymentUrl.ts` — mencakup mode sandbox maupun produksi) sebelum browser diarahkan — mencegah open-redirect kalau respons backend tidak sesuai ekspektasi.
 - Gateway pembayaran tidak dipilih di sini: `api/daftar` selalu mengirim `paymentGateway: "auto"` dan core memilih gateway yang sedang diizinkan dasbor. Mengaktifkan/mematikan gateway cukup dari dasbor kembarin-v2, tanpa deploy ulang situs ini.
 - Security headers (CSP, HSTS, X-Frame-Options, dst) diatur di `next.config.mjs`.
-- Rate limiting & proteksi double-submit di sisi server (`api/daftar/route.ts`), plus header trusted-proxy opsional supaya rate limiter kembarin-v2 tidak salah tembak pengunjung berbeda sebagai satu sumber (lihat env var di atas). IP pengunjung dibaca dari `x-vercel-forwarded-for` atau entri paling kanan `x-forwarded-for` — bukan seluruh string, yang bisa dikarang klien untuk memecah kunci rate limiter.
-- Pesan error dari core hanya diteruskan ke pengguna kalau lolos saringan "pesan untuk manusia"; respons non-JSON tidak dipantulkan, dan log dibersihkan dari deretan angka panjang (NIK/WhatsApp).
+- Pendaftaran idempoten: browser mengirim `sessionId` per isi pesanan, sehingga kirim ulang setelah timeout memakai pesanan yang sama di core, bukan membuat pesanan baru. Hasil yang tidak pasti ditampilkan sebagai "belum pasti" — tidak pernah disebut gagal atau berhasil.
+- Rate limiting dua lapis (30/menit semua permintaan, 20/menit yang diteruskan ke core, per IP) & kunci "sedang diproses" per nomor identitas di sisi server (`api/daftar/route.ts`), plus header trusted-proxy opsional supaya rate limiter kembarin-v2 tidak salah tembak pengunjung berbeda sebagai satu sumber (lihat env var di atas). IP pengunjung dibaca dari `x-vercel-forwarded-for` atau entri paling kanan `x-forwarded-for` — bukan seluruh string, yang bisa dikarang klien untuk memecah kunci rate limiter.
+- Pesan error dari core hanya diteruskan ke pengguna kalau lolos saringan "pesan untuk manusia"; respons non-JSON tidak dipantulkan. Log hanya JSON terstruktur (kode rujukan, status, kode error) — body request/respons core dan token status tidak pernah dicatat.
 - Kunci proteksi double-submit memakai hash NIK ber-salt, bukan NIK mentah.
 
 ## Deployment

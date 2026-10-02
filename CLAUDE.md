@@ -1,7 +1,8 @@
 # CLAUDE.md — smadarun2027
 
 Landing page mandiri untuk event SMADARUN 2027. Baca `README.md` dulu untuk gambaran umum.
-File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
+File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode. Dokumentasi
+lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`docs/README.md`**.
 
 ## Fakta arsitektur yang wajib dipahami sebelum mengubah apa pun
 
@@ -50,6 +51,11 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   panitia mematikan gateway itu di dasbor. Kalau gateway baru dipakai, cukup tambahkan
   domain induknya ke `ALLOWED_PAYMENT_DOMAINS` di `src/lib/paymentUrl.ts` (mode sandbox/produksi tidak perlu diubah — subdomain ikut diterima). Core yang belum mengenal
   `"auto"` menolak dengan "Metode pembayaran tidak valid" — deploy kembarin-v2 lebih dulu.
+- **Kontrak partner core ada di kembarin-v2 `docs/PARTNER_INTEGRATION.md`** (payload, `sessionId`,
+  tabel kode error §7, status pesanan §8, persetujuan §9). Itu acuannya — jangan menebak dari
+  kode core. Penafsiran tiap kode ada di `src/lib/kontrakPendaftaran.ts`; aturan proxy bersama
+  (IP, batas laju, Origin, batas body, header trusted-proxy, log tanpa PII) di
+  `src/lib/proxyCore.ts` dan dipakai `api/daftar` maupun `api/status-pesanan`.
 - **Pengiriman pendaftaran idempoten lewat `sessionId`** (kontrak core
   `RegisterParticipantRequest.sessionId` → `idempotency_key` unik `smadarun:<id>`; diverifikasi
   dari kode kembarin-v2 Oktober 2026). Browser membuat satu UUID per SIDIK JARI isi pesanan
@@ -66,8 +72,15 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   Peserta 1 membuat peserta berikutnya diam-diam memakai nama/email/WhatsApp pemesan sementara
   NIK-nya tetap miliknya (payload berisi identitas dua orang). Menghapus peserta pemesan
   melepas kaitan, tidak memindahkannya. Diuji di `tests/pesananPeserta.test.ts`.
-- Log `api/daftar` hanya JSON terstruktur (kode rujukan, status, kode error) — JANGAN mencatat
-  body request/respons core; body error core bisa memantulkan nama/NIK/WhatsApp.
+- Log `api/daftar` & `api/status-pesanan` hanya JSON terstruktur (kode rujukan, status, kode
+  error) — JANGAN mencatat body request/respons core (bisa memantulkan nama/NIK/WhatsApp) dan
+  JANGAN pernah mencatat `statusToken`. Event `partner_bug` = core menolak `sessionId`
+  (`REGISTRATION_IDEMPOTENCY_MISMATCH`/`SESSION_INVALID`); itu tanda rotasi kunci di sini salah.
+- **Halaman `/daftar/status` memeriksa status sungguhan** untuk pesanan terakhir TAB ini:
+  `{ kode, statusToken }` disimpan di `sessionStorage` (bukan localStorage, bukan URL — token
+  adalah kunci akses pesanan) lalu diperiksa lewat `api/status-pesanan` → core
+  `POST /api/public/orders/status`. Tanpa token (tab lama, atau core belum memasang
+  `ORDER_STATUS_TOKEN_SECRET`) halaman menautkan `kembar.in/events/smadarun/payment-return?order=`.
 - IP pengunjung dibaca lewat `getClientIp()`: `x-vercel-forwarded-for` dulu, lalu entri
   PALING KANAN dari `x-forwarded-for`. Memakai seluruh string `x-forwarded-for` (perilaku
   lama) membuat rate limiter bisa dilewati cukup dengan mengarang header.
@@ -197,9 +210,11 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   error — jadi kalau lupa sinkron, tidak akan langsung ketahuan dari behavior).
 - Next.js 16 + Turbopack + React 19 + ESLint 9 flat config (`next lint` sudah dihapus di v16,
   pakai `eslint .`). Uji regresi: `npm test` (vitest, tanpa jaringan — data live & core di-mock).
-- **Core belum menyimpan jejak persetujuan.** `health_declaration`, `privacy_consent`, dan
-  `consent_recorded_at` dikirim `api/daftar` tetapi tidak dibaca kembarin-v2 (dicek Oktober
-  2026). Penyimpanannya (plus versi kebijakan) harus dikerjakan di core, bukan di sini.
+- **Label versi teks persetujuan WAJIB dinaikkan setiap teks itu berubah** — kalimat dua kotak
+  centang di `DaftarForm` atau isi `IsiKebijakanPrivasi.tsx`. Ubah `VERSI_PERSETUJUAN` dan
+  TAMBAHKAN label baru ke `VERSI_PERSETUJUAN_DIKENAL` di `src/lib/persetujuan.ts` (jangan hapus
+  label lama: tab yang dibuka sebelum deploy masih mengirimnya). Core menyimpannya sebagai
+  `partnerPolicyVersion` di `registration_orders.consent_json` (setelah migrasi core).
 
 ## Kalau perlu ubah sesuatu di sisi kembarin-v2
 
