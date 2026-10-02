@@ -18,6 +18,8 @@ import {
   validasiIdentitas,
 } from "@/lib/identitas";
 import { PESAN_BELUM_PASTI, tafsirkanResponsDaftar } from "@/lib/kontrakPendaftaran";
+import { VERSI_PERSETUJUAN } from "@/lib/persetujuan";
+import { simpanPesananTerakhir } from "@/lib/statusPesanan";
 import {
   aturPemesanIkut,
   bangunPesertaPayload,
@@ -463,6 +465,9 @@ export default function DaftarForm({
     // Isi yang sama → kunci idempotensi yang sama (kirim ulang aman); isi berubah → kunci baru.
     const sesi = pilihSesiPengiriman(sesiPengiriman.current, JSON.stringify(payloadInti), buatIdSesi);
     sesiPengiriman.current = sesi;
+    // Versi teks persetujuan yang SEDANG tampil di tab ini (bukan bagian sidik jari isi,
+    // sama seperti core tidak menghitung field persetujuan sebagai isi pesanan).
+    const payloadKirim = { ...payloadInti, sessionId: sesi.id, consent_policy_version: VERSI_PERSETUJUAN };
 
     const tampilkanBelumPasti = (pesan: string, kode?: string, ref?: string) =>
       setModal({ show: true, jenis: "belum-pasti", title: "Hasil Belum Dapat Dipastikan", message: pesan, kode, ref });
@@ -472,7 +477,7 @@ export default function DaftarForm({
     try {
       const response = await fetch(WEBHOOK_URL, {
         method: "POST",
-        body: JSON.stringify({ ...payloadInti, sessionId: sesi.id }),
+        body: JSON.stringify(payloadKirim),
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
       });
@@ -481,6 +486,8 @@ export default function DaftarForm({
 
       switch (hasil.jenis) {
         case "bayar":
+          // Untuk halaman /daftar/status (sessionStorage tab ini; token = kunci akses status).
+          simpanPesananTerakhir({ kode: hasil.kode, statusToken: hasil.statusToken });
           // Tandai supaya blok `finally` TIDAK mengembalikan tombol ke keadaan diam
           // selagi browser berpindah ke halaman pembayaran.
           sedangDialihkan = true;
@@ -491,6 +498,7 @@ export default function DaftarForm({
           window.location.assign(hasil.url);
           return;
         case "lunas":
+          simpanPesananTerakhir({ kode: hasil.kode, statusToken: hasil.statusToken });
           setModal({
             show: true,
             jenis: "berhasil",
@@ -512,10 +520,22 @@ export default function DaftarForm({
           setRingkasanError(null);
           return;
         case "ditolak":
-          // Core pasti tidak membuat tagihan. Isian dipertahankan untuk diperbaiki.
-          setModal({ show: true, jenis: "gagal", title: "Pendaftaran Ditolak", message: hasil.pesan, ref: hasil.ref });
+          // Core pasti tidak membuat tagihan BARU. Isian dipertahankan untuk diperbaiki.
+          // Kode pesanan yang menyertai (mis. identitas sudah ada di pesanan pending pemesan
+          // ini) ditampilkan dan diingat untuk halaman status.
+          if (hasil.ulangSesi) sesiPengiriman.current = null;
+          if (hasil.kode) simpanPesananTerakhir({ kode: hasil.kode });
+          setModal({
+            show: true,
+            jenis: "gagal",
+            title: "Pendaftaran Ditolak",
+            message: hasil.pesan,
+            kode: hasil.kode,
+            ref: hasil.ref,
+          });
           return;
         case "belum-pasti":
+          if (hasil.kode) simpanPesananTerakhir({ kode: hasil.kode });
           tampilkanBelumPasti(hasil.pesan, hasil.kode, hasil.ref);
           return;
       }
@@ -1318,7 +1338,7 @@ export default function DaftarForm({
               </dl>
             )}
             <div className="flex flex-col gap-2">
-              {modal.jenis !== "gagal" && (
+              {(modal.jenis !== "gagal" || modal.kode) && (
                 <Link
                   href="/daftar/status"
                   className="w-full rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary transition hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"

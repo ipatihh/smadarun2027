@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FiMail, FiClock, FiHelpCircle, FiCreditCard } from "react-icons/fi";
 import { footerDetails } from "@/data/footer";
+import PemeriksaStatus from "./PemeriksaStatus";
 
 export const metadata: Metadata = {
   title: "Status Pendaftaran — SMADARUN 2027",
@@ -13,14 +14,11 @@ export const metadata: Metadata = {
  * Tujuan balik setelah pembayaran. Sebelumnya peserta yang menutup halaman pembayaran
  * tidak punya tempat kembali sama sekali di situs ini.
  *
- * Halaman ini sengaja INFORMASIONAL, bukan pengecek status: kembarin-v2 belum
- * menyediakan endpoint publik untuk melihat status pesanan, dan mengarang tampilan
- * "berhasil/gagal" tanpa data asli justru menyesatkan orang yang baru membayar.
- * Karena itu SEMUA teks di sini bersyarat ("bila pembayaran sudah selesai…") — dulu judul
- * "pendaftaran Anda sedang diproses" + ikon centang + "pembayaran Anda tetap tercatat"
- * terbaca sebagai konfirmasi sukses, padahal halaman ini juga dibuka orang yang belum
- * atau gagal membayar. Kalau core nanti membuka endpoint status (dengan token akses
- * pesanan), halaman inilah tempat memasangnya.
+ * Status SUNGGUHAN hanya ditampilkan oleh <PemeriksaStatus>, untuk pesanan terakhir yang
+ * dibuat dari tab ini (kode + token status di sessionStorage, diperiksa ke core lewat
+ * api/status-pesanan). Teks statis di bawahnya tetap BERSYARAT ("bila pembayaran sudah
+ * selesai…"): halaman ini juga dibuka orang yang belum atau gagal membayar, dan dulu
+ * judul "pendaftaran Anda sedang diproses" + ikon centang terbaca sebagai konfirmasi sukses.
  */
 const langkah = [
   {
@@ -62,13 +60,15 @@ export default function StatusPendaftaranPage() {
 
         <div className="mt-8 rounded-card border border-border bg-card p-6 shadow-rest md:p-9">
           <h1 className="font-display text-2xl font-bold text-foreground">
-            Setelah halaman pembayaran
+            Status pendaftaran
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
-            Halaman ini belum terhubung ke catatan pesanan, jadi tidak dapat memastikan apakah
-            pembayaran Anda berhasil. Status resmi selalu mengikuti email konfirmasi dan catatan
-            sistem pembayaran.
+            Pesanan yang dibuat dari tab peramban ini diperiksa langsung ke sistem pendaftaran dan
+            tampil di bawah. Untuk pesanan lain, ikuti panduan berikut; status resmi selalu
+            mengikuti email konfirmasi dan catatan sistem pembayaran.
           </p>
+
+          <PemeriksaStatus />
 
           <ol className="mt-8 space-y-6">
             {langkah.map((item, index) => (

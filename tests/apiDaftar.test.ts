@@ -294,11 +294,73 @@ describe("kunci dalam proses & rate limit", () => {
     expect((await POST(permintaan(payloadValid(), { ip }))).status).toBe(200);
   });
 
-  it("lebih dari 10 permintaan valid per menit dari satu IP = 429 dengan Retry-After", async () => {
+  it("lebih dari 20 permintaan valid per menit dari satu IP = 429 dengan Retry-After", async () => {
     const ip = "198.51.100.9";
-    for (let i = 0; i < 10; i++) expect((await POST(permintaan(payloadValid(), { ip }))).status).toBe(200);
+    for (let i = 0; i < 20; i++) expect((await POST(permintaan(payloadValid(), { ip }))).status).toBe(200);
     const res = await POST(permintaan(payloadValid(), { ip }));
     expect(res.status).toBe(429);
     expect(res.headers.get("retry-after")).toBeTruthy();
+  });
+});
+
+describe("kontrak partner core", () => {
+  const TOKEN = "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-_AbCde";
+
+  it("consent_policy_version: dikirim label yang ditampilkan; tanpa label = label pertama; label asing ditolak", async () => {
+    await POST(permintaan(payloadValid({ consent_policy_version: "smadarun-2026-10" })));
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).consent_policy_version).toBe("smadarun-2026-10");
+
+    await POST(permintaan(payloadValid()));
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).consent_policy_version).toBe("smadarun-2026-10");
+
+    const res = await POST(permintaan(payloadValid({ consent_policy_version: "karangan-sendiri" })));
+    expect(res.status).toBe(400);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("statusToken dari core diteruskan ke browser", async () => {
+    fetchMock.mockResolvedValueOnce(responsCore({ ...SUKSES_CORE, statusToken: TOKEN }));
+    const body = await (await POST(permintaan(payloadValid()))).json();
+    expect(body.order.statusToken).toBe(TOKEN);
+  });
+
+  it("REGISTRATION_ORDER_PROCESSING = 503 belum pasti dengan orderCode dan Retry-After", async () => {
+    fetchMock.mockResolvedValueOnce(
+      responsCore({ success: false, code: "REGISTRATION_ORDER_PROCESSING", message: "x", orderCode: "ORD-ABC123", retryAfterSeconds: 4, retryable: true }, 503)
+    );
+    const res = await POST(permintaan(payloadValid()));
+    expect(res.status).toBe(503);
+    expect(res.headers.get("retry-after")).toBe("4");
+    expect(await res.json()).toMatchObject({ outcome: "unknown", code: "REGISTRATION_ORDER_PROCESSING", orderCode: "ORD-ABC123", retryAfterSeconds: 4 });
+  });
+
+  it("REGISTRATION_IDENTITY_PENDING_ORDER = 409 ditolak dengan orderCode, tanpa tautan bayar", async () => {
+    fetchMock.mockResolvedValueOnce(
+      responsCore({ success: false, code: "REGISTRATION_IDENTITY_PENDING_ORDER", message: "Nomor identitas ini sudah ada di pesanan ORD-LAMA.", orderCode: "ORD-LAMA", paymentExpiresAt: "2026-10-02T04:00:00.000Z" }, 409)
+    );
+    const res = await POST(permintaan(payloadValid()));
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body).toMatchObject({ outcome: "rejected", orderCode: "ORD-LAMA", paymentExpiresAt: "2026-10-02T04:00:00.000Z" });
+    expect(body).not.toHaveProperty("ulangSesi");
+  });
+
+  it("REGISTRATION_IDEMPOTENCY_MISMATCH dicatat sebagai bug partner dan meminta browser mengulang sesi", async () => {
+    fetchMock.mockResolvedValueOnce(responsCore({ success: false, code: "REGISTRATION_IDEMPOTENCY_MISMATCH", message: "x", orderCode: "ORD-ABC123" }, 409));
+    const body = await (await POST(permintaan(payloadValid()))).json();
+    expect(body).toMatchObject({ outcome: "rejected", ulangSesi: true, orderCode: "ORD-ABC123" });
+    expect(JSON.stringify(logError.mock.calls)).toContain("partner_bug");
+  });
+});
+
+describe("label versi persetujuan", () => {
+  it("label yang sedang dipakai form selalu ada di daftar label yang diterima server", async () => {
+    const { VERSI_PERSETUJUAN, VERSI_PERSETUJUAN_DIKENAL, VERSI_PERSETUJUAN_TANPA_LABEL } = await import("@/lib/persetujuan");
+    // Kalau gagal: label baru belum ditambahkan ke VERSI_PERSETUJUAN_DIKENAL — tanpa itu
+    // SEMUA pendaftaran dari form ditolak "Versi teks persetujuan tidak dikenal".
+    expect(VERSI_PERSETUJUAN_DIKENAL).toContain(VERSI_PERSETUJUAN);
+    expect(VERSI_PERSETUJUAN_DIKENAL).toContain(VERSI_PERSETUJUAN_TANPA_LABEL);
+    for (const label of VERSI_PERSETUJUAN_DIKENAL) expect(label).toMatch(/^[A-Za-z0-9._-]{1,32}$/);
+    expect(new Set(VERSI_PERSETUJUAN_DIKENAL).size).toBe(VERSI_PERSETUJUAN_DIKENAL.length);
   });
 });

@@ -18,6 +18,20 @@ import {
   ResponsDaftar,
   verifikasiSuksesCore,
 } from "@/lib/kontrakPendaftaran";
+import {
+  ambilJatah,
+  asalDiizinkan,
+  bacaBodyRequest,
+  bacaTeksTerbatas,
+  catat as catatLog,
+  contentTypeJson,
+  getClientIp,
+  headerKeCore,
+  isRecord,
+  urlCore,
+  type PetaHitungan,
+} from "@/lib/proxyCore";
+import { VERSI_PERSETUJUAN_DIKENAL, VERSI_PERSETUJUAN_TANPA_LABEL } from "@/lib/persetujuan";
 
 // ─── Batas & proteksi per instance ───────────────────────────────────────────
 // Semua Map di bawah hidup di memori SATU instance serverless (Vercel bisa menjalankan
@@ -28,16 +42,17 @@ import {
 /**
  * Dua lapis rate limit per IP:
  * - semua permintaan: saringan banjir murah sebelum body dibaca;
- * - permintaan yang lolos validasi dan benar-benar diteruskan ke core: disamakan dengan
- *   limiter core. Dulu satu batas 3/menit menghitung juga request yang gagal validasi,
- *   sehingga satu jaringan sekolah/kampus (banyak pendaftar di balik satu IP NAT) cepat
- *   terblokir bersama hanya karena beberapa orang salah ketik.
+ * - permintaan yang lolos validasi dan benar-benar diteruskan ke core. Core mengizinkan
+ *   30/menit per IP pengunjung partner terverifikasi (PARTNER_INTEGRATION.md §3); di sini
+ *   20 (keputusan pemilik, 2 Oktober 2026) — longgar untuk satu jaringan sekolah/kampus di
+ *   balik satu IP NAT, tetapi tetap di bawah batas core sehingga penolakan terjadi di sini
+ *   dulu dengan pesan yang jelas. Dulu satu batas 3/menit menghitung juga request yang
+ *   gagal validasi, sehingga satu jaringan cepat terblokir hanya karena beberapa orang salah ketik.
  */
-const RATE_LIMIT_WINDOW = 60 * 1000;
 const BATAS_SEMUA_PERMINTAAN = 30;
-const BATAS_KE_CORE = 10;
-const hitunganSemua = new Map<string, { count: number; lastReset: number }>();
-const hitunganKeCore = new Map<string, { count: number; lastReset: number }>();
+const BATAS_KE_CORE = 20;
+const hitunganSemua: PetaHitungan = new Map();
+const hitunganKeCore: PetaHitungan = new Map();
 
 /** Payload 10 peserta ±5 KB; batas ini jauh di atasnya tetapi tetap memotong body raksasa. */
 const BATAS_BODY_REQUEST = 32 * 1024;
@@ -58,51 +73,8 @@ function hashNik(nik: string): string {
   return createHash("sha256").update(`${NIK_HASH_SALT}:${nik}`).digest("hex");
 }
 
-/**
- * IP pengunjung asli. PENTING: `x-forwarded-for` bisa diisi sebagian oleh klien —
- * penyerang tinggal mengirim header itu dengan nilai acak tiap request untuk memecah
- * kunci rate limiter (dan, kalau diteruskan mentah, ikut mengelabui rate limiter
- * kembarin-v2 lewat jalur trusted-proxy). Yang boleh dipercaya:
- *   1. `x-vercel-forwarded-for` — ditulis platform, tidak bisa ditimpa klien.
- *   2. entri PALING KANAN dari `x-forwarded-for` — ditambahkan proxy terakhir/terdekat;
- *      bagian kiri adalah bagian yang bisa dikarang klien.
- */
-function getClientIp(req: NextRequest): string {
-  const vercelIp = req.headers.get("x-vercel-forwarded-for");
-  if (vercelIp) return vercelIp.split(",").pop()!.trim();
-
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) {
-    const hops = forwarded.split(",").map((part) => part.trim()).filter(Boolean);
-    if (hops.length > 0) return hops[hops.length - 1];
-  }
-
-  return req.headers.get("x-real-ip") || "127.0.0.1";
-}
-
-/** true = masih di bawah batas (dan hitungan dinaikkan). */
-function ambilJatah(map: Map<string, { count: number; lastReset: number }>, ip: string, batas: number, now: number) {
-  const data = map.get(ip);
-  if (!data || now - data.lastReset > RATE_LIMIT_WINDOW) {
-    map.set(ip, { count: 1, lastReset: now });
-    return { ok: true, retryAfter: 0 };
-  }
-  if (data.count >= batas) {
-    return { ok: false, retryAfter: Math.max(1, Math.ceil((RATE_LIMIT_WINDOW - (now - data.lastReset)) / 1000)) };
-  }
-  data.count++;
-  return { ok: true, retryAfter: 0 };
-}
-
-// Pembersihan cache memori berkala dilakukan secara pasif di dalam request handler
-function bersihkanCacheMundur(now: number) {
-  for (const map of [hitunganSemua, hitunganKeCore]) {
-    if (map.size > 200) {
-      map.forEach((data, ip) => {
-        if (now - data.lastReset > RATE_LIMIT_WINDOW) map.delete(ip);
-      });
-    }
-  }
+// Kunci "sedang diproses" yang kedaluwarsa dibersihkan pasif di dalam request handler.
+function bersihkanKunciMundur(now: number) {
   if (kunciDalamProses.size > 200) {
     kunciDalamProses.forEach((kedaluwarsa, key) => {
       if (now > kedaluwarsa) kunciDalamProses.delete(key);
@@ -110,56 +82,7 @@ function bersihkanCacheMundur(now: number) {
   }
 }
 
-/**
- * Log terstruktur TANPA isi request/respons. Body error core bisa memantulkan nama, email,
- * nomor identitas, atau WhatsApp — dulu sebagian dicatat (hanya deretan ≥8 digit yang
- * disamarkan). Yang dicatat sekarang hanya kode rujukan, status, dan kode error.
- */
-function catat(event: string, data: Record<string, string | number | undefined>) {
-  console.error(JSON.stringify({ src: "api/daftar", event, ...data }));
-}
-
-/** Baca stream sampai `batas` byte; null bila melebihi batas. */
-async function bacaTeksTerbatas(stream: ReadableStream<Uint8Array> | null, batas: number): Promise<string | null> {
-  if (!stream) return "";
-  const reader = stream.getReader();
-  const potongan: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > batas) {
-      await reader.cancel().catch(() => {});
-      return null;
-    }
-    potongan.push(value);
-  }
-  const gabung = new Uint8Array(total);
-  let offset = 0;
-  for (const p of potongan) {
-    gabung.set(p, offset);
-    offset += p.byteLength;
-  }
-  return new TextDecoder().decode(gabung);
-}
-
-/**
- * Permintaan lintas situs ditolak. Endpoint ini anonim (bukan soal sesi/CSRF akun), tetapi
- * tidak ada klien sah selain formulir di situs ini sendiri. Request tanpa header Origin
- * (alat server-to-server, browser lama) tetap diterima — validasi isian tetap berlaku.
- */
-function asalDiizinkan(req: NextRequest): boolean {
-  if (req.headers.get("sec-fetch-site") === "cross-site") return false;
-  const origin = req.headers.get("origin");
-  if (!origin) return true;
-  const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").split(",")[0].trim();
-  try {
-    return new URL(origin).host === host;
-  } catch {
-    return false;
-  }
-}
+const catat = (event: string, data: Record<string, string | number | undefined>) => catatLog("api/daftar", event, data);
 
 // ─── Validator satuan ────────────────────────────────────────────────────────
 const NAMA_PATTERN = /^[a-zA-Z\s\.\']+$/;
@@ -171,13 +94,10 @@ const SIZE_WHITELIST = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 const KODE_WILAYAH_MAX = 16;
 const KATEGORI_MAX = 100;
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const POLA_VERSI_PERSETUJUAN = /^[A-Za-z0-9._-]{1,32}$/;
 
 function emailValid(email: string): boolean {
   return email.length <= EMAIL_MAX && EMAIL_PATTERN.test(email);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
 function balas(body: ResponsDaftar, status: number, headers?: Record<string, string>) {
@@ -210,7 +130,7 @@ export async function POST(req: NextRequest) {
   const kunciDipegang: string[] = [];
   try {
     const now = Date.now();
-    bersihkanCacheMundur(now);
+    bersihkanKunciMundur(now);
 
     // 1. IP pengunjung untuk rate limiting (lihat catatan di getClientIp)
     const ip = getClientIp(req);
@@ -230,15 +150,10 @@ export async function POST(req: NextRequest) {
     if (!asalDiizinkan(req)) {
       return gagal("Permintaan ditolak.", 403, "ORIGIN_NOT_ALLOWED");
     }
-    const contentType = req.headers.get("content-type") ?? "";
-    if (!/^application\/json(\s*;|$)/i.test(contentType.trim())) {
+    if (!contentTypeJson(req)) {
       return gagal("Format permintaan harus JSON.", 415, "UNSUPPORTED_MEDIA_TYPE");
     }
-    const panjangDinyatakan = Number(req.headers.get("content-length"));
-    if (Number.isFinite(panjangDinyatakan) && panjangDinyatakan > BATAS_BODY_REQUEST) {
-      return gagal("Ukuran data pendaftaran terlalu besar.", 413, "PAYLOAD_TOO_LARGE");
-    }
-    const teksBody = await bacaTeksTerbatas(req.body, BATAS_BODY_REQUEST);
+    const teksBody = await bacaBodyRequest(req, BATAS_BODY_REQUEST);
     if (teksBody === null) {
       return gagal("Ukuran data pendaftaran terlalu besar.", 413, "PAYLOAD_TOO_LARGE");
     }
@@ -261,6 +176,7 @@ export async function POST(req: NextRequest) {
       subtotal,
       total_amount,
       sessionId,
+      consent_policy_version,
     } = body;
 
     // 4. Validasi & sanitasi ketat
@@ -303,6 +219,20 @@ export async function POST(req: NextRequest) {
     }
     if (privacy_consent !== true) {
       return gagal("Persetujuan Kebijakan Privasi wajib diberikan sebelum mendaftar.");
+    }
+    // Versi teks persetujuan yang DITAMPILKAN di tab pendaftar (lihat src/lib/persetujuan.ts).
+    // Hanya label yang pernah dipakai situs ini yang diterima; tab lama tanpa label
+    // menampilkan teks label pertama.
+    let versiPersetujuan = VERSI_PERSETUJUAN_TANPA_LABEL;
+    if (consent_policy_version !== undefined && consent_policy_version !== null) {
+      if (
+        typeof consent_policy_version !== "string" ||
+        !POLA_VERSI_PERSETUJUAN.test(consent_policy_version) ||
+        !VERSI_PERSETUJUAN_DIKENAL.includes(consent_policy_version)
+      ) {
+        return gagal("Versi teks persetujuan tidak dikenal. Muat ulang halaman lalu coba lagi.");
+      }
+      versiPersetujuan = consent_policy_version;
     }
 
     // ── Data live: harga, kategori aktif, status buka/tutup, batas kolektif ───
@@ -488,7 +418,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 7. Payload ke core (kembarin-v2)
-    const kembarInUrl = process.env.KEMBAR_IN_API_URL || "https://kembar.in/api/participants/register";
+    const kembarInUrl = urlCore("register");
 
     // PENTING: payload dibangun EKSPLISIT dari field yang sudah divalidasi.
     // Jangan pernah menyebar body mentah dari klien ke sini — endpoint ini mengirim
@@ -536,24 +466,18 @@ export async function POST(req: NextRequest) {
       // panitia mematikan gateway itu di dasbor.
       paymentGateway: "auto",
 
-      // Jejak persetujuan peserta. Timestamp sengaja dibuat di server, bukan diambil
-      // dari klien, supaya tidak bisa dikarang. CATATAN: core saat ini belum membaca
-      // ketiga field ini (diverifikasi Oktober 2026) — penyimpanannya kebutuhan di core.
+      // Jejak persetujuan. Core (kontrak partner, PARTNER_INTEGRATION.md §9) menyimpannya di
+      // registration_orders.consent_json — setelah migrasi core; sebelumnya diabaikan.
+      // Timestamp dibuat di server ini, bukan browser; core hanya menyimpannya bila selisih
+      // dengan jamnya <= 10 menit, dan waktu resmi tetap created_at pesanan.
       health_declaration: true,
       privacy_consent: true,
       consent_recorded_at: new Date(now).toISOString(),
+      consent_policy_version: versiPersetujuan,
     };
 
-    // Header trusted-proxy: memberitahu core system IP pengunjung ASLI (bukan IP egress
-    // server-to-server smadarun2027), supaya rate limiter kembarin-v2 tidak salah tembak
-    // saat banyak pendaftar berbeda mendaftar bersamaan. Opt-in — kalau TRUSTED_PROXY_API_KEY
-    // belum dikonfigurasi, header ini tidak dikirim dan perilaku proxy tetap seperti sebelumnya.
-    const proxyHeaders: Record<string, string> = { "Content-Type": "application/json" };
-    const trustedProxyKey = process.env.TRUSTED_PROXY_API_KEY;
-    if (trustedProxyKey) {
-      proxyHeaders["X-Trusted-Proxy-Key"] = trustedProxyKey;
-      proxyHeaders["X-Forwarded-Client-Ip"] = ip;
-    }
+    // Header trusted-proxy (IP pengunjung asli) — lihat headerKeCore di src/lib/proxyCore.ts.
+    const proxyHeaders = headerKeCore(ip);
 
     // 8. Panggil core. Batas waktu mencakup SELURUH respons — header DAN body. Dulu timer
     // dihentikan begitu header tiba, sehingga body yang macet bisa menggantung melewati
@@ -592,13 +516,45 @@ export async function POST(req: NextRequest) {
 
     if (statusCore < 200 || statusCore >= 300) {
       const hasil = klasifikasiPenolakanCore(statusCore, teksCore);
-      catat("core_rejected", { ref, httpStatus: statusCore, code: hasil.code, outcome: hasil.outcome });
+      catat(hasil.bugPartner ? "partner_bug" : "core_rejected", {
+        ref,
+        httpStatus: statusCore,
+        code: hasil.code,
+        outcome: hasil.outcome,
+      });
+      const retryAfter = hasil.retryAfterSeconds ? { "Retry-After": String(hasil.retryAfterSeconds) } : undefined;
       if (hasil.outcome === "unknown") {
-        return balas({ success: false, outcome: "unknown", code: hasil.code, message: hasil.message, ref }, 502);
+        return balas(
+          {
+            success: false,
+            outcome: "unknown",
+            code: hasil.code,
+            message: hasil.message,
+            orderCode: hasil.orderCode,
+            retryAfterSeconds: hasil.retryAfterSeconds,
+            ref,
+          },
+          // 503 dipertahankan untuk "tautan bayar masih disiapkan" (core mengirim Retry-After).
+          hasil.code === "REGISTRATION_ORDER_PROCESSING" ? 503 : 502,
+          retryAfter
+        );
       }
       // 4xx core diteruskan apa adanya (409 = sudah terdaftar, 429 = rate limit core, ...).
       const status = statusCore >= 400 && statusCore < 500 ? statusCore : 503;
-      return balas({ success: false, outcome: "rejected", code: hasil.code, message: hasil.message, ref }, status);
+      return balas(
+        {
+          success: false,
+          outcome: "rejected",
+          code: hasil.code,
+          message: hasil.message,
+          orderCode: hasil.orderCode,
+          paymentExpiresAt: hasil.paymentExpiresAt,
+          ...(hasil.ulangSesi ? { ulangSesi: true as const } : {}),
+          ref,
+        },
+        status,
+        retryAfter
+      );
     }
 
     let dataCore: unknown;

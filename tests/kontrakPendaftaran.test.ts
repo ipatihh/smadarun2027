@@ -3,6 +3,7 @@ import {
   klasifikasiPenolakanCore,
   PESAN_BELUM_PASTI,
   PESAN_GATEWAY_GAGAL,
+  PESAN_SESI_DIPERBARUI,
   tafsirkanResponsDaftar,
   verifikasiSuksesCore,
 } from "@/lib/kontrakPendaftaran";
@@ -144,7 +145,7 @@ describe("tafsirkanResponsDaftar — browser tidak pernah menganggap respons rus
   it("ditolak tetap ditolak; belum pasti membawa kode pesanan & rujukan", () => {
     expect(
       tafsirkanResponsDaftar(409, JSON_CT, JSON.stringify({ success: false, outcome: "rejected", code: "X_Y", message: "NIK sudah terdaftar." }), ORIGIN)
-    ).toEqual({ jenis: "ditolak", pesan: "NIK sudah terdaftar.", ref: undefined });
+    ).toEqual({ jenis: "ditolak", pesan: "NIK sudah terdaftar.", kode: undefined, ulangSesi: false, ref: undefined });
     expect(
       tafsirkanResponsDaftar(
         502,
@@ -159,5 +160,111 @@ describe("tafsirkanResponsDaftar — browser tidak pernah menganggap respons rus
     expect(
       tafsirkanResponsDaftar(200, JSON_CT, JSON.stringify({ success: false, outcome: "rejected", message: "x" }), ORIGIN).jenis
     ).toBe("belum-pasti");
+  });
+});
+
+// ─── Kontrak partner core (kembarin-v2 docs/PARTNER_INTEGRATION.md §6–§7) ────────
+
+const TOKEN = "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789-_AbCde"; // 43 karakter base64url sintetis
+const core = (status: number, body: Record<string, unknown>) => klasifikasiPenolakanCore(status, JSON.stringify(body));
+
+describe("statusToken di respons sukses", () => {
+  const sukses = {
+    success: true,
+    status: "pending",
+    orderId: 7,
+    orderCode: "ORD-XYZ123",
+    paymentUrl: "https://app.midtrans.com/snap/v4/redirection/x",
+  };
+
+  it("token berpola sah ikut diteruskan; token salah bentuk diabaikan tanpa menggagalkan pesanan", () => {
+    expect(TOKEN).toHaveLength(43);
+    expect(verifikasiSuksesCore({ ...sukses, statusToken: TOKEN })).toMatchObject({ jenis: "berhasil", order: { statusToken: TOKEN } });
+    const salah = verifikasiSuksesCore({ ...sukses, statusToken: "pendek" });
+    expect(salah.jenis).toBe("berhasil");
+    expect((salah as { order: object }).order).not.toHaveProperty("statusToken", "pendek");
+    expect(verifikasiSuksesCore({ ...sukses, status: "paid", statusToken: TOKEN })).toMatchObject({
+      order: { status: "paid", statusToken: TOKEN },
+    });
+  });
+
+  it("browser menerima token bersama kode pesanan", () => {
+    const body = { success: true, outcome: "created", order: { kode: "ORD-XYZ123", status: "pending", paymentUrl: sukses.paymentUrl, statusToken: TOKEN } };
+    expect(tafsirkanResponsDaftar(200, JSON_CT, JSON.stringify(body), ORIGIN)).toEqual({
+      jenis: "bayar",
+      url: sukses.paymentUrl,
+      kode: "ORD-XYZ123",
+      statusToken: TOKEN,
+    });
+  });
+});
+
+describe("kode error baru dari core", () => {
+  it("REGISTRATION_ORDER_PROCESSING (503) = belum pasti, membawa kode pesanan & detik tunggu", () => {
+    const hasil = core(503, { success: false, code: "REGISTRATION_ORDER_PROCESSING", message: "Invoice pembayaran untuk pesanan ORD-1 sedang diproses.", orderCode: "ORD-1", retryAfterSeconds: 5, retryable: true });
+    expect(hasil).toMatchObject({ outcome: "unknown", code: "REGISTRATION_ORDER_PROCESSING", orderCode: "ORD-1", retryAfterSeconds: 5 });
+    expect(hasil.message).toContain("ORD-1");
+    expect(hasil.message).toMatch(/tanpa mengubah isian/);
+    expect(hasil.message).not.toMatch(/gagal|dibatalkan/i);
+  });
+
+  it("REGISTRATION_IDENTITY_PENDING_ORDER (409) = ditolak, pesan core diteruskan + kode pesanan + batas bayar", () => {
+    const message = "Nomor identitas ini sudah ada di pesanan ORD-2 yang menunggu pembayaran hingga 2 Okt 2026 11.00 WIB. Bayar lewat tautan di email pemesan, atau daftar ulang setelah itu.";
+    expect(message.length).toBeLessThanOrEqual(200);
+    expect(core(409, { code: "REGISTRATION_IDENTITY_PENDING_ORDER", message, orderCode: "ORD-2", paymentExpiresAt: "2026-10-02T04:00:00.000Z" })).toEqual({
+      outcome: "rejected",
+      code: "REGISTRATION_IDENTITY_PENDING_ORDER",
+      orderCode: "ORD-2",
+      paymentExpiresAt: "2026-10-02T04:00:00.000Z",
+      message,
+    });
+  });
+
+  it("REGISTRATION_IDEMPOTENCY_MISMATCH = ditolak, sesi diulang, dicatat sebagai bug; saran 'muat ulang' core tidak diteruskan", () => {
+    const hasil = core(409, { code: "REGISTRATION_IDEMPOTENCY_MISMATCH", message: "Halaman ini sudah membuat pesanan ORD-3 dengan isi berbeda. Muat ulang halaman lalu isi kembali untuk membuat pesanan baru.", orderCode: "ORD-3" });
+    expect(hasil).toMatchObject({ outcome: "rejected", orderCode: "ORD-3", ulangSesi: true, bugPartner: true });
+    expect(hasil.message).not.toMatch(/muat ulang/i);
+    expect(hasil.message).toMatch(/Isian Anda tetap ada/);
+  });
+
+  it("REGISTRATION_SESSION_INVALID (400) = ditolak, sesi diulang, dicatat sebagai bug", () => {
+    expect(core(400, { code: "REGISTRATION_SESSION_INVALID", message: "Kode sesi pendaftaran tidak valid. Muat ulang halaman lalu coba lagi." })).toEqual({
+      outcome: "rejected",
+      code: "REGISTRATION_SESSION_INVALID",
+      ulangSesi: true,
+      bugPartner: true,
+      message: PESAN_SESI_DIPERBARUI,
+    });
+  });
+
+  it("PAYMENT_GATEWAY_RECONCILIATION_REQUIRED memakai field orderCode, bukan mengurai kalimat", () => {
+    expect(core(400, { code: "PAYMENT_GATEWAY_RECONCILIATION_REQUIRED", message: "x".repeat(250), orderCode: "ORD-4" })).toMatchObject({
+      outcome: "unknown",
+      orderCode: "ORD-4",
+      message: expect.stringContaining("ORD-4"),
+    });
+  });
+
+  it("penolakan konfigurasi event kini 400 REGISTRATION_VALIDATION_FAILED = ditolak", () => {
+    expect(core(400, { code: "REGISTRATION_VALIDATION_FAILED", message: "Harga tiket kategori ini belum disetel panitia." })).toEqual({
+      outcome: "rejected",
+      code: "REGISTRATION_VALIDATION_FAILED",
+      message: "Harga tiket kategori ini belum disetel panitia.",
+    });
+  });
+
+  it("orderCode berbahaya / format salah dibuang", () => {
+    expect(core(409, { code: "REGISTRATION_IDENTITY_PENDING_ORDER", orderCode: "<b>x</b>" }).orderCode).toBeUndefined();
+  });
+
+  it("browser: ditolak membawa kode pesanan dan instruksi mengulang sesi", () => {
+    const body = { success: false, outcome: "rejected", code: "REGISTRATION_IDEMPOTENCY_MISMATCH", message: "Pesanan ORD-3 sudah tercatat.", orderCode: "ORD-3", ulangSesi: true };
+    expect(tafsirkanResponsDaftar(409, JSON_CT, JSON.stringify(body), ORIGIN)).toEqual({
+      jenis: "ditolak",
+      pesan: "Pesanan ORD-3 sudah tercatat.",
+      kode: "ORD-3",
+      ulangSesi: true,
+      ref: undefined,
+    });
   });
 });
