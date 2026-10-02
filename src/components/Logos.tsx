@@ -76,7 +76,7 @@ const Logos: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={sponsor.name}
-                      className="rounded-field focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      className="rounded-field focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     >
                       <SponsorLogo sponsor={sponsor} tier={tier} />
                     </a>

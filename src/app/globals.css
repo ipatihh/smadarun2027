@@ -32,6 +32,13 @@
   /* Garis */
   --border: 229 229 226; /* #E5E5E2 */
   --border-strong: 210 210 206; /* #D2D2CE */
+  /* Batas kontrol form (input/select/combobox). --border hanya garis dekoratif (1,26:1
+     terhadap card) — terlalu samar untuk menandai kotak isian; WCAG 1.4.11 minta >= 3:1.
+     #858581: 3,70:1 terhadap card, 3,39:1 terhadap surface-sunken. */
+  --field-border: 133 133 129; /* #858581 */
+  /* Cincin fokus keyboard. Kuning --primary hanya 1,39:1 di atas card putih; warna teks
+     17,9:1. Di panel gelap (--secondary) tetap pakai ring-primary (12,2:1). */
+  --focus: 23 23 23; /* #171717 */
 
   /* Brand — kuning HANYA untuk permukaan/aksen, bukan warna teks di latar terang */
   --primary: 254 216 53; /* #FED835 */
@@ -78,6 +85,8 @@
 
     --border: 46 50 56; /* #2E3238 */
     --border-strong: 67 71 78; /* #43474E */
+    --field-border: 115 120 130; /* #737882 — 3,82:1 terhadap card, 3,51:1 terhadap surface-sunken */
+    --focus: 254 216 53; /* #FED835 — 12,2:1 terhadap card gelap */
 
     --secondary: 34 38 43; /* #22262B */
     --secondary-accent: 46 50 56; /* #2E3238 */

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useMemo, useRef, useState, ChangeEvent, FocusEvent, FormEvent } from "react";
+import React, { useEffect, useMemo, useRef, useState, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/WilayahSelect";
+import IsiKebijakanPrivasi from "@/components/legal/IsiKebijakanPrivasi";
 import { KOTA_MANUAL_MAX_LENGTH, KOTA_MANUAL_PATTERN } from "@/lib/wilayah";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
@@ -14,30 +15,34 @@ import {
   kunciIdentitas,
   LABEL_JENIS_IDENTITAS,
   NOMOR_IDENTITAS_MAX,
-  rapikanNomorIdentitas,
   validasiIdentitas,
 } from "@/lib/identitas";
-import { isTrustedPaymentUrl } from "@/lib/paymentUrl";
+import { PESAN_BELUM_PASTI, tafsirkanResponsDaftar } from "@/lib/kontrakPendaftaran";
+import {
+  aturPemesanIkut,
+  bangunPesertaPayload,
+  buatIdSesi,
+  dataPesertaEfektif,
+  hapusPeserta as hapusPesertaDariPesanan,
+  KeadaanPesanan,
+  PemesanForm,
+  pemesanIkutLari,
+  PesertaForm,
+  pilihSesiPengiriman,
+  SesiPengiriman,
+  tambahPeserta as tambahPesertaKePesanan,
+} from "@/lib/pesananPeserta";
 
-interface BuyerState {
-  nama: string;
-  email: string;
-  whatsapp: string;
-}
+// Lebih lama dari batas api/daftar (data live ±8 dtk + core 25 dtk) supaya browser tidak
+// menyerah lebih dulu daripada server. Tidak ada pengiriman ulang otomatis.
+const BATAS_TUNGGU_KLIEN_MS = 45_000;
+// Bila browser belum berpindah ke halaman pembayaran setelah ini, tautannya ditampilkan.
+const JEDA_TAUTAN_CADANGAN_MS = 8_000;
 
-interface PesertaState {
-  key: string;
-  nama: string;
-  email: string;
-  whatsapp: string;
-  nik: string;
-  /** Jenis isian `nik`: NIK (16 digit) atau nomor kartu pelajar. */
-  jenisIdentitas: JenisIdentitas;
-  gender: string;
-  wilayah: WilayahValue;
-  kategori: string;
-  size: string;
-}
+type JenisModal = "berhasil" | "gagal" | "belum-pasti";
+
+type BuyerState = PemesanForm;
+type PesertaState = PesertaForm;
 
 type BuyerField = keyof BuyerState;
 // `jenisIdentitas` bukan isian yang divalidasi sendiri — ia menentukan aturan untuk `nik`.
@@ -136,7 +141,7 @@ const fieldClass = (hasError: boolean) =>
   `w-full p-3.5 bg-surface-sunken border rounded-field text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
     hasError
       ? "border-danger focus:border-danger focus:ring-danger/20"
-      : "border-border focus:border-foreground focus:ring-primary/40"
+      : "border-field-border focus:border-foreground focus:ring-primary/40"
   }`;
 
 const labelClass = "block text-sm font-semibold text-foreground mb-2";
@@ -154,7 +159,7 @@ const StepHeading: React.FC<{ step: number; title: string; hint?: string }> = ({
       {step}
     </span>
     <div>
-      <h3 className="font-display text-xl font-bold text-foreground leading-none">{title}</h3>
+      <h2 className="font-display text-xl font-bold text-foreground leading-none">{title}</h2>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   </div>
@@ -210,17 +215,22 @@ export default function DaftarForm({
   const [buyer, setBuyer] = useState<BuyerState>({ nama: "", email: "", whatsapp: "" });
   const [buyerErrors, setBuyerErrors] = useState<Partial<Record<BuyerField, string>>>({});
 
-  // Pemesan umumnya ikut lari juga (kasus paling sering). Kalau dicentang, data
-  // nama/email/WhatsApp peserta pertama mengikuti pemesan supaya tidak diketik dua kali.
-  const [pemesanIkut, setPemesanIkut] = useState(true);
-
   // Peserta awal selalu `peserta-0` supaya render server dan browser identik. Peserta
   // berikutnya hanya dibuat di browser, nomornya dari ref milik komponen ini.
   const nomorKeyBerikut = useRef(1);
   const keyPesertaBaru = () => `peserta-${nomorKeyBerikut.current++}`;
-  const [pesertaList, setPesertaList] = useState<PesertaState[]>(() => [
-    pesertaBaru("peserta-0", KATEGORI_KEYS[0] || ""),
-  ]);
+  // Pemesan umumnya ikut lari juga (kasus paling sering), jadi awalnya dikaitkan ke
+  // peserta pertama: nama/email/WhatsApp peserta itu mengikuti pemesan supaya tidak
+  // diketik dua kali. Kaitannya lewat KEY peserta (pemesanKey), bukan indeks — lihat
+  // src/lib/pesananPeserta.ts.
+  const [pesanan, setPesanan] = useState<KeadaanPesanan>(() => ({
+    pesertaList: [pesertaBaru("peserta-0", KATEGORI_KEYS[0] || "")],
+    pemesanKey: "peserta-0",
+  }));
+  const pesertaList = pesanan.pesertaList;
+  const pemesanIkut = pemesanIkutLari(pesanan);
+  const setPesertaList = (ubah: (prev: PesertaState[]) => PesertaState[]) =>
+    setPesanan((prev) => ({ ...prev, pesertaList: ubah(prev.pesertaList) }));
   const [pesertaErrors, setPesertaErrors] = useState<Record<string, Partial<Record<PesertaField, string>>>>({});
 
   const [isHealthyChecked, setIsHealthyChecked] = useState(false);
@@ -237,21 +247,37 @@ export default function DaftarForm({
   const loading = status !== "idle";
   const [ringkasanError, setRingkasanError] = useState<{ jumlah: number; targetId: string } | null>(null);
   const [isImgOpen, setIsImgOpen] = useState(false);
+  const [isPrivasiOpen, setIsPrivasiOpen] = useState(false);
   // Kartu peserta yang baru dituju dari tombol "Ubah" di ringkasan, disorot sebentar
   // supaya pengguna tahu sedang berada di kartu peserta yang mana.
   const [kartuDisorot, setKartuDisorot] = useState<string | null>(null);
-  const [modal, setModal] = useState<{ show: boolean; success: boolean; title: string; message: string }>({
-    show: false,
-    success: false,
-    title: "",
-    message: "",
-  });
+  const [modal, setModal] = useState<{
+    show: boolean;
+    jenis: JenisModal;
+    title: string;
+    message: string;
+    kode?: string;
+    ref?: string;
+  }>({ show: false, jenis: "gagal", title: "", message: "" });
+  // Kunci idempotensi pengiriman terakhir — lihat pilihSesiPengiriman.
+  const sesiPengiriman = useRef<SesiPengiriman | null>(null);
+  // Tautan bayar yang sedang dituju; ditampilkan sebagai cadangan bila pengalihan macet.
+  const [tautanBayar, setTautanBayar] = useState<{ url: string; kode: string } | null>(null);
+  const [tampilkanCadangan, setTampilkanCadangan] = useState(false);
 
-  // Peserta pertama memakai identitas pemesan kalau kotaknya dicentang.
-  const dataPesertaEfektif = (p: PesertaState, index: number): PesertaState =>
-    index === 0 && pemesanIkut
-      ? { ...p, nama: buyer.nama, email: buyer.email, whatsapp: buyer.whatsapp }
-      : p;
+  // Kembali dari halaman pembayaran lewat tombol Back bisa memulihkan halaman ini dari
+  // bfcache dalam keadaan "Mengalihkan…" selamanya. Kembalikan ke formulir (isian utuh).
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setStatus("idle");
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
+  // Hanya peserta yang dikaitkan ke pemesan (pemesanKey) yang memakai identitas pemesan.
+  const efektif = (p: PesertaState): PesertaState => dataPesertaEfektif(p, buyer, pesanan.pemesanKey);
+  const pesertaPemesan = (p: PesertaState) => pesanan.pemesanKey !== null && p.key === pesanan.pemesanKey;
 
   const hargaPeserta = (p: PesertaState) => KATEGORI_TIKET[p.kategori]?.price ?? 0;
 
@@ -311,11 +337,13 @@ export default function DaftarForm({
   const tambahPeserta = () => {
     if (!bolehTambahPeserta) return;
     const baru = pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || "");
-    setPesertaList((prev) => [...prev, baru]);
+    setPesanan((prev) => tambahPesertaKePesanan(prev, baru, batasTiket));
   };
 
+  // Menghapus peserta pemesan MELEPAS kaitan pemesan (kotak "ikut lari" jadi tidak
+  // tercentang); data peserta lain tidak ikut berubah.
   const hapusPeserta = (key: string) => {
-    setPesertaList((prev) => (prev.length <= 1 ? prev : prev.filter((p) => p.key !== key)));
+    setPesanan((prev) => hapusPesertaDariPesanan(prev, key));
     setPesertaErrors((prev) => {
       const next = { ...prev };
       delete next[key];
@@ -364,12 +392,12 @@ export default function DaftarForm({
     const nextPesertaErrors: Record<string, Partial<Record<PesertaField, string>>> = {};
     const nikTerpakai = new Map<string, number>();
     pesertaList.forEach((raw, index) => {
-      const p = dataPesertaEfektif(raw, index);
+      const p = efektif(raw);
       const errorsPeserta: Partial<Record<PesertaField, string>> = {};
       for (const field of URUTAN_PESERTA) {
-        // Nama/email/WA peserta pertama mengikuti pemesan; kesalahannya sudah
+        // Nama/email/WA peserta pemesan mengikuti pemesan; kesalahannya sudah
         // dilaporkan di bagian pemesan, jangan dilaporkan dua kali.
-        if (index === 0 && pemesanIkut && (field === "nama" || field === "email" || field === "whatsapp")) continue;
+        if (pesertaPemesan(raw) && (field === "nama" || field === "email" || field === "whatsapp")) continue;
         const message = validasiPeserta(field, p[field], p);
         if (message) errorsPeserta[field] = message;
       }
@@ -416,33 +444,14 @@ export default function DaftarForm({
     setStatus("submitting");
     let sedangDialihkan = false;
 
-    const payload = {
+    const payloadInti = {
       eventCode: "smadarun",
       buyer: {
         nama: buyer.nama.trim(),
         email: buyer.email.trim(),
         whatsapp: buyer.whatsapp.trim(),
       },
-      participants: pesertaList.map((raw, index) => {
-        const p = dataPesertaEfektif(raw, index);
-        return {
-          nama: p.nama.trim(),
-          email: p.email.trim(),
-          whatsapp: p.whatsapp.trim(),
-          nik: rapikanNomorIdentitas(p.nik),
-          jenisIdentitas: p.jenisIdentitas,
-          gender: p.gender,
-          // Kode wilayah ikut dikirim supaya core menyimpan provinsi & kabupaten/kota
-          // resmi (prov_code/kota_code), bukan sekadar teks. Server menurunkan ulang
-          // nama dari kode; `kota` hanya dipakai untuk isian manual. Saat dropdown
-          // dimatikan di kembarin-v2 hanya teks yang dikirim.
-          provCode: wilayahDropdown ? p.wilayah.provCode : "",
-          kotaCode: wilayahDropdown && !p.wilayah.manual ? p.wilayah.kotaCode : "",
-          kota: p.wilayah.display.trim(),
-          kategori: p.kategori,
-          size: p.size,
-        };
-      }),
+      participants: bangunPesertaPayload(pesanan, buyer, wilayahDropdown),
       // Persetujuan ikut dikirim dan divalidasi ulang di server, bukan cuma mengunci tombol.
       health_declaration: true,
       privacy_consent: true,
@@ -451,73 +460,70 @@ export default function DaftarForm({
       subtotal,
       total_amount: totalAmount,
     };
+    // Isi yang sama → kunci idempotensi yang sama (kirim ulang aman); isi berubah → kunci baru.
+    const sesi = pilihSesiPengiriman(sesiPengiriman.current, JSON.stringify(payloadInti), buatIdSesi);
+    sesiPengiriman.current = sesi;
 
+    const tampilkanBelumPasti = (pesan: string, kode?: string, ref?: string) =>
+      setModal({ show: true, jenis: "belum-pasti", title: "Hasil Belum Dapat Dipastikan", message: pesan, kode, ref });
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), BATAS_TUNGGU_KLIEN_MS);
     try {
       const response = await fetch(WEBHOOK_URL, {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payloadInti, sessionId: sesi.id }),
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
       });
+      const teks = await response.text();
+      const hasil = tafsirkanResponsDaftar(response.status, response.headers.get("content-type"), teks, window.location.origin);
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error(
-          `Server mengembalikan respons tidak valid (HTTP ${response.status}). Silakan coba beberapa saat lagi.`
-        );
-      }
-
-      const result = await response.json();
-
-      if (response.ok && result.success !== false) {
-        const paymentUrl =
-          result.paymentUrl || result.payment_url || result.data?.paymentUrl || result.data?.payment_url;
-
-        if (paymentUrl) {
-          // Redirect hanya diizinkan ke domain resmi payment gateway untuk mencegah open-redirect/phishing.
-          if (!isTrustedPaymentUrl(paymentUrl, window.location.origin)) {
-            throw new Error(
-              "Tautan pembayaran yang diterima tidak valid. Pendaftaran dibatalkan demi keamanan Anda."
-            );
-          }
+      switch (hasil.jenis) {
+        case "bayar":
           // Tandai supaya blok `finally` TIDAK mengembalikan tombol ke keadaan diam
           // selagi browser berpindah ke halaman pembayaran.
           sedangDialihkan = true;
+          setTautanBayar({ url: hasil.url, kode: hasil.kode });
+          setTampilkanCadangan(false);
           setStatus("redirecting");
-          window.location.href = paymentUrl;
+          window.setTimeout(() => setTampilkanCadangan(true), JEDA_TAUTAN_CADANGAN_MS);
+          window.location.assign(hasil.url);
           return;
-        }
-
-        setModal({
-          show: true,
-          success: true,
-          title: "Pendaftaran Berhasil!",
-          message:
-            result.message ||
-            "Data pendaftaran Anda telah aman tersimpan. Silakan periksa email Anda untuk rincian pembayaran.",
-        });
-
-        setBuyer({ nama: "", email: "", whatsapp: "" });
-        setPesertaList([pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || "")]);
-        setPesertaErrors({});
-        setBuyerErrors({});
-        setIsHealthyChecked(false);
-        setIsConsentChecked(false);
-        setConsentErrors({});
-        setRingkasanError(null);
-      } else {
-        throw new Error(result.message || result.error || "Gagal memproses pendaftaran");
+        case "lunas":
+          setModal({
+            show: true,
+            jenis: "berhasil",
+            title: "Pesanan Sudah Lunas",
+            message: `Pesanan ${hasil.kode} sudah tercatat lunas. Bukti pendaftaran dikirim ke email pemesan.`,
+            kode: hasil.kode,
+          });
+          setBuyer({ nama: "", email: "", whatsapp: "" });
+          {
+            const keyAwal = keyPesertaBaru();
+            setPesanan({ pesertaList: [pesertaBaru(keyAwal, KATEGORI_KEYS[0] || "")], pemesanKey: keyAwal });
+          }
+          sesiPengiriman.current = null;
+          setPesertaErrors({});
+          setBuyerErrors({});
+          setIsHealthyChecked(false);
+          setIsConsentChecked(false);
+          setConsentErrors({});
+          setRingkasanError(null);
+          return;
+        case "ditolak":
+          // Core pasti tidak membuat tagihan. Isian dipertahankan untuk diperbaiki.
+          setModal({ show: true, jenis: "gagal", title: "Pendaftaran Ditolak", message: hasil.pesan, ref: hasil.ref });
+          return;
+        case "belum-pasti":
+          tampilkanBelumPasti(hasil.pesan, hasil.kode, hasil.ref);
+          return;
       }
-    } catch (err: unknown) {
-      setModal({
-        show: true,
-        success: false,
-        title: "Pendaftaran Gagal",
-        message:
-          err instanceof Error
-            ? err.message
-            : "Gagal mengirim data pendaftaran. Silakan periksa koneksi Anda dan coba lagi.",
-      });
+    } catch {
+      // Timeout browser atau sambungan putus: permintaan mungkin sudah sampai ke server.
+      tampilkanBelumPasti(PESAN_BELUM_PASTI);
     } finally {
+      window.clearTimeout(timer);
       if (!sedangDialihkan) setStatus("idle");
     }
   };
@@ -552,7 +558,7 @@ export default function DaftarForm({
   const RincianBiaya = (
     <dl className="space-y-3 text-sm">
       {pesertaList.map((raw, index) => {
-        const nama = dataPesertaEfektif(raw, index).nama.trim();
+        const nama = efektif(raw).nama.trim();
         const kategori = KATEGORI_TIKET[raw.kategori];
         return (
           <div key={raw.key} className="flex justify-between gap-4 text-foreground-accent font-medium">
@@ -574,7 +580,7 @@ export default function DaftarForm({
               <button
                 type="button"
                 onClick={() => ubahPeserta(raw.key, index)}
-                className="rounded text-xs font-bold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="rounded text-xs font-bold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 Ubah<span className="sr-only"> data peserta {index + 1}</span>
               </button>
@@ -606,7 +612,7 @@ export default function DaftarForm({
       form="formDaftar"
       disabled={loading || isFormClosed}
       aria-busy={loading}
-      className={`w-full bg-primary hover:bg-primary-accent text-on-primary font-bold text-base rounded-full shadow-rest hover:shadow-hover transition-all disabled:bg-surface-sunken disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center gap-3 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
+      className={`w-full bg-primary hover:bg-primary-accent text-on-primary font-bold text-base rounded-full shadow-rest hover:shadow-hover transition-all disabled:bg-surface-sunken disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center gap-3 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
     >
       <span>{loading ? labelStatus : label}</span>
       {loading && (
@@ -627,9 +633,11 @@ export default function DaftarForm({
 
       <div className="mx-auto w-full max-w-5xl">
         <div className="text-center mb-8">
-          <p className="font-display text-3xl font-bold uppercase text-foreground">
+          {/* h1 halaman ini (dulu tidak ada; langkah-langkah form langsung h3). */}
+          <h1 className="font-display text-3xl font-bold uppercase text-foreground">
             SMADARUN <span className="accent-mark">2027</span>
-          </p>
+            <span className="sr-only"> — pendaftaran peserta</span>
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">Portal pendaftaran resmi</p>
         </div>
 
@@ -724,7 +732,7 @@ export default function DaftarForm({
                     type="checkbox"
                     id="pemesanIkut"
                     checked={pemesanIkut}
-                    onChange={(e) => setPemesanIkut(e.target.checked)}
+                    onChange={(e) => setPesanan((prev) => aturPemesanIkut(prev, e.target.checked))}
                     className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary"
                   />
                   <label htmlFor="pemesanIkut" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
@@ -746,9 +754,9 @@ export default function DaftarForm({
                 />
 
                 {pesertaList.map((raw, index) => {
-                  const p = dataPesertaEfektif(raw, index);
+                  const p = efektif(raw);
                   const errs = pesertaErrors[raw.key] || {};
-                  const identitasDariPemesan = index === 0 && pemesanIkut;
+                  const identitasDariPemesan = pesertaPemesan(raw);
 
                   return (
                     <div
@@ -772,7 +780,7 @@ export default function DaftarForm({
                           <button
                             type="button"
                             onClick={() => hapusPeserta(raw.key)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground-accent transition hover:border-danger hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground-accent transition hover:border-danger hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                           >
                             <FiTrash2 className="h-3.5 w-3.5" aria-hidden="true" />
                             Hapus
@@ -1013,7 +1021,7 @@ export default function DaftarForm({
                       type="button"
                       onClick={tambahPeserta}
                       disabled={!bolehTambahPeserta}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-border-strong px-5 py-3 text-sm font-bold text-foreground transition hover:border-primary-accent hover:text-primary-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-border-strong px-5 py-3 text-sm font-bold text-foreground transition hover:border-primary-accent hover:text-primary-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     >
                       <FiPlus className="h-4 w-4" aria-hidden="true" />
                       Tambah Peserta
@@ -1040,6 +1048,13 @@ export default function DaftarForm({
                     {RincianBiaya}
                   </div>
                 )}
+                {/* Tautan status untuk ponsel — versi desktop ada di kartu ringkasan (lg). */}
+                <p className="text-center text-xs text-muted-foreground lg:hidden">
+                  Sudah membayar?{" "}
+                  <Link href="/daftar/status" className="font-semibold text-foreground underline underline-offset-2 hover:text-foreground-accent">
+                    Lihat langkah setelah pembayaran
+                  </Link>
+                </p>
 
                 <div
                   className={`flex items-start gap-3 rounded-field border p-4 ${
@@ -1092,6 +1107,14 @@ export default function DaftarForm({
                       <span className="font-bold text-foreground">Kebijakan Privasi</span> atas data pribadi seluruh
                       peserta yang saya daftarkan.
                     </label>
+                    {/* Dialog di halaman yang sama — dulu kebijakan hanya bisa dibuka dari footer. */}
+                    <button
+                      type="button"
+                      onClick={() => setIsPrivasiOpen(true)}
+                      className="mt-1 block rounded text-xs font-bold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    >
+                      Baca Kebijakan Privasi
+                    </button>
                     <FieldError id="privacy-error" message={consentErrors.privacy} />
                   </div>
                 </div>
@@ -1186,6 +1209,29 @@ export default function DaftarForm({
                 ? <>Anda sedang dibawa ke halaman pembayaran resmi <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Jangan tutup halaman ini.</>
                 : "Mohon tunggu sebentar dan jangan tutup halaman ini."}
             </p>
+            {/* Pengalihan bisa tertahan (pemblokir, koneksi lambat). Pesanan sudah ada,
+                jadi tautan yang SAMA ditawarkan — bukan ajakan mendaftar ulang. */}
+            {status === "redirecting" && tampilkanCadangan && tautanBayar && (
+              <div className="mt-4 border-t border-border pt-4 text-left">
+                <p className="text-xs text-foreground-accent">
+                  Belum berpindah? Pesanan <span className="font-mono font-semibold text-foreground">{tautanBayar.kode}</span> sudah dibuat.
+                </p>
+                <a
+                  href={tautanBayar.url}
+                  rel="noopener noreferrer"
+                  className="mt-3 block w-full rounded-full bg-primary px-5 py-2.5 text-center text-sm font-bold text-on-primary transition hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                >
+                  Buka halaman pembayaran
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setStatus("idle")}
+                  className="mt-2 w-full rounded-full px-5 py-2 text-xs font-semibold text-foreground underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                >
+                  Kembali ke formulir
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1214,6 +1260,24 @@ export default function DaftarForm({
         </div>
       </Dialog>
 
+      {/* Kebijakan Privasi, dibuka dari kotak persetujuan tanpa meninggalkan formulir */}
+      <Dialog open={isPrivasiOpen} onClose={() => setIsPrivasiOpen(false)} className="relative z-50">
+        <div className="fixed inset-0 bg-overlay backdrop-blur-sm" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-lg rounded-card border border-border bg-card p-6 text-foreground shadow-hover md:p-8">
+            <DialogTitle className="mb-4 text-xl font-bold text-foreground sm:text-2xl">Kebijakan Privasi</DialogTitle>
+            <IsiKebijakanPrivasi />
+            <button
+              type="button"
+              onClick={() => setIsPrivasiOpen(false)}
+              className="mt-6 w-full rounded-full bg-secondary py-2.5 text-sm font-bold text-on-secondary transition hover:bg-secondary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            >
+              Kembali ke formulir
+            </button>
+          </DialogPanel>
+        </div>
+      </Dialog>
+
       {/* Modal hasil pendaftaran */}
       <Dialog
         open={modal.show}
@@ -1224,29 +1288,49 @@ export default function DaftarForm({
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-sm rounded-card border border-border bg-card p-8 text-center shadow-hover">
             <div
-              className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full text-2xl ${
-                modal.success ? "bg-success-surface text-success" : "bg-danger-surface text-danger"
+              className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold ${
+                modal.jenis === "berhasil"
+                  ? "bg-success-surface text-success"
+                  : modal.jenis === "belum-pasti"
+                    ? "bg-warning-surface text-warning"
+                    : "bg-danger-surface text-danger"
               }`}
               aria-hidden="true"
             >
-              {modal.success ? "✓" : "✕"}
+              {modal.jenis === "berhasil" ? "✓" : modal.jenis === "belum-pasti" ? "!" : "✕"}
             </div>
             <DialogTitle className="mb-2 font-display text-xl font-bold text-foreground">{modal.title}</DialogTitle>
-            <p className="mb-6 text-sm leading-relaxed text-foreground-accent">{modal.message}</p>
+            <p className="mb-4 text-sm leading-relaxed text-foreground-accent">{modal.message}</p>
+            {(modal.kode || modal.ref) && (
+              <dl className="mb-6 space-y-1 rounded-field border border-border bg-surface-sunken px-4 py-3 text-left text-xs">
+                {modal.kode && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Kode pesanan</dt>
+                    <dd className="font-mono font-semibold text-foreground">{modal.kode}</dd>
+                  </div>
+                )}
+                {modal.ref && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Kode rujukan</dt>
+                    <dd className="truncate font-mono text-foreground-accent">{modal.ref}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
             <div className="flex flex-col gap-2">
-              {modal.success && (
+              {modal.jenis !== "gagal" && (
                 <Link
                   href="/daftar/status"
-                  className="w-full rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary transition hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                  className="w-full rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary transition hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                 >
-                  Lihat langkah berikutnya
+                  {modal.jenis === "berhasil" ? "Lihat langkah berikutnya" : "Cara memeriksa pesanan"}
                 </Link>
               )}
               <button
                 onClick={() => setModal((prev) => ({ ...prev, show: false }))}
-                className="w-full rounded-full bg-secondary px-6 py-2.5 text-sm font-bold text-on-secondary transition hover:bg-secondary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                className="w-full rounded-full bg-secondary px-6 py-2.5 text-sm font-bold text-on-secondary transition hover:bg-secondary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
               >
-                Tutup
+                {modal.jenis === "berhasil" ? "Tutup" : "Kembali ke formulir"}
               </button>
             </div>
           </DialogPanel>

@@ -6,9 +6,10 @@ import { FiAlertTriangle, FiRefreshCw } from "react-icons/fi";
 
 /**
  * Layar galat untuk seluruh route. Paling sering dipicu saat data live kembarin-v2
- * gagal/timeout — dan itulah kenapa pesannya menegaskan bahwa tidak ada pendaftaran
- * atau pembayaran yang terjadi: pengguna yang melihat error di tengah alur bayar
- * perlu kepastian itu lebih dulu sebelum diminta mencoba lagi.
+ * gagal/timeout ketika halaman DIMUAT. Layar ini tidak tahu apa pun tentang pesanan
+ * pengunjung, jadi ia TIDAK boleh menyatakan "tidak ada pendaftaran/pembayaran yang
+ * terproses" (dulu begitu) — pengunjung yang baru saja menekan Bayar di tab lain bisa
+ * salah paham lalu mendaftar ulang dan membayar dua kali.
  */
 export default function ErrorHalaman({
   error,
@@ -36,21 +37,23 @@ export default function ErrorHalaman({
           Halaman gagal dimuat
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
-          Sambungan ke sistem pendaftaran sedang bermasalah. <strong className="text-foreground">Tidak ada
-          pendaftaran atau pembayaran yang terproses</strong> — data Anda aman.
+          Sambungan ke sistem pendaftaran sedang bermasalah saat memuat halaman ini.
+          Bila Anda baru saja mengirim pendaftaran atau membayar,{" "}
+          <strong className="text-foreground">jangan mendaftar ulang</strong> sebelum memeriksa email pemesan
+          atau menghubungi panitia.
         </p>
 
         <div className="mt-7 flex flex-col gap-3">
           <button
             onClick={reset}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
           >
             <FiRefreshCw className="h-4 w-4" aria-hidden="true" />
             Coba lagi
           </button>
           <Link
             href="/"
-            className="w-full rounded-full border border-border-strong px-6 py-3.5 text-sm font-bold text-foreground transition-colors hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            className="w-full rounded-full border border-border-strong px-6 py-3.5 text-sm font-bold text-foreground transition-colors hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
           >
             Kembali ke beranda
           </Link>

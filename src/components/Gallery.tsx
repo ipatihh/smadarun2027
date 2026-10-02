@@ -13,7 +13,11 @@ import { galleryIntro, galleryPhotos } from "@/data/gallery";
  * foto pertama selalu tampil besar, sisanya kotak-kotak kecil di sebelahnya.
  *
  * Klik foto untuk membuka lightbox (memperbesar + navigasi antar foto + zoom).
+ * Tiap foto adalah <button> sungguhan: bisa dicapai dengan Tab dan dibuka dengan
+ * Enter/Spasi. Dulu pemicunya `figure onClick` — tidak terjangkau keyboard sama sekali.
  */
+const tombolFoto =
+    "absolute inset-0 h-full w-full cursor-pointer rounded-card focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-focus";
 const Gallery: React.FC = () => {
     const [lightboxIndex, setLightboxIndex] = useState(-1);
 
@@ -39,18 +43,19 @@ const Gallery: React.FC = () => {
                 }`}
             >
                 <figure
-                    onClick={() => setLightboxIndex(0)}
-                    className={`relative col-span-2 aspect-[16/10] cursor-pointer overflow-hidden rounded-card bg-surface-sunken transition-transform duration-200 hover:scale-[1.01] ${
+                    className={`relative col-span-2 aspect-[16/10] overflow-hidden rounded-card bg-surface-sunken transition-transform duration-200 hover:scale-[1.01] ${
                         adaLainnya ? "lg:row-span-2 lg:aspect-auto" : "lg:col-span-3 lg:aspect-[21/9]"
                     }`}
                 >
-                    <Image
-                        src={utama.src}
-                        alt={utama.alt}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 800px"
-                        className="object-cover"
-                    />
+                    <button type="button" onClick={() => setLightboxIndex(0)} className={tombolFoto} aria-label={`Perbesar foto: ${utama.alt}`}>
+                        <Image
+                            src={utama.src}
+                            alt=""
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 800px"
+                            className="object-cover"
+                        />
+                    </button>
                 </figure>
 
                 {lainnya.map((foto, index) => {
@@ -60,20 +65,21 @@ const Gallery: React.FC = () => {
                     return (
                         <figure
                             key={`${foto.src}-${index}`}
-                            onClick={() => setLightboxIndex(index + 1)}
-                            className={`relative cursor-pointer overflow-hidden rounded-card bg-surface-sunken transition-transform duration-200 hover:scale-[1.02] ${
+                            className={`relative overflow-hidden rounded-card bg-surface-sunken transition-transform duration-200 hover:scale-[1.02] ${
                                 sendirianDiPonsel
                                     ? "col-span-2 aspect-[16/10] lg:col-span-1 lg:aspect-square"
                                     : "aspect-square"
                             }`}
                         >
-                            <Image
-                                src={foto.src}
-                                alt={foto.alt}
-                                fill
-                                sizes="(max-width: 1024px) 50vw, 400px"
-                                className="object-cover"
-                            />
+                            <button type="button" onClick={() => setLightboxIndex(index + 1)} className={tombolFoto} aria-label={`Perbesar foto: ${foto.alt}`}>
+                                <Image
+                                    src={foto.src}
+                                    alt=""
+                                    fill
+                                    sizes="(max-width: 1024px) 50vw, 400px"
+                                    className="object-cover"
+                                />
+                            </button>
                         </figure>
                     );
                 })}

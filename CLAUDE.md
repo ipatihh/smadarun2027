@@ -50,6 +50,24 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   panitia mematikan gateway itu di dasbor. Kalau gateway baru dipakai, cukup tambahkan
   domain induknya ke `ALLOWED_PAYMENT_DOMAINS` di `src/lib/paymentUrl.ts` (mode sandbox/produksi tidak perlu diubah — subdomain ikut diterima). Core yang belum mengenal
   `"auto"` menolak dengan "Metode pembayaran tidak valid" — deploy kembarin-v2 lebih dulu.
+- **Pengiriman pendaftaran idempoten lewat `sessionId`** (kontrak core
+  `RegisterParticipantRequest.sessionId` → `idempotency_key` unik `smadarun:<id>`; diverifikasi
+  dari kode kembarin-v2 Oktober 2026). Browser membuat satu UUID per SIDIK JARI isi pesanan
+  (`pilihSesiPengiriman` di `src/lib/pesananPeserta.ts`): isi sama → id sama, jadi kirim ulang
+  setelah timeout mengembalikan pesanan yang sudah ada; isi berubah → id baru, supaya core tidak
+  mengembalikan pesanan lama berisi data usang. JANGAN mengikat id ke umur halaman.
+- **Hasil kirim hanya tiga: berhasil / ditolak / belum pasti** (`src/lib/kontrakPendaftaran.ts`).
+  Timeout, sambungan putus, 5xx core, dan respons yang tidak sesuai schema = "belum pasti":
+  isian dipertahankan dan copy TIDAK boleh mengklaim "belum tersimpan", "dibatalkan", atau
+  "berhasil". Respons sukses core diverifikasi schema-nya dan hanya field allowlist yang
+  diteruskan ke browser (token/participantIds tidak). Tidak ada retry otomatis untuk POST.
+  Timeout 25 detik ke core mencakup pembacaan body, bukan hanya header.
+- **Pemesan dikaitkan ke peserta lewat KEY (`pemesanKey`), bukan indeks 0.** Dulu menghapus
+  Peserta 1 membuat peserta berikutnya diam-diam memakai nama/email/WhatsApp pemesan sementara
+  NIK-nya tetap miliknya (payload berisi identitas dua orang). Menghapus peserta pemesan
+  melepas kaitan, tidak memindahkannya. Diuji di `tests/pesananPeserta.test.ts`.
+- Log `api/daftar` hanya JSON terstruktur (kode rujukan, status, kode error) — JANGAN mencatat
+  body request/respons core; body error core bisa memantulkan nama/NIK/WhatsApp.
 - IP pengunjung dibaca lewat `getClientIp()`: `x-vercel-forwarded-for` dulu, lalu entri
   PALING KANAN dari `x-forwarded-for`. Memakai seluruh string `x-forwarded-for` (perilaku
   lama) membuat rate limiter bisa dilewati cukup dengan mengarang header.
@@ -119,6 +137,10 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   semacam itu diam-diam tidak pernah ada (tanpa error): header & bar bayar `/daftar` jadi
   tembus pandang dan cincin fokus input jatuh ke biru bawaan Tailwind. Di CSS biasa tulis
   `rgb(var(--x))`.
+- **Batas kontrol form pakai `border-field-border`, cincin fokus pakai `ring-focus`.** `--border`
+  hanya garis dekoratif (1,26:1, gagal WCAG 1.4.11 untuk kotak isian) dan kuning `--primary`
+  sebagai cincin fokus cuma 1,39:1 di atas card putih. `ring-primary` hanya untuk elemen di
+  atas panel/overlay gelap (`bg-secondary`), di mana kuning justru kontras.
 - **Mode gelap otomatis ikut setelan sistem** — tidak ada toggle. Setiap warna baru wajib
   punya pasangan di blok `@media (prefers-color-scheme: dark)`, kalau tidak akan hilang
   kontras di mode gelap.
@@ -174,7 +196,10 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   bersamaan atau fitur trusted-proxy diam-diam nonaktif (fail-safe ke perilaku lama, tidak
   error — jadi kalau lupa sinkron, tidak akan langsung ketahuan dari behavior).
 - Next.js 16 + Turbopack + React 19 + ESLint 9 flat config (`next lint` sudah dihapus di v16,
-  pakai `eslint .`).
+  pakai `eslint .`). Uji regresi: `npm test` (vitest, tanpa jaringan — data live & core di-mock).
+- **Core belum menyimpan jejak persetujuan.** `health_declaration`, `privacy_consent`, dan
+  `consent_recorded_at` dikirim `api/daftar` tetapi tidak dibaca kembarin-v2 (dicek Oktober
+  2026). Penyimpanannya (plus versi kebijakan) harus dikerjakan di core, bukan di sini.
 
 ## Kalau perlu ubah sesuatu di sisi kembarin-v2
 

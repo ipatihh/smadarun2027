@@ -48,7 +48,7 @@ const Header: React.FC = () => {
         >
             <Container className="!px-0">
                 <nav aria-label="Navigasi utama" className="mx-auto flex justify-between items-center gap-4 py-3 px-5 md:py-4">
-                    <Link href="/" className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+                    <Link href="/" className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background">
                         <span className="font-display text-xl font-semibold text-foreground">
                             {siteDetails.siteName}
                         </span>
@@ -60,7 +60,7 @@ const Header: React.FC = () => {
                             <li key={item.text}>
                                 <Link
                                     href={formatUrl(item.url)}
-                                    className="text-foreground hover:text-foreground-accent transition-colors font-medium rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+                                    className="text-foreground hover:text-foreground-accent transition-colors font-medium rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-background"
                                 >
                                     {item.text}
                                 </Link>
@@ -73,7 +73,7 @@ const Header: React.FC = () => {
                         {!isDaftarPage && (
                             <Link
                                 href="/daftar"
-                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-6 py-2.5 text-sm shadow-rest hover:shadow-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-6 py-2.5 text-sm shadow-rest hover:shadow-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>
@@ -85,7 +85,7 @@ const Header: React.FC = () => {
                         {!isDaftarPage && (
                             <Link
                                 href="/daftar"
-                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-4 py-2 text-sm shadow-rest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-4 py-2 text-sm shadow-rest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>
@@ -93,7 +93,7 @@ const Header: React.FC = () => {
                         <button
                             onClick={toggleMenu}
                             type="button"
-                            className="bg-surface-sunken text-foreground rounded-full w-10 h-10 flex items-center justify-center border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="bg-surface-sunken text-foreground rounded-full w-10 h-10 flex items-center justify-center border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             aria-controls="mobile-menu"
                             aria-expanded={isOpen}
                         >
@@ -124,7 +124,7 @@ const Header: React.FC = () => {
                             <li key={item.text}>
                                 <Link
                                     href={formatUrl(item.url)}
-                                    className="block py-2 text-foreground hover:text-foreground-accent font-medium rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    className="block py-2 text-foreground hover:text-foreground-accent font-medium rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                                     onClick={toggleMenu}
                                 >
                                     {item.text}

@@ -32,6 +32,8 @@ const config: Config = {
         "surface-sunken": "rgb(var(--surface-sunken) / <alpha-value>)",
         border: "rgb(var(--border) / <alpha-value>)",
         "border-strong": "rgb(var(--border-strong) / <alpha-value>)",
+        "field-border": "rgb(var(--field-border) / <alpha-value>)",
+        focus: "rgb(var(--focus) / <alpha-value>)",
         "muted-foreground": "rgb(var(--muted-foreground) / <alpha-value>)",
 
         // Warna teks/ikon di atas permukaan brand

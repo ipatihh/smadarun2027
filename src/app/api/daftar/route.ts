@@ -10,21 +10,49 @@ import {
   rapikanNomorIdentitas,
   validasiIdentitas,
 } from "@/lib/identitas";
-import { pesanPenolakanCore } from "@/lib/pesanPenolakanCore";
+import {
+  klasifikasiPenolakanCore,
+  PESAN_BELUM_PASTI,
+  pesanTanpaTautan,
+  pesanTautanDitolak,
+  ResponsDaftar,
+  verifikasiSuksesCore,
+} from "@/lib/kontrakPendaftaran";
 
-// Sederhana in-memory cache untuk Rate Limiting & Proteksi Double Submit
-// Catatan: Karena Vercel adalah serverless environment, in-memory cache ini berjalan per instance/container.
-// Ini cukup efektif untuk memblokir spam langsung atau double click brutal dari client yang sama.
-const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
-// Key-nya HASH dari NIK, bukan NIK mentah — supaya data pribadi peserta tidak menetap
-// di memori proses dalam bentuk terbaca (dan tidak ikut tercetak kalau map ini pernah
-// ter-dump saat debugging). Salt-nya acak per instance; map ini memang per instance.
-const doubleSubmitMap = new Map<string, number>();
+// ─── Batas & proteksi per instance ───────────────────────────────────────────
+// Semua Map di bawah hidup di memori SATU instance serverless (Vercel bisa menjalankan
+// banyak instance, dan instance bisa di-restart). Ini saringan lapis pertama, bukan
+// sumber kebenaran: limiter terpusat ada di core (`register_<ip>`, 10/menit, memakai IP
+// asli lewat header trusted-proxy) dan idempotensi pesanan dijamin core lewat `sessionId`.
+
+/**
+ * Dua lapis rate limit per IP:
+ * - semua permintaan: saringan banjir murah sebelum body dibaca;
+ * - permintaan yang lolos validasi dan benar-benar diteruskan ke core: disamakan dengan
+ *   limiter core. Dulu satu batas 3/menit menghitung juga request yang gagal validasi,
+ *   sehingga satu jaringan sekolah/kampus (banyak pendaftar di balik satu IP NAT) cepat
+ *   terblokir bersama hanya karena beberapa orang salah ketik.
+ */
+const RATE_LIMIT_WINDOW = 60 * 1000;
+const BATAS_SEMUA_PERMINTAAN = 30;
+const BATAS_KE_CORE = 10;
+const hitunganSemua = new Map<string, { count: number; lastReset: number }>();
+const hitunganKeCore = new Map<string, { count: number; lastReset: number }>();
+
+/** Payload 10 peserta ±5 KB; batas ini jauh di atasnya tetapi tetap memotong body raksasa. */
+const BATAS_BODY_REQUEST = 32 * 1024;
+/** Respons core normal < 2 KB. */
+const BATAS_BODY_CORE = 64 * 1024;
+const CORE_TIMEOUT_MS = 25_000;
+
+/**
+ * Kunci "sedang diproses" per nomor identitas, dipegang SELAMA request ke core berjalan
+ * (dulu hanya 5 detik, padahal request ke core bisa 25 detik). Masa berlaku hanya jaring
+ * pengaman bila handler mati di tengah jalan. Key-nya hash ber-salt, bukan NIK mentah.
+ */
+const kunciDalamProses = new Map<string, number>();
+const MASA_KUNCI = CORE_TIMEOUT_MS + 10_000;
 const NIK_HASH_SALT = randomUUID();
-
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 menit
-const MAX_REQUESTS_PER_WINDOW = 3;   // Maksimal 3 kali daftar per menit per IP
-const DOUBLE_SUBMIT_WINDOW = 5000;   // 5 detik pencegahan double-submit untuk NIK yang sama
 
 function hashNik(nik: string): string {
   return createHash("sha256").update(`${NIK_HASH_SALT}:${nik}`).digest("hex");
@@ -52,38 +80,113 @@ function getClientIp(req: NextRequest): string {
   return req.headers.get("x-real-ip") || "127.0.0.1";
 }
 
-/** Buang deretan angka panjang (NIK, no. WhatsApp) sebelum sesuatu masuk log. */
-function redact(text: string): string {
-  return text.replace(/\d{8,}/g, "[redacted]");
+/** true = masih di bawah batas (dan hitungan dinaikkan). */
+function ambilJatah(map: Map<string, { count: number; lastReset: number }>, ip: string, batas: number, now: number) {
+  const data = map.get(ip);
+  if (!data || now - data.lastReset > RATE_LIMIT_WINDOW) {
+    map.set(ip, { count: 1, lastReset: now });
+    return { ok: true, retryAfter: 0 };
+  }
+  if (data.count >= batas) {
+    return { ok: false, retryAfter: Math.max(1, Math.ceil((RATE_LIMIT_WINDOW - (now - data.lastReset)) / 1000)) };
+  }
+  data.count++;
+  return { ok: true, retryAfter: 0 };
 }
 
 // Pembersihan cache memori berkala dilakukan secara pasif di dalam request handler
 function bersihkanCacheMundur(now: number) {
-  if (rateLimitMap.size > 200) {
-    rateLimitMap.forEach((data, ip) => {
-      if (now - data.lastReset > RATE_LIMIT_WINDOW) rateLimitMap.delete(ip);
+  for (const map of [hitunganSemua, hitunganKeCore]) {
+    if (map.size > 200) {
+      map.forEach((data, ip) => {
+        if (now - data.lastReset > RATE_LIMIT_WINDOW) map.delete(ip);
+      });
+    }
+  }
+  if (kunciDalamProses.size > 200) {
+    kunciDalamProses.forEach((kedaluwarsa, key) => {
+      if (now > kedaluwarsa) kunciDalamProses.delete(key);
     });
   }
-  if (doubleSubmitMap.size > 200) {
-    doubleSubmitMap.forEach((timestamp, key) => {
-      if (now - timestamp > DOUBLE_SUBMIT_WINDOW) doubleSubmitMap.delete(key);
-    });
+}
+
+/**
+ * Log terstruktur TANPA isi request/respons. Body error core bisa memantulkan nama, email,
+ * nomor identitas, atau WhatsApp — dulu sebagian dicatat (hanya deretan ≥8 digit yang
+ * disamarkan). Yang dicatat sekarang hanya kode rujukan, status, dan kode error.
+ */
+function catat(event: string, data: Record<string, string | number | undefined>) {
+  console.error(JSON.stringify({ src: "api/daftar", event, ...data }));
+}
+
+/** Baca stream sampai `batas` byte; null bila melebihi batas. */
+async function bacaTeksTerbatas(stream: ReadableStream<Uint8Array> | null, batas: number): Promise<string | null> {
+  if (!stream) return "";
+  const reader = stream.getReader();
+  const potongan: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > batas) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    potongan.push(value);
+  }
+  const gabung = new Uint8Array(total);
+  let offset = 0;
+  for (const p of potongan) {
+    gabung.set(p, offset);
+    offset += p.byteLength;
+  }
+  return new TextDecoder().decode(gabung);
+}
+
+/**
+ * Permintaan lintas situs ditolak. Endpoint ini anonim (bukan soal sesi/CSRF akun), tetapi
+ * tidak ada klien sah selain formulir di situs ini sendiri. Request tanpa header Origin
+ * (alat server-to-server, browser lama) tetap diterima — validasi isian tetap berlaku.
+ */
+function asalDiizinkan(req: NextRequest): boolean {
+  if (req.headers.get("sec-fetch-site") === "cross-site") return false;
+  const origin = req.headers.get("origin");
+  if (!origin) return true;
+  const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "").split(",")[0].trim();
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
   }
 }
 
 // ─── Validator satuan ────────────────────────────────────────────────────────
 const NAMA_PATTERN = /^[a-zA-Z\s\.\']+$/;
 const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const EMAIL_MAX = 254;
 const WHATSAPP_PATTERN = /^\+?\d{8,15}$/;
 const GENDER_WHITELIST = ["Laki-laki", "Perempuan"];
 const SIZE_WHITELIST = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+const KODE_WILAYAH_MAX = 16;
+const KATEGORI_MAX = 100;
+const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function emailValid(email: string): boolean {
+  return email.length <= EMAIL_MAX && EMAIL_PATTERN.test(email);
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function gagal(message: string, status = 400) {
-  return NextResponse.json({ success: false, message }, { status });
+function balas(body: ResponsDaftar, status: number, headers?: Record<string, string>) {
+  return NextResponse.json(body, { status, headers });
+}
+
+/** Penolakan sebelum/tanpa menghubungi core: pasti tidak ada pesanan yang dibuat. */
+function gagal(message: string, status = 400, code = "INVALID_REQUEST", headers?: Record<string, string>) {
+  return balas({ success: false, outcome: "rejected", code, message }, status, headers);
 }
 
 interface PesertaTervalidasi {
@@ -103,50 +206,77 @@ interface PesertaTervalidasi {
 }
 
 export async function POST(req: NextRequest) {
+  const ref = randomUUID();
+  const kunciDipegang: string[] = [];
   try {
     const now = Date.now();
-    // Jalankan pembersihan pasif
     bersihkanCacheMundur(now);
 
     // 1. IP pengunjung untuk rate limiting (lihat catatan di getClientIp)
     const ip = getClientIp(req);
 
-    // 2. Rate limiting
-    const limitData = rateLimitMap.get(ip);
-    if (!limitData) {
-      rateLimitMap.set(ip, { count: 1, lastReset: now });
-    } else {
-      if (now - limitData.lastReset > RATE_LIMIT_WINDOW) {
-        rateLimitMap.set(ip, { count: 1, lastReset: now });
-      } else {
-        if (limitData.count >= MAX_REQUESTS_PER_WINDOW) {
-          const retryAfter = Math.max(1, Math.ceil((RATE_LIMIT_WINDOW - (now - limitData.lastReset)) / 1000));
-          return NextResponse.json(
-            {
-              success: false,
-              message: "Terlalu banyak permintaan pendaftaran dari IP Anda. Silakan tunggu 1 menit sebelum mencoba lagi.",
-            },
-            { status: 429, headers: { "Retry-After": String(retryAfter) } }
-          );
-        }
-        limitData.count++;
-      }
+    // 2. Saringan banjir (semua permintaan)
+    const jatahSemua = ambilJatah(hitunganSemua, ip, BATAS_SEMUA_PERMINTAAN, now);
+    if (!jatahSemua.ok) {
+      return gagal(
+        "Terlalu banyak permintaan pendaftaran dari jaringan Anda. Silakan tunggu 1 menit sebelum mencoba lagi.",
+        429,
+        "RATE_LIMITED",
+        { "Retry-After": String(jatahSemua.retryAfter) }
+      );
     }
 
-    // 3. Parse body
-    let body: Record<string, unknown>;
+    // 3. Bentuk permintaan: asal, media type, ukuran, dan root JSON
+    if (!asalDiizinkan(req)) {
+      return gagal("Permintaan ditolak.", 403, "ORIGIN_NOT_ALLOWED");
+    }
+    const contentType = req.headers.get("content-type") ?? "";
+    if (!/^application\/json(\s*;|$)/i.test(contentType.trim())) {
+      return gagal("Format permintaan harus JSON.", 415, "UNSUPPORTED_MEDIA_TYPE");
+    }
+    const panjangDinyatakan = Number(req.headers.get("content-length"));
+    if (Number.isFinite(panjangDinyatakan) && panjangDinyatakan > BATAS_BODY_REQUEST) {
+      return gagal("Ukuran data pendaftaran terlalu besar.", 413, "PAYLOAD_TOO_LARGE");
+    }
+    const teksBody = await bacaTeksTerbatas(req.body, BATAS_BODY_REQUEST);
+    if (teksBody === null) {
+      return gagal("Ukuran data pendaftaran terlalu besar.", 413, "PAYLOAD_TOO_LARGE");
+    }
+    let parsed: unknown;
     try {
-      body = (await req.json()) as Record<string, unknown>;
+      parsed = JSON.parse(teksBody);
     } catch {
       return gagal("Format JSON tidak valid.");
     }
+    // JSON `null`, angka, string, atau array dulu lolos ke destructuring dan berakhir 500.
+    if (!isRecord(parsed)) return gagal("Format data pendaftaran tidak valid.");
+    const body = parsed;
 
-    const { eventCode, buyer, participants, health_declaration, privacy_consent, subtotal, total_amount } = body;
+    const {
+      eventCode,
+      buyer,
+      participants,
+      health_declaration,
+      privacy_consent,
+      subtotal,
+      total_amount,
+      sessionId,
+    } = body;
 
     // 4. Validasi & sanitasi ketat
 
     if (typeof eventCode !== "string" || eventCode.trim() !== "smadarun") {
       return gagal("Kode event tidak valid.");
+    }
+
+    // Kunci idempotensi dari browser: satu UUID per isi pesanan (lihat DaftarForm). Opsional
+    // supaya tab yang dibuka sebelum deploy ini tetap bisa mendaftar; bila dikirim, wajib UUID.
+    let sessionIdTervalidasi: string | null = null;
+    if (sessionId !== undefined && sessionId !== null) {
+      if (typeof sessionId !== "string" || !SESSION_ID_PATTERN.test(sessionId)) {
+        return gagal("Kode sesi pendaftaran tidak valid. Muat ulang halaman lalu coba lagi.");
+      }
+      sessionIdTervalidasi = sessionId.toLowerCase();
     }
 
     // ── Data pemesan ──────────────────────────────────────────────────────────
@@ -158,7 +288,7 @@ export async function POST(req: NextRequest) {
     }
 
     const buyerEmail = typeof buyer.email === "string" ? buyer.email.trim() : "";
-    if (!EMAIL_PATTERN.test(buyerEmail)) return gagal("Format email pemesan tidak valid.");
+    if (!emailValid(buyerEmail)) return gagal("Format email pemesan tidak valid.");
 
     const buyerWhatsapp = typeof buyer.whatsapp === "string" ? buyer.whatsapp.trim() : "";
     if (!WHATSAPP_PATTERN.test(buyerWhatsapp)) {
@@ -179,7 +309,7 @@ export async function POST(req: NextRequest) {
     // kembarin-v2 adalah sumber kebenaran; nominal apa pun dari klien tidak dipercaya.
     const live = await getLiveEventData();
     if (!live.isOpen) {
-      return gagal("Pendaftaran untuk event ini sedang tidak dibuka. Silakan coba beberapa saat lagi.");
+      return gagal("Pendaftaran untuk event ini sedang tidak dibuka. Silakan coba beberapa saat lagi.", 400, "REGISTRATION_CLOSED");
     }
 
     const tarifPerKategori = new Map(live.ticketTypes.map((t) => [t.categoryKey, t]));
@@ -245,6 +375,9 @@ export async function POST(req: NextRequest) {
       // keduanya dengan dataset yang sama (lihat src/lib/wilayah.ts).
       const provCodeRaw = typeof p.provCode === "string" ? p.provCode.trim() : "";
       const kotaCodeRaw = typeof p.kotaCode === "string" ? p.kotaCode.trim() : "";
+      if (provCodeRaw.length > KODE_WILAYAH_MAX || kotaCodeRaw.length > KODE_WILAYAH_MAX) {
+        return gagal(`Kode wilayah domisili peserta ${nomor} tidak valid. Silakan pilih ulang.`);
+      }
       const kotaTeks = typeof p.kota === "string" ? p.kota.trim().toUpperCase() : "";
       let kota: string;
       let provCode: string | null = null;
@@ -274,7 +407,7 @@ export async function POST(req: NextRequest) {
         kota = kotaTeks;
       }
 
-      const kategori = typeof p.kategori === "string" ? p.kategori : "";
+      const kategori = typeof p.kategori === "string" && p.kategori.length <= KATEGORI_MAX ? p.kategori : "";
       const tiket = tarifPerKategori.get(kategori);
       if (!tiket) {
         return gagal(`Kategori lomba peserta ${nomor} tidak valid atau sedang tidak aktif.`);
@@ -283,7 +416,7 @@ export async function POST(req: NextRequest) {
       // Email & WhatsApp peserta bersifat opsional: kalau kosong, core memakai data
       // pemesan (lihat resolveParticipantEmail di kembarin-v2).
       const emailPeserta = typeof p.email === "string" && p.email.trim() ? p.email.trim() : null;
-      if (emailPeserta && !EMAIL_PATTERN.test(emailPeserta)) {
+      if (emailPeserta && !emailValid(emailPeserta)) {
         return gagal(`Format email peserta ${nomor} tidak valid.`);
       }
       const waPeserta = typeof p.whatsapp === "string" && p.whatsapp.trim() ? p.whatsapp.trim() : null;
@@ -326,19 +459,35 @@ export async function POST(req: NextRequest) {
       return gagal("Total nominal pembayaran tidak sesuai.");
     }
 
-    // 5. Proteksi double-submit — mengunci SEMUA nomor identitas dalam pesanan
-    const nikKeys = pesertaTervalidasi.map((p) => hashNik(kunciIdentitas(p.nik)));
-    const terkunci = nikKeys.find((key) => {
-      const last = doubleSubmitMap.get(key);
-      return last && now - last < DOUBLE_SUBMIT_WINDOW;
-    });
-    if (terkunci) {
-      return gagal("Pendaftaran dengan nomor identitas ini sedang diproses. Silakan tunggu beberapa detik.", 409);
+    // 5. Jatah ke core — hanya permintaan yang lolos validasi yang dihitung.
+    const jatahCore = ambilJatah(hitunganKeCore, ip, BATAS_KE_CORE, now);
+    if (!jatahCore.ok) {
+      return gagal(
+        "Terlalu banyak percobaan pendaftaran dari jaringan Anda. Silakan tunggu 1 menit sebelum mencoba lagi.",
+        429,
+        "RATE_LIMITED",
+        { "Retry-After": String(jatahCore.retryAfter) }
+      );
     }
-    nikKeys.forEach((key) => doubleSubmitMap.set(key, now));
-    const lepasKunci = () => nikKeys.forEach((key) => doubleSubmitMap.delete(key));
 
-    // 6. Payload ke core (kembarin-v2)
+    // 6. Kunci "sedang diproses" untuk SEMUA nomor identitas dalam pesanan, selama
+    // request ke core berjalan. Dilepas di `finally` apa pun hasilnya: pengiriman ulang
+    // setelah hasil belum pasti aman karena membawa sessionId yang sama.
+    const nikKeys = pesertaTervalidasi.map((p) => hashNik(kunciIdentitas(p.nik)));
+    const terkunci = nikKeys.some((key) => (kunciDalamProses.get(key) ?? 0) > now);
+    if (terkunci) {
+      return gagal(
+        "Pendaftaran dengan nomor identitas ini sedang diproses. Tunggu hingga selesai sebelum mencoba lagi.",
+        409,
+        "REGISTRATION_IN_PROGRESS"
+      );
+    }
+    for (const key of nikKeys) {
+      kunciDalamProses.set(key, now + MASA_KUNCI);
+      kunciDipegang.push(key);
+    }
+
+    // 7. Payload ke core (kembarin-v2)
     const kembarInUrl = process.env.KEMBAR_IN_API_URL || "https://kembar.in/api/participants/register";
 
     // PENTING: payload dibangun EKSPLISIT dari field yang sudah divalidasi.
@@ -348,6 +497,11 @@ export async function POST(req: NextRequest) {
     // menghitung ulang seluruh harga, biaya layanan, dan kuota dari databasenya sendiri.
     const payloadBackend = {
       eventCode: "smadarun",
+      // Kontrak idempotensi core (RegisterParticipantRequest.sessionId): core menyimpan
+      // `smadarun:<sessionId>` sebagai idempotency_key unik pesanan. Permintaan ulang
+      // dengan sessionId yang sama mengembalikan pesanan yang sudah ada (beserta tautan
+      // bayarnya), bukan membuat pesanan baru — kecuali pesanan itu sudah dibatalkan.
+      ...(sessionIdTervalidasi ? { sessionId: sessionIdTervalidasi } : {}),
       buyer: {
         nama: buyerNama,
         email: buyerEmail,
@@ -383,15 +537,12 @@ export async function POST(req: NextRequest) {
       paymentGateway: "auto",
 
       // Jejak persetujuan peserta. Timestamp sengaja dibuat di server, bukan diambil
-      // dari klien, supaya tidak bisa dikarang.
+      // dari klien, supaya tidak bisa dikarang. CATATAN: core saat ini belum membaca
+      // ketiga field ini (diverifikasi Oktober 2026) — penyimpanannya kebutuhan di core.
       health_declaration: true,
       privacy_consent: true,
       consent_recorded_at: new Date(now).toISOString(),
     };
-
-    // Set timeout request proxy 25 detik agar API route Next.js memberi waktu cukup untuk backend core
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     // Header trusted-proxy: memberitahu core system IP pengunjung ASLI (bukan IP egress
     // server-to-server smadarun2027), supaya rate limiter kembarin-v2 tidak salah tembak
@@ -404,62 +555,97 @@ export async function POST(req: NextRequest) {
       proxyHeaders["X-Forwarded-Client-Ip"] = ip;
     }
 
+    // 8. Panggil core. Batas waktu mencakup SELURUH respons — header DAN body. Dulu timer
+    // dihentikan begitu header tiba, sehingga body yang macet bisa menggantung melewati
+    // 25 detik. Tidak ada percobaan ulang otomatis: POST pendaftaran tidak diulang diam-diam.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CORE_TIMEOUT_MS);
+    let statusCore: number;
+    let teksCore: string | null;
     try {
       const response = await fetch(kembarInUrl, {
         method: "POST",
         headers: proxyHeaders,
         body: JSON.stringify(payloadBackend),
         signal: controller.signal,
+        cache: "no-store",
       });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errText = await response.text();
-        // Log tanpa deretan angka panjang (NIK/WhatsApp bisa ikut terpantul di pesan error).
-        console.error(`[api/daftar] core menolak (HTTP ${response.status}):`, redact(errText).slice(0, 300));
-        lepasKunci();
-
-        // Teruskan pesan validasi dari core HANYA kalau bentuknya memang pesan untuk
-        // pengguna (mis. "NIK sudah terdaftar"), bukan potongan error internal. Gagal
-        // membuat halaman pembayaran punya pesan sendiri — lihat pesanPenolakanCore.
-        const customMessage = pesanPenolakanCore(response.status, errText);
-
-        return NextResponse.json({ success: false, message: customMessage }, { status: response.status });
-      }
-
-      const result = await response.json();
-      if (result && result.success === false) {
-        lepasKunci();
-      }
-      return NextResponse.json(result);
+      statusCore = response.status;
+      teksCore = await bacaTeksTerbatas(response.body, BATAS_BODY_CORE);
     } catch (fetchErr: unknown) {
-      clearTimeout(timeoutId);
-      console.error(
-        "[api/daftar] gagal menghubungi core:",
-        fetchErr instanceof Error ? `${fetchErr.name}: ${fetchErr.message}` : "unknown error"
+      const nama = fetchErr instanceof Error ? fetchErr.name : "unknown";
+      const timeout = nama === "AbortError" || nama === "TimeoutError";
+      catat(timeout ? "core_timeout" : "core_unreachable", { ref, error: nama });
+      // Permintaan mungkin sudah diproses core sebelum sambungan putus/timeout.
+      return balas(
+        { success: false, outcome: "unknown", code: timeout ? "CORE_TIMEOUT" : "CORE_UNREACHABLE", message: PESAN_BELUM_PASTI, ref },
+        504
       );
-      lepasKunci();
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
-      let errorMsg =
-        "Koneksi ke core system pendaftaran terputus atau sibuk. Data Anda belum tersimpan, silakan coba beberapa saat lagi.";
-      if (fetchErr instanceof Error && fetchErr.name === "AbortError") {
-        errorMsg = "Request Timeout. Waktu tunggu pendaftaran habis (25 detik). Silakan periksa koneksi Anda dan coba lagi.";
+    if (teksCore === null) {
+      catat("core_response_too_large", { ref, httpStatus: statusCore });
+      return balas({ success: false, outcome: "unknown", code: "CORE_MALFORMED_RESPONSE", message: PESAN_BELUM_PASTI, ref }, 502);
+    }
+
+    if (statusCore < 200 || statusCore >= 300) {
+      const hasil = klasifikasiPenolakanCore(statusCore, teksCore);
+      catat("core_rejected", { ref, httpStatus: statusCore, code: hasil.code, outcome: hasil.outcome });
+      if (hasil.outcome === "unknown") {
+        return balas({ success: false, outcome: "unknown", code: hasil.code, message: hasil.message, ref }, 502);
       }
+      // 4xx core diteruskan apa adanya (409 = sudah terdaftar, 429 = rate limit core, ...).
+      const status = statusCore >= 400 && statusCore < 500 ? statusCore : 503;
+      return balas({ success: false, outcome: "rejected", code: hasil.code, message: hasil.message, ref }, status);
+    }
 
-      return NextResponse.json({ success: false, message: errorMsg }, { status: 504 });
+    let dataCore: unknown;
+    try {
+      dataCore = JSON.parse(teksCore);
+    } catch {
+      dataCore = undefined;
+    }
+    const verifikasi = verifikasiSuksesCore(dataCore);
+    switch (verifikasi.jenis) {
+      case "berhasil":
+        return balas(
+          { success: true, outcome: verifikasi.order.status === "paid" ? "paid" : "created", order: verifikasi.order },
+          200
+        );
+      case "tanpa-tautan":
+        catat("core_missing_payment_url", { ref });
+        return balas(
+          { success: false, outcome: "unknown", code: "PAYMENT_LINK_MISSING", message: pesanTanpaTautan(verifikasi.kode), orderCode: verifikasi.kode, ref },
+          502
+        );
+      case "tautan-ditolak":
+        catat("core_untrusted_payment_url", { ref });
+        return balas(
+          { success: false, outcome: "unknown", code: "PAYMENT_LINK_UNTRUSTED", message: pesanTautanDitolak(verifikasi.kode), orderCode: verifikasi.kode, ref },
+          502
+        );
+      default:
+        catat("core_malformed_success", { ref, httpStatus: statusCore });
+        return balas({ success: false, outcome: "unknown", code: "CORE_MALFORMED_RESPONSE", message: PESAN_BELUM_PASTI, ref }, 502);
     }
   } catch (globalErr: unknown) {
-    console.error(
-      "[api/daftar] kesalahan internal:",
-      globalErr instanceof Error ? `${globalErr.name}: ${globalErr.message}` : "unknown error"
+    catat("internal_error", { ref, error: globalErr instanceof Error ? globalErr.name : "unknown" });
+    // Bila kunci sudah dipegang, kegagalan bisa terjadi setelah core dihubungi.
+    return balas(
+      kunciDipegang.length > 0
+        ? { success: false, outcome: "unknown", code: "INTERNAL_ERROR", message: PESAN_BELUM_PASTI, ref }
+        : {
+            success: false,
+            outcome: "rejected",
+            code: "INTERNAL_ERROR",
+            message: "Terjadi kesalahan pada server pendaftaran. Belum ada pesanan yang dikirim; silakan coba beberapa saat lagi.",
+            ref,
+          },
+      kunciDipegang.length > 0 ? 502 : 500
     );
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Terjadi kesalahan internal pada server pendaftaran. Silakan coba beberapa saat lagi.",
-      },
-      { status: 500 }
-    );
+  } finally {
+    for (const key of kunciDipegang) kunciDalamProses.delete(key);
   }
 }

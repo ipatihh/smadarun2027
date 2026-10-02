@@ -59,12 +59,19 @@ export default function RootLayout({
         className={`${oswald.variable} ${plusJakartaSans.variable} antialiased`}
       >
         {siteDetails.googleAnalyticsId && <GoogleAnalytics gaId={siteDetails.googleAnalyticsId} />}
+        {/* Skip link: pengguna keyboard/pembaca layar langsung ke konten tanpa melewati menu. */}
+        <a
+          href="#konten-utama"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-card focus:px-5 focus:py-3 focus:text-sm focus:font-bold focus:text-foreground focus:shadow-hover focus:outline-none focus:ring-2 focus:ring-focus"
+        >
+          Lewati ke konten utama
+        </a>
         <Header />
         {/* overflow-x-clip di sini, BUKAN di body: overflow milik body dipindahkan browser ke
             viewport, dan Safari iOS tetap membiarkan halaman digeser ke samping walau body
             clip/hidden. Elemen reveal-left/right (translateX ±48px sebelum muncul) membuat isi
             halaman 403px di layar 375px. Clip (bukan hidden) tidak mematikan position: sticky. */}
-        <main className="overflow-x-clip">
+        <main id="konten-utama" tabIndex={-1} className="overflow-x-clip focus:outline-none">
           {children}
         </main>
         <FooterLive />

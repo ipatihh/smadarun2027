@@ -20,7 +20,7 @@ const FAQ: React.FC = () => {
                     </p>
                     <a
                         href="mailto:info@kembar.in"
-                        className="mt-2 block text-base sm:text-xl font-semibold text-foreground underline-offset-4 hover:underline text-center lg:text-left break-all rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="mt-2 block text-base sm:text-xl font-semibold text-foreground underline-offset-4 hover:underline text-center lg:text-left break-all rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     >
                         info@kembar.in
                     </a>
@@ -31,7 +31,7 @@ const FAQ: React.FC = () => {
                         <Disclosure key={index} as="div" className="border-t border-border">
                             {({ open }) => (
                                 <>
-                                    <DisclosureButton className="flex items-center justify-between w-full gap-4 px-1 py-6 text-left group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                    <DisclosureButton className="flex items-center justify-between w-full gap-4 px-1 py-6 text-left group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                                         <span className="text-base sm:text-lg lg:text-xl font-semibold text-foreground group-hover:text-foreground-accent transition-colors duration-200">
                                             {faq.question}
                                         </span>

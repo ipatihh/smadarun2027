@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FiMail, FiClock, FiHelpCircle, FiCheckCircle } from "react-icons/fi";
+import { FiMail, FiClock, FiHelpCircle, FiCreditCard } from "react-icons/fi";
 import { footerDetails } from "@/data/footer";
 
 export const metadata: Metadata = {
@@ -16,27 +16,31 @@ export const metadata: Metadata = {
  * Halaman ini sengaja INFORMASIONAL, bukan pengecek status: kembarin-v2 belum
  * menyediakan endpoint publik untuk melihat status pesanan, dan mengarang tampilan
  * "berhasil/gagal" tanpa data asli justru menyesatkan orang yang baru membayar.
- * Kalau core nanti membuka endpoint status, halaman inilah tempat memasangnya.
+ * Karena itu SEMUA teks di sini bersyarat ("bila pembayaran sudah selesai…") — dulu judul
+ * "pendaftaran Anda sedang diproses" + ikon centang + "pembayaran Anda tetap tercatat"
+ * terbaca sebagai konfirmasi sukses, padahal halaman ini juga dibuka orang yang belum
+ * atau gagal membayar. Kalau core nanti membuka endpoint status (dengan token akses
+ * pesanan), halaman inilah tempat memasangnya.
  */
 const langkah = [
   {
-    icon: FiCheckCircle,
-    judul: "Pembayaran telah selesai",
+    icon: FiCreditCard,
+    judul: "Bila pembayaran sudah selesai",
     isi: (
       <>
-        Setelah pembayaran berhasil, <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a> mengonfirmasi transaksi ke sistem pendaftaran secara otomatis.
+        <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a> mengonfirmasi transaksi ke sistem pendaftaran secara otomatis.
       </>
     ),
   },
   {
     icon: FiMail,
-    judul: "Email konfirmasi dikirim",
-    isi: "Bukti pendaftaran dikirim ke alamat email pemesan. Periksa juga folder Spam atau Promosi.",
+    judul: "Periksa email pemesan",
+    isi: "Bukti pendaftaran dikirim ke email pemesan setelah pembayaran terkonfirmasi. Periksa juga folder Spam atau Promosi.",
   },
   {
     icon: FiClock,
-    judul: "Butuh waktu beberapa menit",
-    isi: "Konfirmasi umumnya masuk dalam beberapa menit. Pada jam sibuk bisa lebih lama — pembayaran Anda tetap tercatat.",
+    judul: "Konfirmasi bisa butuh beberapa menit",
+    isi: "Umumnya masuk dalam beberapa menit; pada jam sibuk bisa lebih lama.",
   },
 ];
 
@@ -58,11 +62,12 @@ export default function StatusPendaftaranPage() {
 
         <div className="mt-8 rounded-card border border-border bg-card p-6 shadow-rest md:p-9">
           <h1 className="font-display text-2xl font-bold text-foreground">
-            Terima kasih, pendaftaran Anda sedang diproses
+            Setelah halaman pembayaran
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
-            Halaman ini muncul setelah Anda kembali dari halaman pembayaran. Status resmi
-            pendaftaran selalu mengikuti catatan sistem pembayaran — bukan halaman ini.
+            Halaman ini belum terhubung ke catatan pesanan, jadi tidak dapat memastikan apakah
+            pembayaran Anda berhasil. Status resmi selalu mengikuti email konfirmasi dan catatan
+            sistem pembayaran.
           </p>
 
           <ol className="mt-8 space-y-6">
@@ -85,10 +90,11 @@ export default function StatusPendaftaranPage() {
             <div className="flex items-start gap-3">
               <FiHelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-foreground-accent" aria-hidden="true" />
               <div>
-                <p className="text-sm font-bold text-foreground">Belum menerima email konfirmasi?</p>
+                <p className="text-sm font-bold text-foreground">Belum menerima email, atau halaman pembayaran tertutup?</p>
                 <p className="mt-1 text-sm leading-relaxed text-foreground-accent">
-                  Hubungi panitia dan sebutkan nama pemesan serta email yang dipakai mendaftar.
-                  Jangan mengulang pendaftaran sebelum dicek — pembayaran bisa terhitung dua kali.
+                  Hubungi panitia dan sebutkan nama pemesan, email yang dipakai mendaftar, serta kode
+                  pesanan bila ada. Jangan mengulang pendaftaran sebelum dicek — pesanan dan
+                  pembayaran bisa terhitung dua kali.
                 </p>
                 <a
                   href={`mailto:${footerDetails.email}?subject=Konfirmasi%20Pendaftaran%20SMADARUN%202027`}
@@ -103,13 +109,13 @@ export default function StatusPendaftaranPage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/"
-              className="w-full rounded-full bg-primary px-6 py-3.5 text-center text-sm font-bold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              className="w-full rounded-full bg-primary px-6 py-3.5 text-center text-sm font-bold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
             >
               Kembali ke beranda
             </Link>
             <Link
               href="/daftar"
-              className="w-full rounded-full border border-border-strong px-6 py-3.5 text-center text-sm font-bold text-foreground transition-colors hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              className="w-full rounded-full border border-border-strong px-6 py-3.5 text-center text-sm font-bold text-foreground transition-colors hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
             >
               Daftarkan peserta lain
             </Link>

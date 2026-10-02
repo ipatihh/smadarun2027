@@ -41,7 +41,7 @@ function inputClass(hasError: boolean): string {
   return `w-full p-3.5 bg-surface-sunken border rounded-field text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
     hasError
       ? "border-danger focus:border-danger focus:ring-danger/20"
-      : "border-border focus:border-foreground focus:ring-primary/40"
+      : "border-field-border focus:border-foreground focus:ring-primary/40"
   }`;
 }
 
@@ -50,7 +50,7 @@ function fieldClass(invalid?: boolean) {
     "flex w-full items-center justify-between gap-2 p-3.5 bg-surface-sunken border rounded-field text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4",
     invalid
       ? "border-danger focus:border-danger focus:ring-danger/20"
-      : "border-border focus:border-foreground focus:ring-primary/40",
+      : "border-field-border focus:border-foreground focus:ring-primary/40",
     "disabled:cursor-not-allowed disabled:bg-surface-sunken/50 disabled:text-muted-foreground",
   ].join(" ");
 }
@@ -62,6 +62,7 @@ const LIST_MIN_HEIGHT = 120;
 
 function Combobox({
   id,
+  label,
   options,
   value,
   placeholder,
@@ -73,6 +74,8 @@ function Combobox({
   onSelect,
 }: {
   id: string;
+  /** Nama tetap untuk pembaca layar, mis. "Provinsi domisili" (nilai terpilih ditambahkan). */
+  label: string;
   options: Option[];
   value: string;
   placeholder: string;
@@ -88,6 +91,7 @@ function Combobox({
   const [activeIndex, setActiveIndex] = useState(0);
   const [listMaxHeight, setListMaxHeight] = useState(LIST_MAX_HEIGHT);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -171,10 +175,20 @@ function Combobox({
     else if (itemRect.bottom > listRect.bottom) list.scrollTop += itemRect.bottom - listRect.bottom;
   }, [activeIndex, open]);
 
+  // Fokus dikembalikan ke tombol pemicu setelah memilih/Escape. Tanpa ini, kolom pencarian
+  // yang memegang fokus hilang dari DOM dan fokus keyboard jatuh ke <body>.
+  const tutup = (kembalikanFokus: boolean) => {
+    setOpen(false);
+    if (kembalikanFokus) requestAnimationFrame(() => triggerRef.current?.focus());
+  };
+
   const commit = (code: string) => {
     onSelect(code);
-    setOpen(false);
+    tutup(true);
   };
+
+  const idOpsi = (code: string) => `${id}-opsi-${code}`;
+  const opsiAktif = filtered[activeIndex];
 
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "ArrowDown") {
@@ -189,20 +203,30 @@ function Combobox({
       if (option) commit(option.code);
     } else if (event.key === "Escape") {
       event.preventDefault();
-      setOpen(false);
+      tutup(true);
     }
   };
 
   return (
-    <div ref={rootRef} className="relative">
+    <div
+      ref={rootRef}
+      className="relative"
+      // Tab keluar dari panel menutupnya (dulu panel tetap terbuka sampai ada klik di luar).
+      onBlur={(e) => {
+        if (open && !rootRef.current?.contains(e.relatedTarget as Node | null)) setOpen(false);
+      }}
+    >
       <button
+        ref={triggerRef}
         id={id}
         type="button"
         disabled={disabled}
-        onClick={() => (open ? setOpen(false) : openPanel())}
+        onClick={() => (open ? tutup(false) : openPanel())}
         className={fieldClass(invalid)}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-controls={open ? `${id}-listbox` : undefined}
+        aria-label={`${label}: ${selected ? selected.label : "belum dipilih"}`}
         aria-describedby={describedBy}
       >
         <span
@@ -220,9 +244,14 @@ function Combobox({
         <div
           ref={panelRef}
           className="absolute z-30 mt-2 w-full overflow-hidden rounded-card border border-border bg-card shadow-hover"
+          // Klik di dalam panel (opsi, scrollbar) tidak boleh memindahkan fokus dari kolom
+          // pencarian — kalau tidak, onBlur di atas menutup panel sebelum klik opsi tercatat.
+          onMouseDown={(e) => {
+            if (e.target !== searchRef.current) e.preventDefault();
+          }}
         >
           <div className="flex items-center gap-2 border-b border-border px-3">
-            <FiSearch className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <FiSearch className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <input
               ref={searchRef}
               type="text"
@@ -235,8 +264,13 @@ function Combobox({
               placeholder={searchPlaceholder}
               // text-base (16px) wajib: Safari iOS otomatis zoom saat isian di bawah 16px difokus.
               className="w-full bg-transparent py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
+              role="combobox"
+              aria-label={`Cari ${label.toLowerCase()}`}
+              aria-expanded="true"
               aria-controls={`${id}-listbox`}
               aria-autocomplete="list"
+              aria-activedescendant={opsiAktif ? idOpsi(opsiAktif.code) : undefined}
+              aria-describedby={describedBy}
             />
             {query && (
               <button
@@ -245,10 +279,10 @@ function Combobox({
                   setQuery("");
                   searchRef.current?.focus();
                 }}
-                className="shrink-0 rounded-full p-1 text-muted-foreground hover:text-foreground"
+                className="shrink-0 rounded-full p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 aria-label="Bersihkan pencarian"
               >
-                <FiX className="h-3.5 w-3.5" />
+                <FiX className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
             )}
           </div>
@@ -257,20 +291,17 @@ function Combobox({
             ref={listRef}
             id={`${id}-listbox`}
             role="listbox"
+            aria-label={label}
             style={{ maxHeight: listMaxHeight }}
             className="overflow-y-auto overscroll-contain py-1"
           >
-            {filtered.length === 0 && (
-              <li className="px-4 py-6 text-center text-sm font-medium text-muted-foreground">
-                {emptyLabel}
-              </li>
-            )}
             {filtered.map((option, index) => {
               const isSelected = option.code === value;
               const isActive = index === activeIndex;
               return (
                 <li
                   key={option.code}
+                  id={idOpsi(option.code)}
                   data-index={index}
                   role="option"
                   aria-selected={isSelected}
@@ -281,11 +312,17 @@ function Combobox({
                   }`}
                 >
                   <span className="min-w-0 break-words">{option.label}</span>
-                  {isSelected && <FiCheck className="h-4 w-4 shrink-0 text-primary" />}
+                  {isSelected && <FiCheck className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />}
                 </li>
               );
             })}
           </ul>
+          {/* Di luar <ul role="listbox"> — listbox hanya boleh berisi opsi. */}
+          {filtered.length === 0 && (
+            <p role="status" className="px-4 py-6 text-center text-sm font-medium text-muted-foreground">
+              {emptyLabel}
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -340,6 +377,7 @@ export default function WilayahSelect({
         <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
           <Combobox
             id={`${id}-manual-prov`}
+            label="Provinsi domisili"
             options={provinceOptions}
             value={value.provCode}
             placeholder="Pilih provinsi"
@@ -375,7 +413,7 @@ export default function WilayahSelect({
         <button
           type="button"
           onClick={() => toggleManual(false)}
-          className="text-xs font-bold text-foreground underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+          className="text-xs font-bold text-foreground underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded"
         >
           Kembali pilih dari daftar
         </button>
@@ -388,6 +426,7 @@ export default function WilayahSelect({
       <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
         <Combobox
           id={`${id}-prov`}
+          label="Provinsi domisili"
           options={provinceOptions}
           value={value.provCode}
           placeholder="Pilih provinsi"
@@ -398,6 +437,7 @@ export default function WilayahSelect({
         />
         <Combobox
           id={id}
+          label="Kota / kabupaten domisili"
           options={regencyOptions}
           value={value.kotaCode}
           placeholder={value.provCode ? "Pilih kota / kabupaten" : "Pilih provinsi terlebih dahulu"}
@@ -412,7 +452,7 @@ export default function WilayahSelect({
       <button
         type="button"
         onClick={() => toggleManual(true)}
-        className="text-xs font-bold text-foreground underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+        className="text-xs font-bold text-foreground underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded"
       >
         Wilayah saya tidak ada di daftar
       </button>

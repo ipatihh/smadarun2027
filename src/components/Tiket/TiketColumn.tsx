@@ -61,7 +61,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
             ) : (
               <Link
                 href={tier.url || "/daftar"}
-                className="block w-full rounded-full bg-primary px-4 py-3 text-center text-base font-semibold text-on-primary shadow-rest transition-all duration-200 hover:bg-primary-accent hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:text-lg"
+                className="block w-full rounded-full bg-primary px-4 py-3 text-center text-base font-semibold text-on-primary shadow-rest transition-all duration-200 hover:bg-primary-accent hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:text-lg"
               >
                 Daftar {tier.name}
               </Link>

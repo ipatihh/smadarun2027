@@ -53,13 +53,13 @@ const Hero: React.FC = () => {
                 <div className="reveal reveal-3 mt-7 flex flex-col items-center justify-center gap-3 sm:mt-8 sm:flex-row sm:gap-4">
                     <Link
                         href="/daftar"
-                        className="w-full rounded-full bg-primary px-8 py-3.5 text-base font-bold text-on-primary shadow-rest transition-colors hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-hero-background sm:w-auto sm:px-10 sm:py-4 sm:text-lg"
+                        className="w-full rounded-full bg-primary px-8 py-3.5 text-base font-bold text-on-primary shadow-rest transition-colors hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-hero-background sm:w-auto sm:px-10 sm:py-4 sm:text-lg"
                     >
                         Daftar Sekarang
                     </Link>
                     <Link
                         href="#tiket"
-                        className="rounded-full px-4 py-2 font-semibold text-foreground-accent underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-hero-background sm:border sm:border-border-strong sm:px-10 sm:py-4 sm:text-lg sm:font-bold sm:text-foreground sm:no-underline sm:hover:border-foreground"
+                        className="rounded-full px-4 py-2 font-semibold text-foreground-accent underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-hero-background sm:border sm:border-border-strong sm:px-10 sm:py-4 sm:text-lg sm:font-bold sm:text-foreground sm:no-underline sm:hover:border-foreground"
                     >
                         Lihat Kategori
                     </Link>
