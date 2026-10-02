@@ -619,7 +619,7 @@ export default function DaftarForm({
   // dengan overflow selain "visible" membuat kartu ringkasan sticky berhenti menempel
   // saat halaman digulir. Latar dekoratifnya sudah absolute inset-0, jadi tidak perlu diklip.
   return (
-    <div className="relative min-h-screen px-5 pb-40 pt-28 lg:pb-20">
+    <div className="group/daftar relative min-h-screen px-5 pb-40 pt-28 lg:pb-20">
       <div
         aria-hidden="true"
         className="absolute inset-0 -z-10 bg-hero-background bg-[repeating-linear-gradient(115deg,#80808014_0px,#80808014_1.5px,transparent_1.5px,transparent_40px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_60%,transparent_100%)]"
@@ -838,62 +838,61 @@ export default function DaftarForm({
                           </>
                         )}
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <div>
-                            {/* Tinggi pemilih jenis = tinggi baris label (20px), dan label sengaja
-                                pendek: di lg kolom ini hanya ±234px — "Nomor Identitas" membuat baris
-                                ini patah dua dan input tidak lagi sejajar dengan Jenis Kelamin. */}
-                            <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                              <label htmlFor={`peserta-${index}-nik`} className="block text-sm font-semibold text-foreground">
-                                Identitas
-                              </label>
-                              <div
-                                role="radiogroup"
-                                aria-label={`Jenis nomor identitas peserta ${index + 1}`}
-                                className="flex rounded-full border border-border bg-card p-px"
-                              >
-                                {(Object.keys(LABEL_JENIS_IDENTITAS) as JenisIdentitas[]).map((jenis) => (
-                                  <label
-                                    key={jenis}
-                                    className="cursor-pointer rounded-full px-2.5 text-[11px] font-semibold leading-4 text-muted-foreground transition has-[:checked]:bg-primary has-[:checked]:text-on-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-foreground"
-                                  >
-                                    <input
-                                      type="radio"
-                                      name={`${raw.key}-jenis-identitas`}
-                                      value={jenis}
-                                      checked={p.jenisIdentitas === jenis}
-                                      onChange={() => gantiJenisIdentitas(raw.key, jenis)}
-                                      className="sr-only"
-                                    />
-                                    {LABEL_JENIS_IDENTITAS[jenis]}
-                                  </label>
-                                ))}
-                              </div>
+                        <div>
+                          {/* Tinggi pemilih jenis = tinggi baris label (20px), jadi jarak label–input sama dengan isian lain. */}
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                            <label htmlFor={`peserta-${index}-nik`} className="block text-sm font-semibold text-foreground">
+                              Identitas
+                            </label>
+                            <div
+                              role="radiogroup"
+                              aria-label={`Jenis nomor identitas peserta ${index + 1}`}
+                              className="flex rounded-full border border-border bg-card p-px"
+                            >
+                              {(Object.keys(LABEL_JENIS_IDENTITAS) as JenisIdentitas[]).map((jenis) => (
+                                <label
+                                  key={jenis}
+                                  className="cursor-pointer rounded-full px-2.5 text-[11px] font-semibold leading-4 text-muted-foreground transition has-[:checked]:bg-primary has-[:checked]:text-on-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-foreground"
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`${raw.key}-jenis-identitas`}
+                                    value={jenis}
+                                    checked={p.jenisIdentitas === jenis}
+                                    onChange={() => gantiJenisIdentitas(raw.key, jenis)}
+                                    className="sr-only"
+                                  />
+                                  {LABEL_JENIS_IDENTITAS[jenis]}
+                                </label>
+                              ))}
                             </div>
-                            <input
-                              id={`peserta-${index}-nik`}
-                              type="text"
-                              inputMode={p.jenisIdentitas === "nik" ? "numeric" : "text"}
-                              maxLength={NOMOR_IDENTITAS_MAX}
-                              autoComplete="off"
-                              value={p.nik}
-                              onChange={(e) => handlePesertaChange(raw.key, "nik", e.target.value)}
-                              onBlur={(e) => handlePesertaBlur(raw.key, "nik", e.target.value)}
-                              placeholder={p.jenisIdentitas === "nik" ? "16 digit angka" : "Nomor di kartu pelajar"}
-                              aria-invalid={!!errs.nik}
-                              aria-describedby={errs.nik ? `peserta-${index}-nik-error` : `peserta-${index}-nik-hint`}
-                              className={fieldClass(!!errs.nik)}
-                            />
-                            {errs.nik ? (
-                              <FieldError id={`peserta-${index}-nik-error`} message={errs.nik} />
-                            ) : (
-                              <p id={`peserta-${index}-nik-hint`} className="mt-1.5 text-xs text-muted-foreground">
-                                {p.jenisIdentitas === "nik"
-                                  ? "Ada di KTP atau Kartu Keluarga."
-                                  : "NISN atau nomor induk, sesuai kartu pelajar."}
-                              </p>
-                            )}
                           </div>
+                          <input
+                            id={`peserta-${index}-nik`}
+                            type="text"
+                            inputMode={p.jenisIdentitas === "nik" ? "numeric" : "text"}
+                            maxLength={NOMOR_IDENTITAS_MAX}
+                            autoComplete="off"
+                            value={p.nik}
+                            onChange={(e) => handlePesertaChange(raw.key, "nik", e.target.value)}
+                            onBlur={(e) => handlePesertaBlur(raw.key, "nik", e.target.value)}
+                            placeholder={p.jenisIdentitas === "nik" ? "16 digit angka" : "Nomor di kartu pelajar"}
+                            aria-invalid={!!errs.nik}
+                            aria-describedby={errs.nik ? `peserta-${index}-nik-error` : `peserta-${index}-nik-hint`}
+                            className={fieldClass(!!errs.nik)}
+                          />
+                          {errs.nik ? (
+                            <FieldError id={`peserta-${index}-nik-error`} message={errs.nik} />
+                          ) : (
+                            <p id={`peserta-${index}-nik-hint`} className="mt-1.5 text-xs text-muted-foreground">
+                              {p.jenisIdentitas === "nik"
+                                ? "Ada di KTP atau Kartu Keluarga."
+                                : "NISN atau nomor induk, sesuai kartu pelajar."}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div>
                             <label htmlFor={`peserta-${index}-gender`} className={labelClass}>Jenis Kelamin</label>
                             <select
@@ -910,42 +909,6 @@ export default function DaftarForm({
                               <option value="Perempuan">Perempuan</option>
                             </select>
                             <FieldError id={`peserta-${index}-gender-error`} message={errs.gender} />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <div>
-                            <label htmlFor={`peserta-${index}-wilayah`} className={labelClass}>Kota Domisili</label>
-                            {wilayahDropdown ? (
-                              <WilayahSelect
-                                id={`peserta-${index}-wilayah`}
-                                value={p.wilayah}
-                                onChange={(val) => {
-                                  handlePesertaChange(raw.key, "wilayah", val);
-                                  handlePesertaBlur(raw.key, "wilayah", val);
-                                }}
-                                invalid={!!errs.wilayah}
-                                describedBy={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
-                              />
-                            ) : (
-                              <input
-                                id={`peserta-${index}-wilayah`}
-                                type="text"
-                                autoComplete="address-level2"
-                                value={p.wilayah.display}
-                                onChange={(e) =>
-                                  handlePesertaChange(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
-                                }
-                                onBlur={(e) =>
-                                  handlePesertaBlur(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
-                                }
-                                placeholder="Contoh: Nganjuk"
-                                aria-invalid={!!errs.wilayah}
-                                aria-describedby={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
-                                className={fieldClass(!!errs.wilayah)}
-                              />
-                            )}
-                            <FieldError id={`peserta-${index}-wilayah-error`} message={errs.wilayah} />
                           </div>
                           <div>
                             <div className="mb-2 flex items-center justify-between">
@@ -974,6 +937,43 @@ export default function DaftarForm({
                             </select>
                             <FieldError id={`peserta-${index}-size-error`} message={errs.size} />
                           </div>
+                        </div>
+
+                        {/* Domisili sengaja satu baris penuh: Provinsi & Kota masing-masing selebar satu
+                            kolom grid di atasnya. Waktu masih berbagi baris dengan Ukuran Jersey, tiap
+                            pilihan hanya ±119px di desktop — "Jawa Timur" pun terpotong. */}
+                        <div>
+                          <label htmlFor={`peserta-${index}-wilayah`} className={labelClass}>Kota Domisili</label>
+                          {wilayahDropdown ? (
+                            <WilayahSelect
+                              id={`peserta-${index}-wilayah`}
+                              value={p.wilayah}
+                              onChange={(val) => {
+                                handlePesertaChange(raw.key, "wilayah", val);
+                                handlePesertaBlur(raw.key, "wilayah", val);
+                              }}
+                              invalid={!!errs.wilayah}
+                              describedBy={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
+                            />
+                          ) : (
+                            <input
+                              id={`peserta-${index}-wilayah`}
+                              type="text"
+                              autoComplete="address-level2"
+                              value={p.wilayah.display}
+                              onChange={(e) =>
+                                handlePesertaChange(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
+                              }
+                              onBlur={(e) =>
+                                handlePesertaBlur(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
+                              }
+                              placeholder="Contoh: Nganjuk"
+                              aria-invalid={!!errs.wilayah}
+                              aria-describedby={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
+                              className={fieldClass(!!errs.wilayah)}
+                            />
+                          )}
+                          <FieldError id={`peserta-${index}-wilayah-error`} message={errs.wilayah} />
                         </div>
 
                         {PENDAFTARAN_DIBUKA && (
@@ -1127,9 +1127,11 @@ export default function DaftarForm({
         </div>
       </div>
 
-      {/* Bar aksi sticky (mobile & tablet) */}
+      {/* Bar aksi sticky (mobile & tablet). Disembunyikan selama dropdown wilayah terbuka:
+          di browser yang mengecilkan halaman saat keyboard muncul, bar ini naik ke atas
+          keyboard dan menutup daftar pilihan. */}
       {PENDAFTARAN_DIBUKA && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md group-has-[[role=listbox]]/daftar:hidden lg:hidden">
           <div className="mx-auto flex max-w-xl items-center gap-4 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
             <div className="min-w-0">
               <div className="text-xs text-muted-foreground">

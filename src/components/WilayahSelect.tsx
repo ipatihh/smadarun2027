@@ -55,11 +55,17 @@ function fieldClass(invalid?: boolean) {
   ].join(" ");
 }
 
+// Tinggi daftar pilihan: maksimum = max-h-60 lama; minimum = ±3 baris, supaya di HP kecil
+// dengan keyboard terbuka daftar tidak menyusut sampai hilang.
+const LIST_MAX_HEIGHT = 240;
+const LIST_MIN_HEIGHT = 120;
+
 function Combobox({
   id,
   options,
   value,
   placeholder,
+  searchPlaceholder,
   emptyLabel,
   disabled,
   invalid,
@@ -70,6 +76,7 @@ function Combobox({
   options: Option[];
   value: string;
   placeholder: string;
+  searchPlaceholder: string;
   emptyLabel: string;
   disabled?: boolean;
   invalid?: boolean;
@@ -79,7 +86,9 @@ function Combobox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [listMaxHeight, setListMaxHeight] = useState(LIST_MAX_HEIGHT);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -101,13 +110,43 @@ function Combobox({
   const openPanel = () => {
     setQuery("");
     setActiveIndex(0);
+    setListMaxHeight(LIST_MAX_HEIGHT);
     setOpen(true);
   };
 
   useEffect(() => {
     if (!open) return;
-    const raf = requestAnimationFrame(() => searchRef.current?.focus());
-    return () => cancelAnimationFrame(raf);
+    const vv = window.visualViewport;
+    // Layar sentuh: keyboard akan menutup separuh bawah layar, jadi panel dibawa ke atas
+    // (berhenti di scroll-padding-top html, tepat di bawah header). Tanpa ini daftar pilihan
+    // muncul di bawah kolom pencarian dan tertutup keyboard. Sengaja instan:
+    // scroll halus bisa berebut dengan scroll otomatis browser saat keyboard muncul.
+    const touch = window.matchMedia("(pointer: coarse)").matches;
+    panelRef.current?.scrollIntoView(
+      touch ? { block: "start", behavior: "instant" } : { block: "nearest" }
+    );
+
+    // Daftar hanya setinggi sisa layar yang benar-benar terlihat (visualViewport menyusut
+    // saat keyboard muncul), jadi ujung daftar tidak memanjang ke balik keyboard.
+    const fit = () => {
+      const list = listRef.current;
+      if (!list) return;
+      const viewportBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+      const room = viewportBottom - list.getBoundingClientRect().top - 12;
+      setListMaxHeight(Math.min(LIST_MAX_HEIGHT, Math.max(LIST_MIN_HEIGHT, room)));
+    };
+    if (touch) fit();
+    vv?.addEventListener("resize", fit);
+    vv?.addEventListener("scroll", fit);
+
+    // preventScroll: posisi sudah diatur di atas; fokus bawaan hanya menggulir kolom
+    // pencariannya, sehingga daftar di bawahnya bisa tetap terpotong.
+    const raf = requestAnimationFrame(() => searchRef.current?.focus({ preventScroll: true }));
+    return () => {
+      cancelAnimationFrame(raf);
+      vv?.removeEventListener("resize", fit);
+      vv?.removeEventListener("scroll", fit);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -121,9 +160,15 @@ function Combobox({
 
   useEffect(() => {
     if (!open) return;
-    listRef.current
-      ?.querySelector<HTMLLIElement>(`[data-index="${activeIndex}"]`)
-      ?.scrollIntoView({ block: "nearest" });
+    const list = listRef.current;
+    const item = list?.querySelector<HTMLLIElement>(`[data-index="${activeIndex}"]`);
+    if (!list || !item) return;
+    // Gulir di dalam daftar saja. scrollIntoView ikut menggulir halaman, dan saat dropdown
+    // baru dibuka itu membatalkan penggeseran panel di atas (panel jadi tetap terpotong).
+    const itemRect = item.getBoundingClientRect();
+    const listRect = list.getBoundingClientRect();
+    if (itemRect.top < listRect.top) list.scrollTop -= listRect.top - itemRect.top;
+    else if (itemRect.bottom > listRect.bottom) list.scrollTop += itemRect.bottom - listRect.bottom;
   }, [activeIndex, open]);
 
   const commit = (code: string) => {
@@ -160,7 +205,10 @@ function Combobox({
         aria-expanded={open}
         aria-describedby={describedBy}
       >
-        <span className={selected ? "truncate text-left" : "truncate text-left text-muted-foreground"}>
+        <span
+          className={selected ? "truncate text-left" : "truncate text-left text-muted-foreground"}
+          title={selected?.label}
+        >
           {selected ? selected.label : placeholder}
         </span>
         <FiChevronDown
@@ -169,7 +217,10 @@ function Combobox({
       </button>
 
       {open && (
-        <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-card border border-border bg-card shadow-hover">
+        <div
+          ref={panelRef}
+          className="absolute z-30 mt-2 w-full overflow-hidden rounded-card border border-border bg-card shadow-hover"
+        >
           <div className="flex items-center gap-2 border-b border-border px-3">
             <FiSearch className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
@@ -181,8 +232,9 @@ function Combobox({
                 setActiveIndex(0);
               }}
               onKeyDown={onKeyDown}
-              placeholder="Ketik untuk mencari..."
-              className="w-full bg-transparent py-3 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
+              placeholder={searchPlaceholder}
+              // text-base (16px) wajib: Safari iOS otomatis zoom saat isian di bawah 16px difokus.
+              className="w-full bg-transparent py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
               aria-controls={`${id}-listbox`}
               aria-autocomplete="list"
             />
@@ -205,7 +257,8 @@ function Combobox({
             ref={listRef}
             id={`${id}-listbox`}
             role="listbox"
-            className="max-h-60 overflow-y-auto overscroll-contain py-1"
+            style={{ maxHeight: listMaxHeight }}
+            className="overflow-y-auto overscroll-contain py-1"
           >
             {filtered.length === 0 && (
               <li className="px-4 py-6 text-center text-sm font-medium text-muted-foreground">
@@ -227,7 +280,7 @@ function Combobox({
                     isActive ? "bg-surface-sunken text-foreground" : "text-foreground-accent"
                   }`}
                 >
-                  <span className="truncate">{option.label}</span>
+                  <span className="min-w-0 break-words">{option.label}</span>
                   {isSelected && <FiCheck className="h-4 w-4 shrink-0 text-primary" />}
                 </li>
               );
@@ -284,38 +337,41 @@ export default function WilayahSelect({
   if (value.manual) {
     return (
       <div className="space-y-2">
-        <Combobox
-          id={`${id}-manual-prov`}
-          options={provinceOptions}
-          value={value.provCode}
-          placeholder="Pilih provinsi"
-          emptyLabel="Provinsi tidak ditemukan"
-          invalid={invalid && !value.provCode}
-          describedBy={describedBy}
-          onSelect={(provCode) =>
-            onChange({ ...value, provCode, kotaCode: "", manual: true })
-          }
-        />
-        <input
-          id={id}
-          type="text"
-          value={value.display}
-          onChange={(e) =>
-            onChange({
-              provCode: value.provCode, // Keep province selection
-              kotaCode: "",
-              display: e.target.value.toUpperCase(),
-              manual: true,
-            })
-          }
-          required={required}
-          disabled={!value.provCode}
-          maxLength={KOTA_MANUAL_MAX_LENGTH}
-          aria-invalid={invalid || undefined}
-          aria-describedby={describedBy}
-          placeholder={value.provCode ? "Tulis kota / kabupaten domisili" : "Pilih provinsi terlebih dahulu"}
-          className={inputClass(Boolean(invalid))}
-        />
+        <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+          <Combobox
+            id={`${id}-manual-prov`}
+            options={provinceOptions}
+            value={value.provCode}
+            placeholder="Pilih provinsi"
+            searchPlaceholder="Cari provinsi..."
+            emptyLabel="Provinsi tidak ditemukan"
+            invalid={invalid && !value.provCode}
+            describedBy={describedBy}
+            onSelect={(provCode) =>
+              onChange({ ...value, provCode, kotaCode: "", manual: true })
+            }
+          />
+          <input
+            id={id}
+            type="text"
+            value={value.display}
+            onChange={(e) =>
+              onChange({
+                provCode: value.provCode, // Keep province selection
+                kotaCode: "",
+                display: e.target.value.toUpperCase(),
+                manual: true,
+              })
+            }
+            required={required}
+            disabled={!value.provCode}
+            maxLength={KOTA_MANUAL_MAX_LENGTH}
+            aria-invalid={invalid || undefined}
+            aria-describedby={describedBy}
+            placeholder={value.provCode ? "Tulis kota / kabupaten domisili" : "Pilih provinsi terlebih dahulu"}
+            className={inputClass(Boolean(invalid))}
+          />
+        </div>
         <button
           type="button"
           onClick={() => toggleManual(false)}
@@ -335,6 +391,7 @@ export default function WilayahSelect({
           options={provinceOptions}
           value={value.provCode}
           placeholder="Pilih provinsi"
+          searchPlaceholder="Cari provinsi..."
           emptyLabel="Provinsi tidak ditemukan"
           invalid={invalid && !value.provCode}
           onSelect={handleProvince}
@@ -344,6 +401,7 @@ export default function WilayahSelect({
           options={regencyOptions}
           value={value.kotaCode}
           placeholder={value.provCode ? "Pilih kota / kabupaten" : "Pilih provinsi terlebih dahulu"}
+          searchPlaceholder="Cari kota / kabupaten..."
           emptyLabel="Kota / kabupaten tidak ditemukan"
           disabled={!value.provCode}
           invalid={invalid && Boolean(value.provCode)}
