@@ -133,6 +133,15 @@ File ini berisi hal-hal yang tidak terlihat jelas dari sekadar membaca kode.
   tidak ada error, tidak ada peringatan, elemennya hanya tampil tanpa ukuran (kotak logo
   sponsor ikut ukuran gambar asli, bukan ukuran tier-nya). Kalau menambah folder data
   baru yang memuat className, tambahkan juga globnya.
+- **Wadah di ponsel wajib bisa menyusut di bawah lebar isinya.** Grid yang memuat isian
+  form atau teks `truncate` harus punya kolom eksplisit di ponsel (`grid-cols-1` =
+  `minmax(0,1fr)`, bukan kolom implisit `auto`), dan `<fieldset>` wajib `min-w-0` (bawaan
+  browser `min-inline-size: min-content`). Tanpa itu wadah ikut melebar mengikuti isi yang
+  tidak bisa patah (opsi `<select>`, teks nowrap) dan meluber ke kanan — tanpa error, cuma
+  kartu tidak center (pernah: kartu form `/daftar` meluber 7px di 375px, Provinsi/Kota 28px
+  di 320px). Luberan animasi `reveal-left/right` diklip di `<main>` (`layout.tsx`), BUKAN di
+  `body`: overflow body dipindahkan ke viewport dan Safari iOS tetap membiarkan halaman
+  digeser ke samping.
 - **Semua modal wajib pakai `Dialog` dari `@headlessui/react`** (sudah jadi dependency),
   bukan div overlay manual — supaya dapat Escape, focus trap, dan pengembalian fokus.
 - **Bar aksi melayang hanya boleh ada di `/daftar`**, tidak di beranda. Beranda pernah

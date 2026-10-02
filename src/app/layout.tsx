@@ -60,7 +60,11 @@ export default function RootLayout({
       >
         {siteDetails.googleAnalyticsId && <GoogleAnalytics gaId={siteDetails.googleAnalyticsId} />}
         <Header />
-        <main>
+        {/* overflow-x-clip di sini, BUKAN di body: overflow milik body dipindahkan browser ke
+            viewport, dan Safari iOS tetap membiarkan halaman digeser ke samping walau body
+            clip/hidden. Elemen reveal-left/right (translateX ±48px sebelum muncul) membuat isi
+            halaman 403px di layar 375px. Clip (bukan hidden) tidak mematikan position: sticky. */}
+        <main className="overflow-x-clip">
           {children}
         </main>
         <FooterLive />

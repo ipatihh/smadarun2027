@@ -25,7 +25,7 @@ export default function LoadingDaftar() {
           <Baris className="h-2.5 w-40" />
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="space-y-8 rounded-card border border-border bg-card p-6 shadow-rest md:p-9">
             {[0, 1].map((seksi) => (
               <div key={seksi} className="space-y-5">

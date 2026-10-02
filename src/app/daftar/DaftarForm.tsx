@@ -644,7 +644,10 @@ export default function DaftarForm({
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        {/* grid-cols-1 (= minmax(0,1fr)) wajib di ponsel: tanpa itu kolomnya "auto" dan ikut
+            melebar mengikuti isi yang tidak bisa patah (teks truncate, opsi <select>), sehingga
+            kartu form meluber 7px ke kanan dan semua lapisan di dalamnya tidak center. */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
           {/* KOLOM FORM */}
           <form
             id="formDaftar"
@@ -652,7 +655,9 @@ export default function DaftarForm({
             noValidate
             className="rounded-card border border-border bg-card p-6 shadow-rest md:p-9"
           >
-            <fieldset disabled={isFormClosed} className="space-y-10">
+            {/* min-w-0: bawaan browser fieldset adalah min-inline-size: min-content — sama seperti
+                kolom grid di atas, tanpa ini fieldset ikut melebar dan meluber dari kartu form. */}
+            <fieldset disabled={isFormClosed} className="min-w-0 space-y-10">
               {/* LANGKAH 1 — PEMESAN */}
               <section className="space-y-5">
                 <StepHeading

@@ -109,8 +109,7 @@ body {
   font-family: var(--font-plus-jakarta), sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
-  /* Cegah horizontal scrollbar dari animasi reveal-left / reveal-right. */
-  overflow-x: clip;
+  /* Luberan animasi reveal-left / reveal-right diklip di <main> (layout.tsx), bukan di sini. */
 }
 
 @layer utilities {

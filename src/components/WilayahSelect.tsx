@@ -337,7 +337,7 @@ export default function WilayahSelect({
   if (value.manual) {
     return (
       <div className="space-y-2">
-        <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
           <Combobox
             id={`${id}-manual-prov`}
             options={provinceOptions}
@@ -385,7 +385,7 @@ export default function WilayahSelect({
 
   return (
     <div className="space-y-2">
-      <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
         <Combobox
           id={`${id}-prov`}
           options={provinceOptions}
