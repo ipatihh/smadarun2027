@@ -11,6 +11,7 @@ import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { tiketMarketing } from "@/data/tiket";
 import { LiveTicketType } from "@/lib/kembarinEvents";
 import { KolomNamaBib, lipatKetikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
+import { batasTanggalLahir, KolomTambahan, validasiKolomTambahan } from "@/lib/kolomTambahan";
 import {
   JenisIdentitas,
   kunciIdentitas,
@@ -49,7 +50,7 @@ type PesertaState = PesertaForm;
 
 type BuyerField = keyof BuyerState;
 // `jenisIdentitas` bukan isian yang divalidasi sendiri — ia menentukan aturan untuk `nik`.
-type PesertaField = Exclude<keyof PesertaState, "key" | "jenisIdentitas">;
+type PesertaField = Exclude<keyof PesertaState, "key" | "jenisIdentitas" | "tambahan">;
 
 // Cermin dari validasi server di api/daftar/route.ts. Tujuannya UX: pengguna tahu
 // kesalahan format SEBELUM menekan bayar, bukan lewat modal setelah request bolak-balik.
@@ -140,6 +141,8 @@ interface DaftarFormProps {
   wilayahDropdown: boolean;
   /** Kolom Nama BIB dari form_schema kembarin-v2; null = tidak dipasang panitia. */
   namaBib: KolomNamaBib | null;
+  /** Kolom lain dari form builder kembarin-v2, dirender generik (src/lib/kolomTambahan.ts). */
+  kolomTambahan: KolomTambahan[];
 }
 
 const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
@@ -188,6 +191,7 @@ const pesertaBaru = (key: string, kategoriDefault: string): PesertaState => ({
   kategori: kategoriDefault,
   size: "",
   namaBib: "",
+  tambahan: {},
 });
 
 export default function DaftarForm({
@@ -199,6 +203,7 @@ export default function DaftarForm({
   maxTicketsPerOrder,
   wilayahDropdown,
   namaBib,
+  kolomTambahan,
 }: DaftarFormProps) {
   const WEBHOOK_URL = "/api/daftar";
   const imageSrc = "/images/pocari-1.jpg";
@@ -362,6 +367,30 @@ export default function DaftarForm({
       delete next[key];
       return next;
     });
+    setTambahanErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  // ── Kolom tambahan dari form builder core (kunci = nama field) ─────────────
+  const [tambahanErrors, setTambahanErrors] = useState<Record<string, Record<string, string | undefined>>>({});
+  const tanggalLahir = useMemo(() => batasTanggalLahir(), []);
+
+  const ubahTambahan = (key: string, kolom: KolomTambahan, value: string) => {
+    setPesertaList((prev) =>
+      prev.map((p) => (p.key === key ? { ...p, tambahan: { ...p.tambahan, [kolom.name]: value } } : p))
+    );
+    setRingkasanError(null);
+    if (tambahanErrors[key]?.[kolom.name]) {
+      setTambahanErrors((prev) => ({ ...prev, [key]: { ...prev[key], [kolom.name]: undefined } }));
+    }
+  };
+
+  const blurTambahan = (key: string, kolom: KolomTambahan, value: string) => {
+    const message = validasiKolomTambahan(kolom, value);
+    setTambahanErrors((prev) => ({ ...prev, [key]: { ...prev[key], [kolom.name]: message ?? undefined } }));
   };
 
   const focusField = (id: string) => {
@@ -428,6 +457,15 @@ export default function DaftarForm({
     });
     setPesertaErrors(nextPesertaErrors);
 
+    const nextTambahanErrors: Record<string, Record<string, string>> = {};
+    pesertaList.forEach((raw) => {
+      for (const kolom of kolomTambahan) {
+        const message = validasiKolomTambahan(kolom, raw.tambahan[kolom.name] ?? "");
+        if (message) nextTambahanErrors[raw.key] = { ...nextTambahanErrors[raw.key], [kolom.name]: message };
+      }
+    });
+    setTambahanErrors(nextTambahanErrors);
+
     // 3) Validasi persetujuan — tombol sengaja TIDAK di-disable supaya alasannya bisa dijelaskan.
     const nextConsentErrors = {
       health: isHealthyChecked ? undefined : "Pernyataan kondisi sehat wajib dicentang.",
@@ -441,8 +479,12 @@ export default function DaftarForm({
     for (const f of URUTAN_BUYER) if (nextBuyerErrors[f]) daftarMasalah.push(`buyer-${f}`);
     pesertaList.forEach((p, index) => {
       const errorsPeserta = nextPesertaErrors[p.key];
-      if (!errorsPeserta) return;
-      for (const f of URUTAN_PESERTA) if (errorsPeserta[f]) daftarMasalah.push(`peserta-${index}-${f}`);
+      if (errorsPeserta) {
+        for (const f of URUTAN_PESERTA) if (errorsPeserta[f]) daftarMasalah.push(`peserta-${index}-${f}`);
+      }
+      for (const kolom of kolomTambahan) {
+        if (nextTambahanErrors[p.key]?.[kolom.name]) daftarMasalah.push(`peserta-${index}-x-${kolom.name}`);
+      }
     });
     if (nextConsentErrors.health) daftarMasalah.push("healthDeclaration");
     if (nextConsentErrors.privacy) daftarMasalah.push("privacyConsent");
@@ -1070,6 +1112,57 @@ export default function DaftarForm({
                             <FieldError id={`peserta-${index}-kategori-error`} message={errs.kategori} />
                           </div>
                         )}
+
+                        {/* Kolom tambahan dari form builder kembarin-v2 — muncul otomatis tanpa coding di sini. */}
+                        {kolomTambahan.map((kolom) => {
+                          const id = `peserta-${index}-x-${kolom.name}`;
+                          const nilai = raw.tambahan[kolom.name] ?? "";
+                          const pesan = tambahanErrors[raw.key]?.[kolom.name];
+                          const umum = {
+                            id,
+                            "aria-invalid": !!pesan,
+                            "aria-describedby": pesan ? `${id}-error` : undefined,
+                            className: fieldClass(!!pesan),
+                          };
+                          return (
+                            <div key={kolom.name}>
+                              <label htmlFor={id} className={labelClass}>
+                                {kolom.label}
+                                {!kolom.required && (
+                                  <span className="font-medium normal-case tracking-normal text-muted-foreground"> (opsional)</span>
+                                )}
+                              </label>
+                              {kolom.type === "select" ? (
+                                <select
+                                  {...umum}
+                                  value={nilai}
+                                  onChange={(e) => ubahTambahan(raw.key, kolom, e.target.value)}
+                                  onBlur={(e) => blurTambahan(raw.key, kolom, e.target.value)}
+                                >
+                                  <option value="">{kolom.placeholder || `Pilih ${kolom.label}`}</option>
+                                  {kolom.options.map((o) => (
+                                    <option key={o} value={o}>{o}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  {...umum}
+                                  type={kolom.type === "birthdate" ? "date" : kolom.type === "tel" ? "tel" : kolom.type === "email" ? "email" : "text"}
+                                  inputMode={kolom.type === "tel" ? "tel" : kolom.type === "number" ? "decimal" : undefined}
+                                  min={kolom.type === "birthdate" ? tanggalLahir.min : undefined}
+                                  max={kolom.type === "birthdate" ? tanggalLahir.max : undefined}
+                                  maxLength={kolom.type === "birthdate" ? undefined : kolom.maxLength}
+                                  autoComplete="off"
+                                  value={nilai}
+                                  onChange={(e) => ubahTambahan(raw.key, kolom, e.target.value)}
+                                  onBlur={(e) => blurTambahan(raw.key, kolom, e.target.value)}
+                                  placeholder={kolom.placeholder || undefined}
+                                />
+                              )}
+                              <FieldError id={`${id}-error`} message={pesan} />
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );

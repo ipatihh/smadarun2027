@@ -28,6 +28,7 @@ function peserta(key: string, isi: Partial<PesertaForm> = {}): PesertaForm {
     kategori: "5 KM Reguler",
     size: "M",
     namaBib: "",
+    tambahan: {},
     ...isi,
   };
 }

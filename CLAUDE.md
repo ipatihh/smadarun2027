@@ -6,6 +6,11 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Fakta arsitektur yang wajib dipahami sebelum mengubah apa pun
 
+- **Kolom form tambahan muncul otomatis — jangan pernah menulisnya per kolom.** Core menandai
+  tiap field `form_schema` dengan `semantic`; SEMUA field `semantic: null` (kontak darurat,
+  golongan darah, apa pun yang panitia tambahkan kelak) dirender generik per peserta oleh
+  `src/lib/kolomTambahan.ts` dan dikirim di `customFields[field.name]`. Jangan menyaring field
+  null berdasarkan nama. Kontrak: kembarin-v2 `docs/PARTNER_INTEGRATION.md` §4a.
 - **Kolom Nama BIB dipasang panitia di kembarin-v2, bukan di sini.** `getLiveEventData()`
   membaca field `form_schema` bertipe `name_on_bib` (beserta `maxLength`) dan form hanya
   menampilkannya bila field itu ada (`src/lib/namaBib.ts`). Jangan hardcode kolom atau batasnya.

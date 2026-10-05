@@ -5,6 +5,24 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 5 Oktober 2026 — Kolom form tambahan otomatis dari core
+
+Prasyarat: kembarin-v2 dengan `semantic` di `form_schema` publik (branch
+`feat/form-schema-partner`). Sebelum core itu tayang, daftar kolom tambahan kosong — situs
+berperilaku persis seperti sebelumnya.
+
+- Keputusan pemilik: kolom yang panitia tambahkan di form builder kembar.in harus muncul di
+  sini tanpa coding. Semua field `semantic: null` dirender generik per peserta (setelah
+  Kategori), lengkap dengan wajib/opsional, pilihan, batas panjang, dan validasi tipe.
+- Batas body `api/daftar` 32 KB → 64 KB untuk memberi ruang isian tambahan (core menerima 3 MB).
+- Mock core memasang contoh kontak darurat & golongan darah; `GET /__tambahan?on=0` melepasnya.
+
+Diuji: 90 uji vitest; browser (build production + mock core): kolom tampil dengan label core,
+kolom wajib kosong diberi pesan dan dihitung di ringkasan, opsional tidak, payload membawa
+`kontak_darurat_nama/nomor` dan `golongan_darah` dengan nomor dirapikan.
+
+---
+
 ## 5 Oktober 2026 — Kolom Nama BIB dari form_schema core
 
 Prasyarat: kembarin-v2 `v2` commit `2c2f418` (endpoint event publik mengirim `form_schema`;

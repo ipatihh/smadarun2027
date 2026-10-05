@@ -34,6 +34,8 @@ export interface PesertaForm {
   size: string;
   /** Nama BIB; hanya dikirim bila event memasang kolomnya (lihat src/lib/namaBib.ts). */
   namaBib: string;
+  /** Isian kolom tambahan dari form_schema core, kunci = nama field (src/lib/kolomTambahan.ts). */
+  tambahan: Record<string, string>;
 }
 
 /**
@@ -105,6 +107,7 @@ export interface PesertaPayload {
   kategori: string;
   size: string;
   namaBib: string;
+  tambahan: Record<string, string>;
 }
 
 /** Bentuk `participants[]` untuk api/daftar — satu objek per peserta, urutan sama dengan layar. */
@@ -133,6 +136,12 @@ export function bangunPesertaPayload(
       size: p.size,
       // Milik peserta sendiri, bukan pemesan — tidak ikut dataPesertaEfektif.
       namaBib: rapikanNamaBib(raw.namaBib ?? ""),
+      // Milik peserta sendiri; api/daftar membuang kunci yang tidak ada di form_schema core.
+      tambahan: Object.fromEntries(
+        Object.entries(raw.tambahan ?? {})
+          .map(([k, v]) => [k, v.trim()])
+          .filter(([, v]) => v !== "")
+      ),
     };
   });
 }

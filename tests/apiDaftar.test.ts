@@ -18,6 +18,8 @@ const LIVE: LiveEventData = {
   maxTicketsPerOrder: 5,
   wilayahDropdown: true,
   opensAt: null,
+  namaBib: null,
+  kolomTambahan: [],
 } as LiveEventData;
 
 // Data sintetis.
@@ -142,7 +144,7 @@ describe("bentuk permintaan", () => {
   });
 
   it("body melebihi batas = 413 (lewat Content-Length maupun isi sebenarnya)", async () => {
-    const besar = JSON.stringify(payloadValid({ isian: "x".repeat(40 * 1024) }));
+    const besar = JSON.stringify(payloadValid({ isian: "x".repeat(70 * 1024) }));
     expect((await POST(permintaan(null, { raw: besar }))).status).toBe(413);
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -400,5 +402,45 @@ describe("Nama BIB dari form_schema core", () => {
     expect(res.status).toBe(200);
     const dikirim = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(JSON.stringify(dikirim.participants[0].customFields)).not.toContain("BUDI");
+  });
+});
+
+describe("kolom tambahan dari form_schema core", () => {
+  const KONTAK = [
+    { name: "kontak_darurat_nama", label: "Nama Kontak Darurat", type: "text" as const, required: true, options: [], placeholder: "", maxLength: 1000 },
+    { name: "kontak_darurat_nomor", label: "Nomor Kontak Darurat", type: "tel" as const, required: true, options: [], placeholder: "", maxLength: 16 },
+    { name: "golongan_darah", label: "Golongan Darah", type: "select" as const, required: false, options: ["A", "B", "AB", "O"], placeholder: "", maxLength: 1000 },
+  ];
+  const denganTambahan = (tambahan: unknown) =>
+    payloadValid({ participants: [{ ...payloadValid().participants[0], tambahan }] });
+
+  it("isian dikirim dengan kunci field core, telepon dirapikan", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, kolomTambahan: KONTAK });
+    const res = await POST(
+      permintaan(denganTambahan({ kontak_darurat_nama: " Ibu Uji ", kontak_darurat_nomor: "0812-0000-0009", golongan_darah: "O" }))
+    );
+    expect(res.status).toBe(200);
+    const cf = JSON.parse(fetchMock.mock.calls[0][1].body).participants[0].customFields;
+    expect(cf).toMatchObject({ kontak_darurat_nama: "Ibu Uji", kontak_darurat_nomor: "081200000009", golongan_darah: "O" });
+    // Data inti tetap milik api/daftar.
+    expect(cf.nik).toBe(PII.nik);
+  });
+
+  it("kolom wajib kosong, telepon salah, atau pilihan di luar daftar ditolak sebelum core", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, kolomTambahan: KONTAK });
+    expect((await POST(permintaan(denganTambahan({ kontak_darurat_nomor: "081200000009" })))).status).toBe(400);
+    expect((await POST(permintaan(denganTambahan({ kontak_darurat_nama: "Ibu", kontak_darurat_nomor: "12ab" })))).status).toBe(400);
+    expect(
+      (await POST(permintaan(denganTambahan({ kontak_darurat_nama: "Ibu", kontak_darurat_nomor: "081200000009", golongan_darah: "Z" })))).status
+    ).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("kunci yang tidak ada di form_schema dan kunci inti tidak pernah diteruskan", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, kolomTambahan: [] });
+    await POST(permintaan(denganTambahan({ liar: "x", nik: "9999999999999999" })));
+    const cf = JSON.parse(fetchMock.mock.calls[0][1].body).participants[0].customFields;
+    expect(cf).not.toHaveProperty("liar");
+    expect(cf.nik).toBe(PII.nik);
   });
 });

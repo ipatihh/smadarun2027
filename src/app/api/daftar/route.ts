@@ -33,6 +33,7 @@ import {
 } from "@/lib/proxyCore";
 import { VERSI_PERSETUJUAN_DIKENAL, VERSI_PERSETUJUAN_TANPA_LABEL } from "@/lib/persetujuan";
 import { rapikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
+import { rapikanIsian, validasiKolomTambahan } from "@/lib/kolomTambahan";
 
 // ─── Batas & proteksi per instance ───────────────────────────────────────────
 // Semua Map di bawah hidup di memori SATU instance serverless (Vercel bisa menjalankan
@@ -55,8 +56,12 @@ const BATAS_KE_CORE = 20;
 const hitunganSemua: PetaHitungan = new Map();
 const hitunganKeCore: PetaHitungan = new Map();
 
-/** Payload 10 peserta ±5 KB; batas ini jauh di atasnya tetapi tetap memotong body raksasa. */
-const BATAS_BODY_REQUEST = 32 * 1024;
+/**
+ * Payload 10 peserta ±5 KB tanpa kolom tambahan. Kolom tambahan dari form builder core
+ * (src/lib/kolomTambahan.ts) bisa menambah beberapa KB per peserta; batas ini masih jauh
+ * di atasnya tetapi tetap memotong body raksasa. Core sendiri menerima hingga 3 MB.
+ */
+const BATAS_BODY_REQUEST = 64 * 1024;
 /** Respons core normal < 2 KB. */
 const BATAS_BODY_CORE = 64 * 1024;
 const CORE_TIMEOUT_MS = 25_000;
@@ -125,6 +130,7 @@ interface PesertaTervalidasi {
   harga: number;
   ticketTypeId: number | null;
   namaBib: string;
+  tambahan: Record<string, string>;
 }
 
 export async function POST(req: NextRequest) {
@@ -366,6 +372,19 @@ export async function POST(req: NextRequest) {
         namaBib = rapikanNamaBib(mentah);
       }
 
+      // Kolom tambahan form builder core. Hanya kunci yang ada di form_schema yang dibaca
+      // — isian liar dari browser tidak pernah diteruskan ke core.
+      const tambahanMentah = isRecord(p.tambahan) ? p.tambahan : {};
+      const tambahan: Record<string, string> = {};
+      for (const kolom of live.kolomTambahan) {
+        const mentah = tambahanMentah[kolom.name];
+        const nilai = typeof mentah === "string" ? mentah.slice(0, kolom.maxLength + 50) : "";
+        const pesanKolom = validasiKolomTambahan(kolom, nilai);
+        if (pesanKolom) return gagal(`Peserta ${nomor}: ${pesanKolom}`);
+        const rapi = rapikanIsian(kolom, nilai);
+        if (rapi) tambahan[kolom.name] = rapi;
+      }
+
       pesertaTervalidasi.push({
         nama,
         email: emailPeserta,
@@ -381,6 +400,7 @@ export async function POST(req: NextRequest) {
         harga: tiket.price,
         ticketTypeId: tiket.id,
         namaBib,
+        tambahan,
       });
     }
 
@@ -455,6 +475,9 @@ export async function POST(req: NextRequest) {
         email: p.email ?? buyerEmail,
         ticketTypeId: p.ticketTypeId ?? undefined,
         customFields: {
+          // Kolom tambahan form builder core (kunci = nama field). Ditaruh paling atas
+          // bersama Nama BIB: data inti di bawahnya selalu menang bila namanya bentrok.
+          ...p.tambahan,
           // Kunci = nama field Nama BIB di form_schema core, bukan nama karangan situs ini.
           // Ditaruh PALING ATAS supaya nama field yang kebetulan bentrok (mis. "kota")
           // tidak pernah menimpa data inti di bawahnya.

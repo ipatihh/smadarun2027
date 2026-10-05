@@ -27,6 +27,13 @@ Dibangun EKSPLISIT di `api/daftar` dari field yang sudah divalidasi (jangan pern
 
 Harga/subtotal dari browser hanya dicocokkan sebagai deteksi manipulasi; core menghitung ulang.
 
+**Kolom tambahan form builder** (sejak 5 Oktober 2026, kontrak core §4a): setiap field
+`form_schema` ber-`semantic: null` dirender generik per peserta (`src/lib/kolomTambahan.ts`:
+teks, angka, pilihan, tanggal lahir, nomor telepon, email; tipe asing jadi teks) dan dikirim di
+`customFields[field.name]`. Kunci yang tidak ada di `form_schema` dibuang `api/daftar`; data inti
+(NIK, WhatsApp, domisili, dst.) selalu menang bila namanya bentrok. Core lama tanpa `semantic` =
+tidak ada kolom tambahan (tidak menebak).
+
 **Nama BIB** (sejak 5 Oktober 2026) dibaca dari `form_schema` di endpoint event publik core:
 field bertipe `name_on_bib` beserta `maxLength`-nya (`src/lib/namaBib.ts`). Ada field itu =
 kolom tampil per peserta (opsional) dan nilainya dikirim di `customFields[<nama field core>]`

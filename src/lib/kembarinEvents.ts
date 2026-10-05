@@ -5,6 +5,7 @@
 // tanpa perlu redeploy atau ubah kode di project ini.
 
 import { bacaKolomNamaBib, type KolomNamaBib } from "./namaBib";
+import { bacaKolomTambahan, type KolomTambahan } from "./kolomTambahan";
 
 const EVENT_CODE = "smadarun";
 
@@ -84,6 +85,10 @@ export interface LiveEventData {
   // null = panitia tidak memasang kolom itu; form tidak menampilkannya dan api/daftar
   // tidak mengirimnya. Lihat src/lib/namaBib.ts.
   namaBib: KolomNamaBib | null;
+  // Kolom lain dari form builder kembarin-v2 (field `semantic: null`), dirender generik
+  // per peserta. Kolom baru dari panitia muncul di sini tanpa coding. Lihat
+  // src/lib/kolomTambahan.ts.
+  kolomTambahan: KolomTambahan[];
 }
 
 // Batas tunggu fetch data live. Dipilih 8 detik: cukup longgar untuk jaringan lambat,
@@ -106,6 +111,7 @@ const CLOSED: LiveEventData = {
   wilayahDropdown: false,
   opensAt: null,
   namaBib: null,
+  kolomTambahan: [],
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -238,6 +244,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       timeline,
       opensAt,
       namaBib: bacaKolomNamaBib(event.form_schema),
+      kolomTambahan: bacaKolomTambahan(event.form_schema),
     };
   } catch (err) {
     const alasan = err instanceof Error && err.name === "TimeoutError"

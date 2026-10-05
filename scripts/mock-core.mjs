@@ -13,6 +13,7 @@
 //   GET /__status?fitur=belum-aktif      endpoint status menjawab 503 ORDER_STATUS_UNAVAILABLE
 //   GET /__log                           ringkasan permintaan (tanpa nilai rahasia)
 //   GET /__namabib?on=0|1                pasang/lepas kolom Nama BIB di form_schema (bawaan: pasang)
+//   GET /__tambahan?on=0|1               pasang/lepas kolom tambahan (kontak darurat dll., bawaan: pasang)
 //
 // PENGAMAN: kategori tiket mock sengaja bernama "UJI LOKAL 5K" (id 987654, Rp181.000) — tidak
 // ada di core production. Kalau server uji ternyata salah alamat ke production, data live-nya
@@ -42,8 +43,21 @@ const MODE = {
 
 let mode = "sukses";
 let namaBibAktif = true;
+let tambahanAktif = true;
 // Cermin field form_schema core bertipe `name_on_bib` (kembarin-v2 domains/shared/nameOnBib.ts).
-const KOLOM_NAMA_BIB = { name: "nama_bib", type: "name_on_bib", label: "Name On BIB", required: false, maxLength: 15 };
+const KOLOM_NAMA_BIB = { name: "nama_bib", type: "name_on_bib", label: "Name On BIB", required: false, maxLength: 15, semantic: "name_on_bib" };
+// Cermin keluaran toPublicFormSchema core (kembarin-v2 domains/shared/publicFormSchema.ts):
+// field inti bertanda `semantic`, kolom tambahan panitia `semantic: null`.
+const KOLOM_INTI = [
+  { name: "nama", type: "text", label: "Nama Lengkap", required: true, semantic: "nama", maxLength: 1000 },
+  { name: "nik", type: "text", label: "NIK", required: true, semantic: "nik", maxLength: 1000 },
+  { name: "kategori", type: "select", label: "Kategori", options: ["UJI LOKAL 5K"], required: true, semantic: "kategori" },
+];
+const KOLOM_TAMBAHAN = [
+  { name: "kontak_darurat_nama", type: "text", label: "Nama Kontak Darurat", required: true, placeholder: "", semantic: null, maxLength: 1000 },
+  { name: "kontak_darurat_nomor", type: "tel", label: "Nomor Kontak Darurat", required: true, placeholder: "08xxxxxxxxxx", semantic: null, maxLength: 16, pattern: "^\\+?[0-9]{8,15}$" },
+  { name: "golongan_darah", type: "select", label: "Golongan Darah", options: ["A", "B", "AB", "O"], required: false, placeholder: "", semantic: null },
+];
 let fiturStatus = "aktif";
 let nomor = 0;
 const log = [];
@@ -116,7 +130,7 @@ async function daftar(req, res) {
     sessionId,
     adaKunciTrustedProxy: Boolean(req.headers["x-trusted-proxy-key"]),
     kunciTopLevel: Object.keys(data),
-    peserta: (data.participants || []).map((p) => ({ nama: p.nama, nik: p.customFields?.nik, size: p.customFields?.size, namaBib: p.customFields?.nama_bib })),
+    peserta: (data.participants || []).map((p) => ({ nama: p.nama, nik: p.customFields?.nik, size: p.customFields?.size, namaBib: p.customFields?.nama_bib, darurat: [p.customFields?.kontak_darurat_nama, p.customFields?.kontak_darurat_nomor, p.customFields?.golongan_darah] })),
   });
   if (sessionId && pesananPerSesi.has(sessionId) && mode !== "timeout-lalu-ada") {
     const lama = pesananPerSesi.get(sessionId);
@@ -213,13 +227,18 @@ http
       if (url.searchParams.get("fitur")) fiturStatus = url.searchParams.get("fitur");
       return json(res, 200, { fiturStatus, pesanan: [...pesananPerKode].map(([k, v]) => [k, v.status]) });
     }
+    if (url.pathname === "/__tambahan") {
+      tambahanAktif = url.searchParams.get("on") !== "0";
+      return json(res, 200, { tambahanAktif });
+    }
     if (url.pathname === "/__namabib") {
       namaBibAktif = url.searchParams.get("on") !== "0";
       return json(res, 200, { namaBibAktif });
     }
     if (url.pathname === "/__log") return json(res, 200, { mode, fiturStatus, namaBibAktif, log, jumlahPesanan: pesananPerKode.size });
     if (req.method === "GET" && url.pathname === "/api/public/events/smadarun") {
-      return json(res, 200, { ...LIVE, data: { ...LIVE.data, form_schema: namaBibAktif ? [KOLOM_NAMA_BIB] : [] } });
+      const form_schema = [...KOLOM_INTI, ...(namaBibAktif ? [KOLOM_NAMA_BIB] : []), ...(tambahanAktif ? KOLOM_TAMBAHAN : [])];
+      return json(res, 200, { ...LIVE, data: { ...LIVE.data, form_schema } });
     }
     if (req.method === "POST" && url.pathname === "/api/participants/register") return void daftar(req, res);
     if (req.method === "POST" && url.pathname === "/api/public/orders/status") return void statusPesanan(req, res);

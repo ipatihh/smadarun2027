@@ -27,6 +27,7 @@ export default async function DaftarPage() {
       maxTicketsPerOrder={live.maxTicketsPerOrder}
       wilayahDropdown={live.wilayahDropdown}
       namaBib={live.namaBib}
+      kolomTambahan={live.kolomTambahan}
     />
   );
 }

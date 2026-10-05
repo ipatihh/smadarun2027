@@ -17,6 +17,7 @@ npm run build
 | `tests/pesananPeserta.test.ts` | Kaitan pemesan lewat key (regresi bug hapus Peserta 1), 300 urutan tambah/hapus/centang acak dengan model independen, rotasi `sessionId` per sidik jari isi. |
 | `tests/kontrakPendaftaran.test.ts` | Allowlist respons sukses core, `statusToken`, klasifikasi semua kode error core (ditolak vs belum pasti), tafsir respons di browser. |
 | `tests/apiDaftar.test.ts` | Route `api/daftar` dengan data live & core di-mock: bentuk body, Content-Type, Origin, batas ukuran, timeout termasuk body macet, kunci per NIK, batas laju, `consent_policy_version`, kode baru, tidak ada PII di log. |
+| `tests/kolomTambahan.test.ts` | Kolom generik dari `form_schema` core: hanya `semantic: null`, core lama tanpa penanda = kosong, validasi per tipe. |
 | `tests/namaBib.test.ts` | Pembacaan kolom Nama BIB dari `form_schema` core, cadangan `maxLength`, rapikan & validasi. |
 | `tests/statusPesanan.test.ts` | Allowlist & pemetaan status core, penyimpanan `sessionStorage`, route `api/status-pesanan` (validasi, timeout 10 dtk, batas laju, token tidak masuk log). |
 
