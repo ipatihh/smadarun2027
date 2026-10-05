@@ -19,9 +19,8 @@ const Header: React.FC = () => {
         setIsOpen(!isOpen);
     };
 
-    // Header transparan saat di puncak halaman, lalu memadat (latar + garis bawah)
-    // begitu digulir — supaya hero tidak terpotong bar putih, tapi menu tetap terbaca
-    // di atas konten apa pun.
+    // Header tetap selebar viewport. Saat digulir, latar menguat dan progres tipis
+    // membantu orientasi tanpa menambah bar aksi atau menutup konten.
     useEffect(() => {
         const onScroll = () => setIsScrolled(window.scrollY > 16);
         onScroll();
@@ -42,27 +41,31 @@ const Header: React.FC = () => {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 mx-auto w-full transition-all duration-300 ${
-                isSolid ? 'bg-card/90 backdrop-blur-md border-b border-border shadow-rest' : 'bg-transparent'
+            className={`fixed inset-x-0 top-0 z-50 w-full border-b transition-[background-color,box-shadow,border-color] duration-500 ease-out ${
+                isSolid
+                    ? 'border-border bg-card/95 shadow-rest backdrop-blur-xl'
+                    : 'border-transparent bg-transparent'
             }`}
         >
             <Container className="!px-0">
-                <nav aria-label="Navigasi utama" className="mx-auto flex justify-between items-center gap-4 py-3 px-5 md:py-4">
-                    <Link href="/" className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-                        <span className="font-display text-xl font-semibold text-foreground">
+                <nav aria-label="Navigasi utama" className={`mx-auto flex items-center justify-between gap-4 px-4 transition-[padding] duration-500 sm:px-5 ${isScrolled ? 'py-2.5 md:py-3' : 'py-3 md:py-4'}`}>
+                    <Link href="/" className="group flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+                        <span className="font-display text-base font-semibold tracking-tight text-foreground sm:text-lg">
                             {siteDetails.siteName}
                         </span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary-accent opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true" />
                     </Link>
 
                     {/* Menu Desktop */}
-                    <ul className="hidden md:flex space-x-6 items-center">
+                    <ul className="hidden md:flex space-x-7 items-center text-sm">
                         {menuItems.map(item => (
                             <li key={item.text}>
                                 <Link
                                     href={formatUrl(item.url)}
-                                    className="text-foreground hover:text-foreground-accent transition-colors font-medium rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+                                    className="group relative rounded py-2 text-foreground transition-colors hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-background"
                                 >
                                     {item.text}
+                                    <span className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-primary-accent transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100" aria-hidden="true" />
                                 </Link>
                             </li>
                         ))}
@@ -73,7 +76,7 @@ const Header: React.FC = () => {
                         {!isDaftarPage && (
                             <Link
                                 href="/daftar"
-                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-6 py-2.5 text-sm shadow-rest hover:shadow-hover transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="inline-flex min-h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-on-primary shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>
@@ -85,7 +88,7 @@ const Header: React.FC = () => {
                         {!isDaftarPage && (
                             <Link
                                 href="/daftar"
-                                className="inline-flex items-center rounded-full bg-primary hover:bg-primary-accent text-on-primary font-bold px-4 py-2 text-sm shadow-rest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="inline-flex min-h-10 items-center rounded-full bg-primary px-4 text-sm font-semibold text-on-primary shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>
@@ -93,7 +96,7 @@ const Header: React.FC = () => {
                         <button
                             onClick={toggleMenu}
                             type="button"
-                            className="bg-surface-sunken text-foreground rounded-full w-10 h-10 flex items-center justify-center border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface-sunken text-foreground transition-[background-color,border-color] duration-300 hover:border-border-strong hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             aria-controls="mobile-menu"
                             aria-expanded={isOpen}
                         >
@@ -118,13 +121,13 @@ const Header: React.FC = () => {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
             >
-                <div id="mobile-menu" className="md:hidden bg-card border-t border-border shadow-hover">
+                <div id="mobile-menu" className="border-t border-border bg-card shadow-hover md:hidden">
                     <ul className="flex flex-col space-y-1 pt-2 pb-6 px-6">
                         {menuItems.map(item => (
                             <li key={item.text}>
                                 <Link
                                     href={formatUrl(item.url)}
-                                    className="block py-2 text-foreground hover:text-foreground-accent font-medium rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                    className="block rounded py-2 font-medium text-foreground transition-colors hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                                     onClick={toggleMenu}
                                 >
                                     {item.text}
@@ -134,6 +137,7 @@ const Header: React.FC = () => {
                     </ul>
                 </div>
             </Transition>
+            <span className="header-scroll-progress pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left bg-primary-accent" aria-hidden="true" />
         </header>
     );
 };

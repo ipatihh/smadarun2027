@@ -183,9 +183,9 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   browser `min-inline-size: min-content`). Tanpa itu wadah ikut melebar mengikuti isi yang
   tidak bisa patah (opsi `<select>`, teks nowrap) dan meluber ke kanan — tanpa error, cuma
   kartu tidak center (pernah: kartu form `/daftar` meluber 7px di 375px, Provinsi/Kota 28px
-  di 320px). Luberan animasi `reveal-left/right` diklip di `<main>` (`layout.tsx`), BUKAN di
-  `body`: overflow body dipindahkan ke viewport dan Safari iOS tetap membiarkan halaman
-  digeser ke samping.
+  di 320px). Konten dekoratif yang melewati tepi halaman diklip di `<main>` (`layout.tsx`),
+  BUKAN di `body`: overflow body dipindahkan ke viewport dan Safari iOS tetap membiarkan
+  halaman digeser ke samping. Reveal saat scroll kini bergerak vertikal pendek.
 - **Semua modal wajib pakai `Dialog` dari `@headlessui/react`** (sudah jadi dependency),
   bukan div overlay manual — supaya dapat Escape, focus trap, dan pengembalian fokus.
 - **Bar aksi melayang hanya boleh ada di `/daftar`**, tidak di beranda. Beranda pernah
@@ -202,14 +202,17 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 - **Sebagian besar konten masih SAMPLE dan memang disengaja** (per Agustus 2026): testimoni
   beserta avatarnya, angka statistik (`stats.ts`, tampil di kepala seksi testimoni), nomor
   telepon & tautan sosial media di `src/data/footer.ts`, logo sponsor di
-  `public/images/sponsors/`, ilustrasi hero (`public/images/hero-illustration.svg`, dibuat
-  lewat skrip, bukan aset panitia), foto galeri "momen tahun lalu" (`src/data/gallery.ts`),
+  `public/images/sponsors/`, ilustrasi cadangan (`public/images/hero-illustration.svg`),
+  foto galeri "momen tahun lalu" (`src/data/gallery.ts`),
   dan gambar panduan ukuran jersey. **Slot foto adalah bagian dari wadah**: panitia
   merencanakannya untuk foto event tahun lalu, jadi saat menyederhanakan tata letak jangan
   menghapus tempat foto walau isinya jelas contoh (pernah terjadi di Benefits; fotonya
   kemudian dipindah ke galeri). Event-nya sendiri belum berjalan. Jangan "membetulkan" isinya
   atau menganggapnya data nyata — yang harus dijaga adalah wadahnya (struktur data, tata
   letak, aksesibilitas). Sebelum go-live, semua itu wajib diganti aset/teks asli panitia.
+- Foto hero `public/images/hero1.JPG` adalah dokumentasi start asli dari panitia. Aset
+  mengandung teks "2026" dan tanggal pada tepinya; crop responsif di `Hero.tsx` sengaja
+  menyembunyikan keduanya agar tidak berbenturan dengan identitas 2027.
 - `.env` di repo ini **tidak ter-track git** (sengaja dikeluarkan, lihat `.gitignore`).
   Jangan pernah taruh secret asli (`TRUSTED_PROXY_API_KEY`, dst) di file yang ter-track git —
   pakai `.env.local` untuk dev, Vercel Dashboard untuk production.

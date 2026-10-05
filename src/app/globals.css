@@ -19,37 +19,34 @@
 */
 :root {
   /* Permukaan berjenjang */
-  --background: 253 253 251; /* #FDFDFB */
-  --card: 255 255 255; /* #FFFFFF */
-  --surface-sunken: 245 245 243; /* #F5F5F3 */
-  --hero-background: 243 243 242; /* #F3F3F2 */
+  --background: 250 247 241;
+  --card: 255 253 248;
+  --surface-sunken: 244 239 229;
+  --hero-background: 247 240 226;
 
   /* Teks */
-  --foreground: 23 23 23; /* #171717 */
-  --foreground-accent: 69 69 69; /* #454545 */
-  --muted-foreground: 107 107 104; /* #6B6B68 */
+  --foreground: 44 39 34;
+  --foreground-accent: 85 76 66;
+  --muted-foreground: 112 101 89;
 
   /* Garis */
-  --border: 229 229 226; /* #E5E5E2 */
-  --border-strong: 210 210 206; /* #D2D2CE */
-  /* Batas kontrol form (input/select/combobox). --border hanya garis dekoratif (1,26:1
-     terhadap card) — terlalu samar untuk menandai kotak isian; WCAG 1.4.11 minta >= 3:1.
-     #858581: 3,70:1 terhadap card, 3,39:1 terhadap surface-sunken. */
-  --field-border: 133 133 129; /* #858581 */
-  /* Cincin fokus keyboard. Kuning --primary hanya 1,39:1 di atas card putih; warna teks
-     17,9:1. Di panel gelap (--secondary) tetap pakai ring-primary (12,2:1). */
-  --focus: 23 23 23; /* #171717 */
+  --border: 230 220 204;
+  --border-strong: 205 188 165;
+  /* Batas kontrol form harus lebih jelas daripada garis dekoratif. */
+  --field-border: 128 112 94;
+  /* Cincin fokus keyboard dibuat gelap di permukaan terang. */
+  --focus: 75 55 35;
 
-  /* Brand — kuning HANYA untuk permukaan/aksen, bukan warna teks di latar terang */
-  --primary: 254 216 53; /* #FED835 */
-  --primary-accent: 229 194 48; /* #E5C230 */
-  --on-primary: 23 23 23; /* #171717 */
+  /* Amber hanya untuk permukaan/aksen, bukan teks di latar terang. */
+  --primary: 235 190 104;
+  --primary-accent: 222 170 79;
+  --on-primary: 42 33 22;
 
-  /* Panel gelap (countdown, CTA, portal pendaftaran) */
-  --secondary: 26 29 33; /* #1A1D21 */
-  --secondary-accent: 46 50 56; /* #2E3238 */
-  --on-secondary: 255 255 255; /* #FFFFFF */
-  --on-secondary-muted: 199 201 204; /* #C7C9CC */
+  /* Panel gelap hangat (countdown, CTA, portal pendaftaran) */
+  --secondary: 48 43 38;
+  --secondary-accent: 73 62 49;
+  --on-secondary: 255 250 240;
+  --on-secondary-muted: 219 208 191;
 
   /* Semantik */
   --success: 22 121 76; /* #16794C */
@@ -68,28 +65,26 @@
 }
 
 /*
-  Mode gelap mengikuti setelan sistem. Semua komponen sudah memakai token, jadi cukup
-  menukar nilainya di sini. Panel gelap (--secondary) justru dinaikkan sedikit supaya
-  tetap terbaca sebagai panel "terangkat" di atas latar gelap, bukan lubang hitam.
+  Mode gelap mengikuti setelan sistem. Semua komponen memakai token yang sama.
 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 18 19 22; /* #121316 */
-    --card: 26 29 33; /* #1A1D21 */
-    --surface-sunken: 33 36 41; /* #212429 */
-    --hero-background: 23 25 29; /* #17191D */
+    --background: 29 27 25;
+    --card: 39 36 32;
+    --surface-sunken: 48 43 37;
+    --hero-background: 37 32 27;
 
-    --foreground: 244 244 242; /* #F4F4F2 */
-    --foreground-accent: 201 201 198; /* #C9C9C6 */
-    --muted-foreground: 154 154 151; /* #9A9A97 */
+    --foreground: 248 241 229;
+    --foreground-accent: 214 201 182;
+    --muted-foreground: 178 163 142;
 
-    --border: 46 50 56; /* #2E3238 */
-    --border-strong: 67 71 78; /* #43474E */
-    --field-border: 115 120 130; /* #737882 — 3,82:1 terhadap card, 3,51:1 terhadap surface-sunken */
-    --focus: 254 216 53; /* #FED835 — 12,2:1 terhadap card gelap */
+    --border: 68 59 49;
+    --border-strong: 101 85 66;
+    --field-border: 139 119 94;
+    --focus: 235 190 104;
 
-    --secondary: 34 38 43; /* #22262B */
-    --secondary-accent: 46 50 56; /* #2E3238 */
+    --secondary: 57 48 38;
+    --secondary-accent: 78 64 48;
 
     --success: 111 211 164; /* #6FD3A4 */
     --success-surface: 20 58 42; /* #143A2A */
@@ -163,8 +158,8 @@ body {
 
 @keyframes reveal-slide-left {
   from {
-    opacity: 0;
-    transform: translateX(-48px);
+    opacity: 0.65;
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -174,8 +169,8 @@ body {
 
 @keyframes reveal-slide-right {
   from {
-    opacity: 0;
-    transform: translateX(48px);
+    opacity: 0.65;
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -183,22 +178,39 @@ body {
   }
 }
 
+@keyframes header-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.header-scroll-progress {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .header-scroll-progress {
+    display: block;
+    animation: header-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
 /*
-  Scroll-reveal dari samping — animasi terikat posisi scroll, bukan waktu.
+  Reveal halus terikat posisi scroll, bukan waktu.
   Elemen yang sudah terlihat saat load langsung tampil normal.
   Dibungkus @supports supaya browser yang belum mendukung animation-timeline
   tetap menampilkan konten apa adanya (tanpa opacity 0 permanen).
 */
 @supports (animation-timeline: view()) {
   .reveal-left {
-    animation: reveal-slide-left 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: reveal-slide-left 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
     animation-timeline: view();
-    animation-range: entry 0% entry 35%;
+    animation-range: entry 0% entry 32%;
   }
   .reveal-right {
-    animation: reveal-slide-right 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: reveal-slide-right 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
     animation-timeline: view();
-    animation-range: entry 0% entry 35%;
+    animation-range: entry 0% entry 32%;
   }
 }
 
@@ -209,7 +221,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-oswald), sans-serif;
+  font-family: var(--font-plus-jakarta), sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
 }
@@ -219,18 +231,94 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /*
-  Penanda angka tahun ("2027") di logotype. Kuning dipakai sebagai PERMUKAAN dengan teks
-  gelap di atasnya — sebelumnya angka ini berwarna kuning di atas latar terang (kontras
-  ±1,6:1). Kemiringannya mengikuti motif garis kecepatan di latar hero.
+  Penanda angka tahun ("2027") di logotype memakai permukaan amber dan teks gelap.
 */
 .accent-mark {
-  @apply inline-block -skew-x-6 bg-primary px-[0.12em] text-on-primary;
+  @apply inline-block rounded-[0.12em] bg-primary px-[0.12em] text-on-primary;
+}
+
+.hero-atmosphere {
+  background:
+    radial-gradient(circle at 78% 36%, rgb(var(--primary) / 0.24), transparent 36%),
+    radial-gradient(circle at 15% 85%, rgb(var(--card) / 0.9), transparent 45%),
+    rgb(var(--hero-background));
+}
+
+.hero-grid {
+  background-image: linear-gradient(rgb(var(--foreground) / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--foreground) / 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, transparent, black 24%, black 72%, transparent);
+}
+
+.hero-track-base,
+.hero-track-progress {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.hero-track-base {
+  stroke: rgb(var(--border-strong) / 0.64);
+  stroke-width: 1;
+}
+
+.hero-track-progress {
+  stroke: rgb(var(--primary-accent) / 0.85);
+  stroke-width: 1.5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+@keyframes hero-track-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@supports (animation-timeline: scroll()) {
+  .hero-track-progress {
+    animation: hero-track-draw linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 520px;
+  }
+}
+
+.hero-photo-shade {
+  background:
+    linear-gradient(90deg, rgb(var(--secondary) / 0.86), rgb(var(--secondary) / 0.57) 30%, transparent 63%),
+    linear-gradient(to bottom, rgb(var(--secondary) / 0.18), transparent 58%);
+}
+
+.registration-atmosphere {
+  background:
+    radial-gradient(circle at 84% 8%, rgb(var(--primary) / 0.17), transparent 27rem),
+    radial-gradient(circle at 9% 25%, rgb(var(--card) / 0.95), transparent 31rem),
+    rgb(var(--background));
+}
+
+.registration-grid {
+  background-image: linear-gradient(rgb(var(--foreground) / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--foreground) / 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, black, transparent 36rem);
 }
 
 /* Hormati preferensi sistem: animasi reveal tidak boleh jadi syarat konten terlihat. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .reveal,
+  .reveal-left,
+  .reveal-right {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .header-scroll-progress {
+    display: none !important;
+  }
+  .hero-track-progress {
+    animation: none !important;
+    stroke-dashoffset: 0;
   }
   *,
   *::before,

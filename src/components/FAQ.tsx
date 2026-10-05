@@ -7,7 +7,7 @@ import { faqs } from "@/data/faq";
 
 const FAQ: React.FC = () => {
     return (
-        <section id="faq" className="py-10 lg:py-20">
+        <section id="faq" className="py-16 lg:py-24">
             <div className="flex flex-col lg:flex-row gap-10">
                 <div className="reveal-left lg:w-80 lg:shrink-0">
                     <SectionTitle>
@@ -15,12 +15,12 @@ const FAQ: React.FC = () => {
                             Pertanyaan Populer
                         </h2>
                     </SectionTitle>
-                    <p className="lg:mt-8 text-foreground-accent text-center lg:text-left">
+                    <p className="text-center text-sm leading-relaxed text-foreground-accent lg:mt-6 lg:text-left">
                         Punya pertanyaan lain? Hubungi kami melalui:
                     </p>
                     <a
                         href="mailto:info@kembar.in"
-                        className="mt-2 block text-base sm:text-xl font-semibold text-foreground underline-offset-4 hover:underline text-center lg:text-left break-all rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        className="mt-2 block break-all rounded text-center text-sm font-semibold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:text-left"
                     >
                         info@kembar.in
                     </a>
@@ -31,8 +31,8 @@ const FAQ: React.FC = () => {
                         <Disclosure key={index} as="div" className="border-t border-border">
                             {({ open }) => (
                                 <>
-                                    <DisclosureButton className="flex items-center justify-between w-full gap-4 px-1 py-6 text-left group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
-                                        <span className="text-base sm:text-lg lg:text-xl font-semibold text-foreground group-hover:text-foreground-accent transition-colors duration-200">
+                                    <DisclosureButton className="group flex w-full items-center justify-between gap-4 rounded px-1 py-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+                                        <span className="text-sm font-semibold leading-relaxed text-foreground transition-colors duration-200 group-hover:text-foreground-accent sm:text-base">
                                             {faq.question}
                                         </span>
                                         {open ? (
@@ -41,7 +41,7 @@ const FAQ: React.FC = () => {
                                             <BiPlus className="w-6 h-6 text-foreground-accent flex-shrink-0" aria-hidden="true" />
                                         )}
                                     </DisclosureButton>
-                                    <DisclosurePanel className="px-1 pb-6 -mt-2 text-foreground-accent text-base leading-relaxed">
+                                    <DisclosurePanel className="-mt-1 px-1 pb-6 text-sm leading-relaxed text-foreground-accent sm:text-base">
                                         {faq.answer}
                                     </DisclosurePanel>
                                 </>

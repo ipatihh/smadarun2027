@@ -37,14 +37,14 @@ async function Tiket() {
   }));
 
   return (
-    <section id="tiket" className="scroll-mt-24 py-10 lg:py-20">
+    <section id="tiket" className="scroll-mt-24 py-16 lg:py-24">
       <div className="reveal-left">
         <SectionTitle>
-          <h2 className="text-center mb-4">Kategori Tiket</h2>
+          <h2 className="mb-3 text-center">Pilih jarakmu</h2>
         </SectionTitle>
       </div>
-      <p className="reveal-right mb-12 text-center text-foreground-accent">
-        Amankan slot sekarang sebelum kehabisan!
+      <p className="reveal-right mb-12 text-center text-sm text-foreground-accent sm:text-base">
+        Temukan kategori yang paling pas untukmu.
       </p>
 
       {tiers.length === 0 ? (

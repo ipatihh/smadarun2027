@@ -7,26 +7,26 @@ import SectionTitle from './SectionTitle';
 
 const Testimonials: React.FC = () => {
     return (
-        <section id="testimonials" className="scroll-mt-24 py-10 lg:py-20">
+        <section id="testimonials" className="scroll-mt-24 py-16 lg:py-24">
             {/*
                Angka statistik menumpang di kepala seksi ini, bukan seksi sendiri: keduanya
                sama-sama bukti sosial, dan satu seksi penuh untuk tiga angka (salah satunya
                "5K" yang sudah jadi nama kategori tiket) hanya menambah panjang halaman.
             */}
-            <div className="mb-12 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="mb-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div className="reveal-left max-w-xl">
                     <SectionTitle>
                         <h2 className="mb-4">Apa Kata Mereka?</h2>
                     </SectionTitle>
-                    <p className="text-foreground-accent">
+                    <p className="text-sm leading-relaxed text-foreground-accent sm:text-base">
                         Kesan dan cerita dari para pelari yang sudah pernah bergabung.
                     </p>
                 </div>
                 {stats.length > 0 && (
-                    <ul className="reveal-right flex gap-10">
+                    <ul className="reveal-right flex gap-8 border-l border-border pl-6 sm:gap-10 sm:pl-8">
                         {stats.map(stat => (
                             <li key={stat.title}>
-                                <p className="font-display text-4xl sm:text-5xl font-bold leading-none text-foreground">{stat.title}</p>
+                                <p className="font-display text-3xl font-semibold leading-none text-foreground sm:text-4xl">{stat.title}</p>
                                 <p className="mt-2 max-w-[10rem] text-sm text-foreground-accent">{stat.description}</p>
                             </li>
                         ))}
@@ -43,14 +43,8 @@ const Testimonials: React.FC = () => {
             {testimonials.map((testimonial, index) => (
                 <div
                     key={index}
-                    /*
-                       MENGUBAH KARTU TESTIMONI:
-                       - min-w-[85%] di HP agar kartu berikutnya agak mengintip (memberi petunjuk bisa di-slide)
-                       - lg:min-w-full di desktop agar ukurannya pas mengikuti kolom grid
-                       - snap-center membuat kartu otomatis mengunci di tengah layar saat di-swipe
-                       - offset vertikal selang-seling di desktop supaya tidak rata sempurna seperti tabel
-                    */
-                    className={`min-w-[85%] md:min-w-[45%] lg:min-w-full snap-center bg-card border border-border p-6 rounded-card shadow-rest hover:shadow-hover transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${index % 2 !== 0 ? "lg:translate-y-6" : ""}`}
+                    /* Kartu berikutnya mengintip di ponsel sebagai petunjuk carousel. */
+                    className="relative flex min-w-[85%] snap-center flex-col justify-between overflow-hidden rounded-card border border-border bg-card p-6 transition-[border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-border-strong md:min-w-[45%] lg:min-w-full"
                 >
                     <span className="font-display absolute top-3 right-5 text-6xl text-primary-accent/40 select-none leading-none" aria-hidden="true">&rdquo;</span>
                     <div>

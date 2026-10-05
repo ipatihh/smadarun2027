@@ -69,8 +69,8 @@ export default function RootLayout({
         <Header />
         {/* overflow-x-clip di sini, BUKAN di body: overflow milik body dipindahkan browser ke
             viewport, dan Safari iOS tetap membiarkan halaman digeser ke samping walau body
-            clip/hidden. Elemen reveal-left/right (translateX ±48px sebelum muncul) membuat isi
-            halaman 403px di layar 375px. Clip (bukan hidden) tidak mematikan position: sticky. */}
+            clip/hidden. Clip (bukan hidden) tidak mematikan position: sticky dan tetap
+            menjaga lebar viewport ketika konten dekoratif melewati tepi halaman. */}
         <main id="konten-utama" tabIndex={-1} className="overflow-x-clip focus:outline-none">
           {children}
         </main>

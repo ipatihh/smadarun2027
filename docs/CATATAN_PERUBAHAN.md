@@ -5,6 +5,31 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 6 Oktober 2026 — Penyegaran UI hangat dan minimalis
+
+- Foto hero kini memakai `public/images/hero1.JPG`, dokumentasi start asli yang diberikan
+  panitia. Crop responsif menampilkan pelari dan menyembunyikan teks 2026 serta tanggal
+  yang sudah tertanam di tepi foto.
+- Beranda memakai hero editorial: judul event selebar halaman, foto start sebagai satu
+  bidang visual, dan satu CTA ringkas. Panel jadwal serta ajakan akhir memakai aksen
+  lingkaran tipis sebagai sentuhan futuristis.
+- Setelah tinjauan pemilik, skala judul hero dilunakkan dan garis lintasan tipis
+  menghubungkan judul ke bingkai foto. Aksen garis mengikuti scroll bila browser
+  mendukung, tetap terlihat statis bila tidak, dan berhenti bergerak pada reduced motion.
+  Foto resmi di garis start kemudian diberikan panitia dan kini dipakai di hero.
+- Token warna terang dan gelap bergeser ke krem, amber, dan cokelat lembut; kartu fasilitas
+  dan tiket disederhanakan. Teks promosi dipadatkan tanpa mengubah data live, placeholder,
+  atau kontrak pendaftaran.
+- Portal `/daftar` memakai kepala halaman yang lebih tenang, grid halus, tipografi dan
+  input lebih ringan, pemisah tahap yang jelas, serta tombol bayar berukuran ringkas.
+- Header tetap satu bar penuh: latar kaca hangat menguat saat digulir, tautan mendapat
+  garis hover halus, dan garis progres setipis satu piksel mengikuti scroll di browser
+  yang mendukung. Reveal tiap seksi dibuat pendek dan lembut; reduced motion mematikannya.
+  Testimoni dan FAQ memakai ritme tipografi yang lebih tenang.
+- Preview dan build memakai mock core lokal. Tidak ada perubahan pada core atau deploy.
+
+---
+
 ## 5 Oktober 2026 — Kolom form tambahan otomatis dari core
 
 Prasyarat: kembarin-v2 dengan `semantic` di `form_schema` publik (branch

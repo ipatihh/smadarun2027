@@ -68,16 +68,16 @@ async function EventInfo() {
   const adaFakta = fakta.length > 0;
 
   return (
-    <section id="jadwal" aria-labelledby="jadwal-judul" className="relative z-20 -mt-10 px-5 sm:-mt-16">
-      <div className="relative mx-auto max-w-4xl overflow-hidden rounded-panel bg-secondary px-6 py-8 text-on-secondary shadow-hover sm:px-10 sm:py-10">
+    <section id="jadwal" aria-labelledby="jadwal-judul" className="relative z-20 -mt-8 px-5 sm:-mt-12">
+      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-panel border border-on-secondary/10 bg-secondary px-6 py-8 text-on-secondary shadow-hover sm:px-10 sm:py-10">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-secondary-accent opacity-30 [clip-path:polygon(0_0,20%_0,8%_100%,0_100%)]"
+          className="absolute -right-16 -top-28 h-72 w-72 rounded-full border border-primary/20"
         />
 
         <div className={`relative grid gap-8 ${adaFakta ? "md:grid-cols-2 md:gap-10" : "text-center"}`}>
           <div>
-            <h2 id="jadwal-judul" className="font-display text-base font-medium tracking-wide text-primary">
+            <h2 id="jadwal-judul" className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
               Menuju hari lomba
             </h2>
             <div className="mt-4">

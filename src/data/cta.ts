@@ -1,6 +1,6 @@
 export const ctaDetails = {
-    heading: "Siapkan Sepatumu, Amankan Slot Larimu Sekarang!",
-    subheading: "Jadilah bagian dari keseruan kompetisi dan selebrasi lari terbesar tahun ini. Kuota peserta sangat terbatas, jangan sampai kehabisan!",
+    heading: "Sampai jumpa di garis start.",
+    subheading: "Langkah berikutnya dimulai di sini.",
     appStoreUrl: "#",
     googlePlayUrl: "#",
 };

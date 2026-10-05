@@ -22,7 +22,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
 
   return (
     <div
-      className={`relative flex h-full w-full flex-col justify-between rounded-t-panel rounded-bl-lg rounded-br-panel border bg-card p-8 shadow-rest transition-all duration-300 hover:-translate-y-1 hover:shadow-hover ${
+      className={`relative flex h-full w-full flex-col justify-between rounded-card border bg-card p-7 shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:shadow-hover ${
         tier.highlight ? "border-primary-accent ring-1 ring-primary-accent" : "border-border"
       }`}
     >
@@ -37,10 +37,10 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
       <div className={`${hasFeatures ? 'md:flex md:items-start md:gap-10' : ''}`}>
         {/* Kolom kiri: harga + CTA */}
         <div className={hasFeatures ? 'md:w-1/2 lg:w-5/12' : ''}>
-          <h3 className="text-left font-display text-xl font-bold text-foreground sm:text-2xl">{tier.name}</h3>
+          <h3 className="text-left text-lg font-semibold text-foreground sm:text-xl">{tier.name}</h3>
 
           <div className="mt-4">
-            <span className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <span className="font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
               {rupiah(tier.price)}
             </span>
             {adminFee > 0 && (
@@ -53,7 +53,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
           <div className="mt-6">
             {tier.isAvailable === false ? (
               <button
-                className="block w-full cursor-not-allowed rounded-full bg-surface-sunken px-4 py-3 text-center text-base font-semibold text-muted-foreground sm:text-lg"
+                className="inline-flex min-h-11 cursor-not-allowed items-center rounded-full bg-surface-sunken px-5 text-center text-sm font-semibold text-muted-foreground"
                 disabled
               >
                 Tidak Tersedia
@@ -61,7 +61,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
             ) : (
               <Link
                 href={tier.url || "/daftar"}
-                className="block w-full rounded-full bg-primary px-4 py-3 text-center text-base font-semibold text-on-primary shadow-rest transition-all duration-200 hover:bg-primary-accent hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:text-lg"
+                className="inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-center text-sm font-semibold text-on-primary shadow-rest transition-all duration-200 hover:bg-primary-accent hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
               >
                 Daftar {tier.name}
               </Link>
@@ -71,7 +71,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
 
         {/* Kolom kanan: benefit — di ponsel muncul di bawah, di desktop di samping */}
         {hasFeatures && (
-          <ul className="mt-8 space-y-3 border-t-2 border-dashed border-border pt-6 md:mt-0 md:w-1/2 md:border-l-2 md:border-t-0 md:pl-8 md:pt-0 lg:w-7/12">
+          <ul className="mt-8 space-y-3 border-t border-border pt-6 md:mt-0 md:w-1/2 md:border-l md:border-t-0 md:pl-8 md:pt-0 lg:w-7/12">
             {tier.features.map((feature) => (
               <li key={feature} className="flex items-start">
                 <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-foreground" aria-hidden="true" />

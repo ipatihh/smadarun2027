@@ -148,13 +148,13 @@ interface DaftarFormProps {
 const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
 const fieldClass = (hasError: boolean) =>
-  `w-full p-3.5 bg-surface-sunken border rounded-field text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
+  `min-h-12 w-full rounded-field border bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
     hasError
       ? "border-danger focus:border-danger focus:ring-danger/20"
-      : "border-field-border focus:border-foreground focus:ring-primary/40"
+      : "border-field-border focus:border-focus focus:ring-focus/15"
   }`;
 
-const labelClass = "block text-sm font-semibold text-foreground mb-2";
+const labelClass = "mb-2 block text-xs font-semibold text-foreground";
 
 const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message }) =>
   message ? (
@@ -164,13 +164,13 @@ const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message })
   ) : null;
 
 const StepHeading: React.FC<{ step: number; title: string; hint?: string }> = ({ step, title, hint }) => (
-  <div className="flex items-start gap-3">
-    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary font-display text-sm font-bold text-on-primary">
-      {step}
+  <div className="flex items-start gap-4">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface-sunken text-xs font-semibold text-foreground">
+      {String(step).padStart(2, "0")}
     </span>
     <div>
-      <h2 className="font-display text-xl font-bold text-foreground leading-none">{title}</h2>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+      {hint && <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">{hint}</p>}
     </div>
   </div>
 );
@@ -670,7 +670,7 @@ export default function DaftarForm({
         </dt>
         <dd className="tabular-nums">{rupiah(totalAdminFee)}</dd>
       </div>
-      <div className="flex justify-between gap-4 border-t border-border pt-2.5 font-black text-base text-foreground">
+      <div className="flex justify-between gap-4 border-t border-border pt-4 text-base font-semibold text-foreground">
         <dt>Total Pembayaran</dt>
         <dd className="tabular-nums">{rupiah(totalAmount)}</dd>
       </div>
@@ -679,13 +679,13 @@ export default function DaftarForm({
 
   const labelStatus = status === "redirecting" ? "Mengalihkan ke pembayaran…" : "Memproses…";
 
-  const submitButton = (label = "Konfirmasi & Bayar", extraClass = "py-4") => (
+  const submitButton = (label = "Lanjut ke pembayaran", extraClass = "min-h-11 px-5") => (
     <button
       type="submit"
       form="formDaftar"
       disabled={loading || isFormClosed}
       aria-busy={loading}
-      className={`w-full bg-primary hover:bg-primary-accent text-on-primary font-bold text-base rounded-full shadow-rest hover:shadow-hover transition-all disabled:bg-surface-sunken disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center gap-3 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
+      className={`inline-flex items-center justify-center gap-3 whitespace-nowrap rounded-full bg-primary text-sm font-semibold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-muted-foreground disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
     >
       <span>{loading ? labelStatus : label}</span>
       {loading && (
@@ -698,20 +698,24 @@ export default function DaftarForm({
   // dengan overflow selain "visible" membuat kartu ringkasan sticky berhenti menempel
   // saat halaman digulir. Latar dekoratifnya sudah absolute inset-0, jadi tidak perlu diklip.
   return (
-    <div className="group/daftar relative min-h-screen px-5 pb-40 pt-28 lg:pb-20">
+    <div className="registration-atmosphere group/daftar relative min-h-screen px-5 pb-40 pt-28 lg:pb-24">
       <div
         aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-hero-background bg-[repeating-linear-gradient(115deg,#80808014_0px,#80808014_1.5px,transparent_1.5px,transparent_40px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_60%,transparent_100%)]"
+        className="registration-grid pointer-events-none absolute inset-0 -z-10"
       />
 
-      <div className="mx-auto w-full max-w-5xl">
-        <div className="text-center mb-8">
-          {/* h1 halaman ini (dulu tidak ada; langkah-langkah form langsung h3). */}
-          <h1 className="font-display text-3xl font-bold uppercase text-foreground">
-            SMADARUN <span className="accent-mark">2027</span>
-            <span className="sr-only"> — pendaftaran peserta</span>
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="mb-10 max-w-2xl">
+          <p className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-accent">
+            <span className="h-px w-8 bg-primary-accent" aria-hidden="true" />
+            SMADARUN 2027 / PENDAFTARAN
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Langkahmu dimulai di sini.
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">Portal pendaftaran resmi</p>
+          <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
+            Isi data pemesan dan peserta, lalu periksa ringkasan sebelum membayar.
+          </p>
         </div>
 
         {isFormClosed && (
@@ -728,13 +732,13 @@ export default function DaftarForm({
         {/* grid-cols-1 (= minmax(0,1fr)) wajib di ponsel: tanpa itu kolomnya "auto" dan ikut
             melebar mengikuti isi yang tidak bisa patah (teks truncate, opsi <select>), sehingga
             kartu form meluber 7px ke kanan dan semua lapisan di dalamnya tidak center. */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_20rem]">
           {/* KOLOM FORM */}
           <form
             id="formDaftar"
             onSubmit={handleSubmit}
             noValidate
-            className="rounded-card border border-border bg-card p-6 shadow-rest md:p-9"
+            className="rounded-panel border border-border bg-card p-5 shadow-rest sm:p-8 lg:p-10"
           >
             {/* min-w-0: bawaan browser fieldset adalah min-inline-size: min-content — sama seperti
                 kolom grid di atas, tanpa ini fieldset ikut melebar dan meluber dari kartu form. */}
@@ -815,7 +819,7 @@ export default function DaftarForm({
               </section>
 
               {/* LANGKAH 2 — PESERTA */}
-              <section className="space-y-5">
+              <section className="space-y-5 border-t border-border pt-9">
                 <StepHeading
                   step={2}
                   title="Data Peserta"
@@ -836,12 +840,12 @@ export default function DaftarForm({
                       key={raw.key}
                       id={`kartu-peserta-${index}`}
                       tabIndex={-1}
-                      className={`scroll-mt-28 rounded-field border bg-surface-sunken/60 p-5 transition-shadow duration-300 focus:outline-none ${
-                        kartuDisorot === raw.key ? "border-foreground ring-4 ring-primary/40" : "border-border"
+                      className={`scroll-mt-28 rounded-card border bg-surface-sunken/55 p-5 transition-shadow duration-300 focus:outline-none sm:p-6 ${
+                        kartuDisorot === raw.key ? "border-focus ring-4 ring-focus/15" : "border-border"
                       }`}
                     >
                       <div className="mb-4 flex items-center justify-between gap-3">
-                        <p className="font-display text-base font-bold text-foreground">
+                        <p className="text-sm font-semibold text-foreground">
                           Peserta {index + 1}
                           {identitasDariPemesan && (
                             <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-on-primary">
@@ -1174,7 +1178,7 @@ export default function DaftarForm({
                       type="button"
                       onClick={tambahPeserta}
                       disabled={!bolehTambahPeserta}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-border-strong px-5 py-3 text-sm font-bold text-foreground transition hover:border-primary-accent hover:text-primary-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border-strong bg-card px-5 text-sm font-semibold text-foreground transition hover:border-foreground-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     >
                       <FiPlus className="h-4 w-4" aria-hidden="true" />
                       Tambah Peserta
@@ -1189,7 +1193,7 @@ export default function DaftarForm({
               </section>
 
               {/* LANGKAH 3 — KONFIRMASI */}
-              <section className="space-y-5">
+              <section className="space-y-5 border-t border-border pt-9">
                 <StepHeading step={3} title="Konfirmasi & Bayar" hint="Periksa data peserta dan rincian biaya sebelum melanjutkan ke pembayaran." />
 
                 {KotakRingkasanError}
@@ -1277,7 +1281,7 @@ export default function DaftarForm({
 
           {/* KOLOM RINGKASAN — sticky di desktop */}
           <aside className="hidden lg:block">
-            <div className="sticky top-28 rounded-card border border-border bg-card p-6 shadow-rest">
+            <div className="sticky top-28 rounded-panel border border-border bg-card p-6 shadow-rest">
               <div className="mb-4 flex items-baseline justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground">Ringkasan pesanan</p>
                 {PENDAFTARAN_DIBUKA && (
@@ -1318,7 +1322,7 @@ export default function DaftarForm({
               <div className="text-xs text-muted-foreground">
                 Total · {pesertaList.length} tiket
               </div>
-              <div className="font-display text-xl font-bold leading-none text-foreground tabular-nums">
+              <div className="text-lg font-semibold leading-none tracking-tight text-foreground tabular-nums">
                 {rupiah(totalAmount)}
               </div>
               {ringkasanError && (
@@ -1328,7 +1332,7 @@ export default function DaftarForm({
               )}
             </div>
             <div className="ml-auto flex w-36 shrink-0 flex-col items-center gap-1.5 sm:w-44">
-              <div className="w-full">{submitButton("Bayar", "py-3")}</div>
+              <div className="w-full">{submitButton("Bayar", "min-h-11 w-full px-5")}</div>
               <div className="text-center text-[9px] leading-tight text-muted-foreground">
                 Powered by <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-foreground">PT KEMBAR INOVASI</a>
               </div>

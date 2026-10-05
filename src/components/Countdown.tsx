@@ -64,7 +64,7 @@ const Countdown: React.FC<Props> = ({ eventDate, centered = false }) => {
     <div className={`flex items-center gap-6 sm:gap-8 ${centered ? "justify-center" : ""}`}>
       {UNITS.map((u) => (
         <div key={u.key} className="text-center">
-          <div className="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-none text-primary tabular-nums">
+          <div className="font-display text-3xl sm:text-4xl md:text-5xl font-medium leading-none text-primary tabular-nums">
             {String(timeLeft[u.key]).padStart(2, "0")}
           </div>
           <div className="mt-2 text-sm text-on-secondary-muted">{u.label}</div>
