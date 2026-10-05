@@ -10,6 +10,7 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { tiketMarketing } from "@/data/tiket";
 import { LiveTicketType } from "@/lib/kembarinEvents";
+import { KolomNamaBib, lipatKetikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
 import {
   JenisIdentitas,
   kunciIdentitas,
@@ -104,6 +105,8 @@ const VALIDATOR_PESERTA: Record<PesertaField, (v: any, p: PesertaState) => strin
   },
   kategori: (v) => (v ? null : "Pilih kategori lomba."),
   size: (v) => (v ? null : "Pilih Ukuran jersey."),
+  // Bergantung pada kolom dari core — dinilai di validasiPeserta.
+  namaBib: () => null,
 };
 
 // Domisili teks bebas, dipakai saat dropdown wilayah dimatikan di kembarin-v2.
@@ -119,7 +122,7 @@ const validasiKotaBebas = (v: string) => {
 
 // Urutan ini menentukan field mana yang difokuskan lebih dulu saat submit gagal.
 const URUTAN_BUYER: BuyerField[] = ["nama", "email", "whatsapp"];
-const URUTAN_PESERTA: PesertaField[] = ["nama", "nik", "gender", "wilayah", "kategori", "size", "email", "whatsapp"];
+const URUTAN_PESERTA: PesertaField[] = ["nama", "namaBib", "nik", "gender", "wilayah", "kategori", "size", "email", "whatsapp"];
 
 interface DaftarFormProps {
   ticketTypes: LiveTicketType[];
@@ -135,6 +138,8 @@ interface DaftarFormProps {
   maxTicketsPerOrder: number;
   /** Dropdown wilayah resmi atau teks bebas (event_config.enable_wilayah_dropdown). */
   wilayahDropdown: boolean;
+  /** Kolom Nama BIB dari form_schema kembarin-v2; null = tidak dipasang panitia. */
+  namaBib: KolomNamaBib | null;
 }
 
 const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
@@ -182,6 +187,7 @@ const pesertaBaru = (key: string, kategoriDefault: string): PesertaState => ({
   wilayah: createEmptyWilayah(),
   kategori: kategoriDefault,
   size: "",
+  namaBib: "",
 });
 
 export default function DaftarForm({
@@ -192,6 +198,7 @@ export default function DaftarForm({
   multiTicketEnabled,
   maxTicketsPerOrder,
   wilayahDropdown,
+  namaBib,
 }: DaftarFormProps) {
   const WEBHOOK_URL = "/api/daftar";
   const imageSrc = "/images/pocari-1.jpg";
@@ -316,7 +323,11 @@ export default function DaftarForm({
   const validasiPeserta = (field: PesertaField, value: any, p: PesertaState) =>
     field === "wilayah" && !wilayahDropdown
       ? validasiKotaBebas((value as WilayahValue).display)
-      : VALIDATOR_PESERTA[field](value, p);
+      : field === "namaBib"
+        ? namaBib
+          ? validasiNamaBib(String(value ?? ""), namaBib)
+          : null
+        : VALIDATOR_PESERTA[field](value, p);
 
   const handlePesertaBlur = (key: string, field: PesertaField, value: any) => {
     const peserta = pesertaList.find((p) => p.key === key);
@@ -869,6 +880,35 @@ export default function DaftarForm({
                               </div>
                             </div>
                           </>
+                        )}
+
+                        {/* Nama BIB milik peserta sendiri, termasuk peserta yang memakai data pemesan. */}
+                        {namaBib && (
+                          <div>
+                            <label htmlFor={`peserta-${index}-namaBib`} className={labelClass}>
+                              {namaBib.label} <span className="font-medium normal-case tracking-normal text-muted-foreground">(opsional)</span>
+                            </label>
+                            <input
+                              id={`peserta-${index}-namaBib`}
+                              type="text"
+                              maxLength={namaBib.maxLength}
+                              autoComplete="off"
+                              value={p.namaBib}
+                              onChange={(e) => handlePesertaChange(raw.key, "namaBib", lipatKetikanNamaBib(e.target.value))}
+                              onBlur={(e) => handlePesertaBlur(raw.key, "namaBib", e.target.value)}
+                              placeholder="Kosongkan = pakai nama lengkap"
+                              aria-invalid={!!errs.namaBib}
+                              aria-describedby={errs.namaBib ? `peserta-${index}-namaBib-error` : `peserta-${index}-namaBib-hint`}
+                              className={fieldClass(!!errs.namaBib)}
+                            />
+                            {errs.namaBib ? (
+                              <FieldError id={`peserta-${index}-namaBib-error`} message={errs.namaBib} />
+                            ) : (
+                              <p id={`peserta-${index}-namaBib-hint`} className="mt-1.5 text-xs text-muted-foreground">
+                                Dicetak di BIB, maksimal {namaBib.maxLength} karakter. Tidak bisa diubah setelah mendaftar.
+                              </p>
+                            )}
+                          </div>
                         )}
 
                         <div>

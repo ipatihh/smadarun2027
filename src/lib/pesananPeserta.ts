@@ -5,6 +5,7 @@
 
 import type { JenisIdentitas } from "./identitas";
 import { rapikanNomorIdentitas } from "./identitas";
+import { rapikanNamaBib } from "./namaBib";
 
 export interface WilayahForm {
   provCode: string;
@@ -31,6 +32,8 @@ export interface PesertaForm {
   wilayah: WilayahForm;
   kategori: string;
   size: string;
+  /** Nama BIB; hanya dikirim bila event memasang kolomnya (lihat src/lib/namaBib.ts). */
+  namaBib: string;
 }
 
 /**
@@ -101,6 +104,7 @@ export interface PesertaPayload {
   kota: string;
   kategori: string;
   size: string;
+  namaBib: string;
 }
 
 /** Bentuk `participants[]` untuk api/daftar — satu objek per peserta, urutan sama dengan layar. */
@@ -127,6 +131,8 @@ export function bangunPesertaPayload(
       kota: p.wilayah.display.trim(),
       kategori: p.kategori,
       size: p.size,
+      // Milik peserta sendiri, bukan pemesan — tidak ikut dataPesertaEfektif.
+      namaBib: rapikanNamaBib(raw.namaBib ?? ""),
     };
   });
 }

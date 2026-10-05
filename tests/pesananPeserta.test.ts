@@ -27,6 +27,7 @@ function peserta(key: string, isi: Partial<PesertaForm> = {}): PesertaForm {
     wilayah: { provCode: "35", kotaCode: "3518", display: "KAB. NGANJUK", manual: false },
     kategori: "5 KM Reguler",
     size: "M",
+    namaBib: "",
     ...isi,
   };
 }

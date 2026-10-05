@@ -27,6 +27,13 @@ Dibangun EKSPLISIT di `api/daftar` dari field yang sudah divalidasi (jangan pern
 
 Harga/subtotal dari browser hanya dicocokkan sebagai deteksi manipulasi; core menghitung ulang.
 
+**Nama BIB** (sejak 5 Oktober 2026) dibaca dari `form_schema` di endpoint event publik core:
+field bertipe `name_on_bib` beserta `maxLength`-nya (`src/lib/namaBib.ts`). Ada field itu =
+kolom tampil per peserta (opsional) dan nilainya dikirim di `customFields[<nama field core>]`
+dalam huruf besar; tidak ada = kolom tidak tampil dan isian browser diabaikan. Core menegakkan
+aturan yang sama (maks 15, A–Z/angka/spasi/`. ' -`) dan menolak dengan
+`REGISTRATION_VALIDATION_FAILED`. Kosong = BIB dicetak dengan nama lengkap.
+
 ## 3. `sessionId` — kunci idempotensi
 
 - UUID v4 dibuat browser, diikat ke **sidik jari isi pesanan** (`pilihSesiPengiriman` di

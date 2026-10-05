@@ -6,6 +6,10 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Fakta arsitektur yang wajib dipahami sebelum mengubah apa pun
 
+- **Kolom Nama BIB dipasang panitia di kembarin-v2, bukan di sini.** `getLiveEventData()`
+  membaca field `form_schema` bertipe `name_on_bib` (beserta `maxLength`) dan form hanya
+  menampilkannya bila field itu ada (`src/lib/namaBib.ts`). Jangan hardcode kolom atau batasnya.
+
 - **kembarin-v2 adalah sumber kebenaran mutlak**, project ini bukan. Harga tiket, kategori,
   status buka/tutup pendaftaran, biaya layanan/admin (`event_config.admin_fee_amount`),
   DAN aturan pembelian kolektif (`multi_ticket_enabled`, `max_tickets_per_order`) SELALU

@@ -32,6 +32,7 @@ import {
   type PetaHitungan,
 } from "@/lib/proxyCore";
 import { VERSI_PERSETUJUAN_DIKENAL, VERSI_PERSETUJUAN_TANPA_LABEL } from "@/lib/persetujuan";
+import { rapikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
 
 // ─── Batas & proteksi per instance ───────────────────────────────────────────
 // Semua Map di bawah hidup di memori SATU instance serverless (Vercel bisa menjalankan
@@ -123,6 +124,7 @@ interface PesertaTervalidasi {
   size: string;
   harga: number;
   ticketTypeId: number | null;
+  namaBib: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -354,6 +356,16 @@ export async function POST(req: NextRequest) {
         return gagal(`Format nomor WhatsApp peserta ${nomor} tidak valid. Masukkan 8-15 digit angka.`);
       }
 
+      // Nama BIB hanya dibaca bila kolomnya dipasang panitia di kembarin-v2; selain itu
+      // isian dari browser diabaikan. Core menegakkan aturan yang sama.
+      let namaBib = "";
+      if (live.namaBib) {
+        const mentah = typeof p.namaBib === "string" ? p.namaBib.slice(0, 200) : "";
+        const pesanNamaBib = validasiNamaBib(mentah, live.namaBib);
+        if (pesanNamaBib) return gagal(`Peserta ${nomor}: ${pesanNamaBib}`);
+        namaBib = rapikanNamaBib(mentah);
+      }
+
       pesertaTervalidasi.push({
         nama,
         email: emailPeserta,
@@ -368,6 +380,7 @@ export async function POST(req: NextRequest) {
         size,
         harga: tiket.price,
         ticketTypeId: tiket.id,
+        namaBib,
       });
     }
 
@@ -442,6 +455,10 @@ export async function POST(req: NextRequest) {
         email: p.email ?? buyerEmail,
         ticketTypeId: p.ticketTypeId ?? undefined,
         customFields: {
+          // Kunci = nama field Nama BIB di form_schema core, bukan nama karangan situs ini.
+          // Ditaruh PALING ATAS supaya nama field yang kebetulan bentrok (mis. "kota")
+          // tidak pernah menimpa data inti di bawahnya.
+          ...(live.namaBib && p.namaBib ? { [live.namaBib.fieldName]: p.namaBib } : {}),
           nik: p.nik,
           // Kolom `nik` core menampung NIK maupun nomor kartu pelajar; label ini yang
           // memberi tahu panitia mana yang dipakai peserta. Namanya sengaja tidak cocok

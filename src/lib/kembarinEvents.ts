@@ -4,6 +4,8 @@
 // kembarin-v2 (harga, kategori, status buka/tutup) otomatis berlaku di sini
 // tanpa perlu redeploy atau ubah kode di project ini.
 
+import { bacaKolomNamaBib, type KolomNamaBib } from "./namaBib";
+
 const EVENT_CODE = "smadarun";
 
 export interface LiveTicketType {
@@ -78,6 +80,10 @@ export interface LiveEventData {
   // Diisi hanya kalau tanggalnya masih di masa depan — dipakai UI untuk memberi tahu
   // pengunjung KAPAN bisa daftar, bukan sekadar "belum dibuka".
   opensAt: string | null;
+  // Kolom Nama BIB, dibaca dari form_schema kembarin-v2 (field bertipe `name_on_bib`).
+  // null = panitia tidak memasang kolom itu; form tidak menampilkannya dan api/daftar
+  // tidak mengirimnya. Lihat src/lib/namaBib.ts.
+  namaBib: KolomNamaBib | null;
 }
 
 // Batas tunggu fetch data live. Dipilih 8 detik: cukup longgar untuk jaringan lambat,
@@ -99,6 +105,7 @@ const CLOSED: LiveEventData = {
   maxTicketsPerOrder: 1,
   wilayahDropdown: false,
   opensAt: null,
+  namaBib: null,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -230,6 +237,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       wilayahDropdown,
       timeline,
       opensAt,
+      namaBib: bacaKolomNamaBib(event.form_schema),
     };
   } catch (err) {
     const alasan = err instanceof Error && err.name === "TimeoutError"

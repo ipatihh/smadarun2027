@@ -364,3 +364,41 @@ describe("label versi persetujuan", () => {
     expect(new Set(VERSI_PERSETUJUAN_DIKENAL).size).toBe(VERSI_PERSETUJUAN_DIKENAL.length);
   });
 });
+
+describe("Nama BIB dari form_schema core", () => {
+  const KOLOM = { fieldName: "nama_bib", label: "Name On BIB", maxLength: 15 };
+  const denganNamaBib = (namaBib: unknown) =>
+    payloadValid({
+      participants: [{ ...payloadValid().participants[0], namaBib }],
+    });
+
+  it("kolom dipasang: dirapikan huruf besar dan dikirim dengan kunci field core", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, namaBib: KOLOM });
+    const res = await POST(permintaan(denganNamaBib("  budi  ")));
+    expect(res.status).toBe(200);
+    const dikirim = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(dikirim.participants[0].customFields.nama_bib).toBe("BUDI");
+  });
+
+  it("kolom dipasang tapi dikosongkan: tidak dikirim (BIB memakai nama lengkap)", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, namaBib: KOLOM });
+    await POST(permintaan(denganNamaBib("")));
+    const dikirim = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(dikirim.participants[0].customFields).not.toHaveProperty("nama_bib");
+  });
+
+  it("melebihi batas atau berisi emoji ditolak sebelum core dihubungi", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, namaBib: KOLOM });
+    expect((await POST(permintaan(denganNamaBib("A".repeat(16))))).status).toBe(400);
+    expect((await POST(permintaan(denganNamaBib("BUDI 🏃")))).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("kolom tidak dipasang panitia: isian dari browser diabaikan", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, namaBib: null });
+    const res = await POST(permintaan(denganNamaBib("BUDI")));
+    expect(res.status).toBe(200);
+    const dikirim = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(JSON.stringify(dikirim.participants[0].customFields)).not.toContain("BUDI");
+  });
+});

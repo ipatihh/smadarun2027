@@ -5,6 +5,23 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 5 Oktober 2026 — Kolom Nama BIB dari form_schema core
+
+Prasyarat: kembarin-v2 `v2` commit `2c2f418` (endpoint event publik mengirim `form_schema`;
+dicek production menjawab key `form_schema`).
+
+- Kolom "Name On BIB" per peserta tampil hanya bila panitia memasang field bertipe
+  `name_on_bib` di form builder kembarin-v2; label dan batas (`maxLength`, 15) ikut dari core.
+- Opsional (kosong = BIB pakai nama lengkap), huruf besar otomatis, emoji/huruf hias ditolak,
+  tidak bisa diubah peserta setelah daftar (koreksi lewat panitia) — keputusan pemilik.
+- `api/daftar` memvalidasi ulang dan mengirimnya di `customFields[<nama field core>]`.
+- Mock core memasang kolom ini secara bawaan; `GET /__namabib?on=0` melepasnya.
+
+Diuji: 84 uji vitest; browser (build production + mock core): kolom tampil, huruf besar,
+emoji ditolak, payload membawa `nama_bib`, kolom hilang saat field dilepas.
+
+---
+
 ## 2 Oktober 2026 — Penyelarasan ke kontrak partner core
 
 Branch `claude/kontrak-partner-smadarun`, di-merge ke `main`. Prasyarat: kontrak partner core

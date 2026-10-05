@@ -12,6 +12,7 @@
 //   GET /__status?kode=X&st=<status>     ubah status pesanan (pending|paid|expired|cancelled)
 //   GET /__status?fitur=belum-aktif      endpoint status menjawab 503 ORDER_STATUS_UNAVAILABLE
 //   GET /__log                           ringkasan permintaan (tanpa nilai rahasia)
+//   GET /__namabib?on=0|1                pasang/lepas kolom Nama BIB di form_schema (bawaan: pasang)
 //
 // PENGAMAN: kategori tiket mock sengaja bernama "UJI LOKAL 5K" (id 987654, Rp181.000) — tidak
 // ada di core production. Kalau server uji ternyata salah alamat ke production, data live-nya
@@ -40,6 +41,9 @@ const MODE = {
 };
 
 let mode = "sukses";
+let namaBibAktif = true;
+// Cermin field form_schema core bertipe `name_on_bib` (kembarin-v2 domains/shared/nameOnBib.ts).
+const KOLOM_NAMA_BIB = { name: "nama_bib", type: "name_on_bib", label: "Name On BIB", required: false, maxLength: 15 };
 let fiturStatus = "aktif";
 let nomor = 0;
 const log = [];
@@ -112,7 +116,7 @@ async function daftar(req, res) {
     sessionId,
     adaKunciTrustedProxy: Boolean(req.headers["x-trusted-proxy-key"]),
     kunciTopLevel: Object.keys(data),
-    peserta: (data.participants || []).map((p) => ({ nama: p.nama, nik: p.customFields?.nik, size: p.customFields?.size })),
+    peserta: (data.participants || []).map((p) => ({ nama: p.nama, nik: p.customFields?.nik, size: p.customFields?.size, namaBib: p.customFields?.nama_bib })),
   });
   if (sessionId && pesananPerSesi.has(sessionId) && mode !== "timeout-lalu-ada") {
     const lama = pesananPerSesi.get(sessionId);
@@ -209,8 +213,14 @@ http
       if (url.searchParams.get("fitur")) fiturStatus = url.searchParams.get("fitur");
       return json(res, 200, { fiturStatus, pesanan: [...pesananPerKode].map(([k, v]) => [k, v.status]) });
     }
-    if (url.pathname === "/__log") return json(res, 200, { mode, fiturStatus, log, jumlahPesanan: pesananPerKode.size });
-    if (req.method === "GET" && url.pathname === "/api/public/events/smadarun") return json(res, 200, LIVE);
+    if (url.pathname === "/__namabib") {
+      namaBibAktif = url.searchParams.get("on") !== "0";
+      return json(res, 200, { namaBibAktif });
+    }
+    if (url.pathname === "/__log") return json(res, 200, { mode, fiturStatus, namaBibAktif, log, jumlahPesanan: pesananPerKode.size });
+    if (req.method === "GET" && url.pathname === "/api/public/events/smadarun") {
+      return json(res, 200, { ...LIVE, data: { ...LIVE.data, form_schema: namaBibAktif ? [KOLOM_NAMA_BIB] : [] } });
+    }
     if (req.method === "POST" && url.pathname === "/api/participants/register") return void daftar(req, res);
     if (req.method === "POST" && url.pathname === "/api/public/orders/status") return void statusPesanan(req, res);
     json(res, 404, { success: false });
