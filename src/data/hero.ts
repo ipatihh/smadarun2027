@@ -7,6 +7,6 @@ export const heroDetails = {
     subheading: 'Satu garis start, banyak cerita baru.',
     // Foto start SMADARUN dari panitia. Crop di komponen menghindari teks tahun
     // dan tanggal yang sudah tertanam di tepi foto asli.
-    centerImageSrc: '/images/hero1.JPG',
+    centerImageSrc: '/images/hero-start.jpg',
     centerImageAlt: 'Peserta SMADARUN bersiap di garis start',
 };

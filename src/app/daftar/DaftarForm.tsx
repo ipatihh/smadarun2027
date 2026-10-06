@@ -1411,8 +1411,8 @@ export default function DaftarForm({
             <Image
               src={imageSrc}
               alt="Tabel Panduan Ukuran Jersey diperbesar"
-              width={1994}
-              height={1387}
+              width={1200}
+              height={1600}
               className="max-h-[80vh] w-full rounded-card object-contain shadow-hover"
             />
           </DialogPanel>

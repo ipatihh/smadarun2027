@@ -7,8 +7,9 @@ import { logoSekolah } from "@/data/logo";
 
 /**
  * Hero editorial: satu judul, foto start selebar layar, satu aksi.
- * Foto start asli dipotong secara visual agar tulisan tahun sebelumnya pada
- * tepi aset tidak berbenturan dengan identitas acara 2027.
+ * hero1.JPG sudah dipotong (scripts/optimasi-foto.mjs) ke area yang tampil, sehingga teks tahun
+ * sebelumnya di tepi aset asli ikut terbuang dan tidak berbenturan dengan identitas 2027.
+ * Tidak ada zoom CSS: zoom meregangkan foto dan memaksa browser mengunduh berkas jauh lebih besar.
  */
 const Hero: React.FC = () => (
   <section id="beranda" className="hero-atmosphere relative isolate overflow-hidden pt-28 sm:pt-36">
@@ -45,12 +46,10 @@ const Hero: React.FC = () => (
           src={heroDetails.centerImageSrc}
           alt={heroDetails.centerImageAlt}
           fill
-          // Foto diperbesar ±1.9x lewat scale (crop untuk menyembunyikan teks 2026), jadi sumber harus
-          // ±1.9x lebar layar; dengan "100vw" browser memilih berkas terlalu kecil lalu diregangkan (buram).
-          sizes="(min-width: 640px) 185vw, 190vw"
+          sizes="100vw"
           priority
           unoptimized={heroDetails.centerImageSrc.toLowerCase().endsWith(".svg")}
-          className="photo-warm scale-[1.9] object-cover object-[58%_center] sm:scale-[1.85] sm:object-[center_80%]"
+          className="photo-warm object-cover object-[64%_center] sm:object-bottom"
         />
       )}
       <div className="hero-photo-shade absolute inset-0" aria-hidden="true" />

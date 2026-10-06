@@ -46,3 +46,8 @@ Teks judul & deskripsi pratinjau berasal dari `src/data/siteDetails.ts` (`metada
 ## Menguji lokal
 `npm run dev`, lalu `curl -s localhost:3000/ | grep -E 'og:image|icon'` — tag harus muncul setelah file
 ditaruh (restart dev server bila tidak terbaca). Tanpa file OG, tidak ada tag `og:image` sama sekali.
+
+## Foto ringan
+Foto mentah dari kamera/panitia (MB) wajib dikecilkan sebelum masuk `public/images`: hero ≤ 2880 px lebar,
+galeri ≤ 2400 px, JPG q≈80. `node scripts/optimasi-foto.mjs <folder-asli>` melakukannya (edit daftar tugas di
+dalamnya untuk foto baru). Pakai NAMA BERKAS BARU untuk foto pengganti (cache gambar dikunci oleh URL).

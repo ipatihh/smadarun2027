@@ -107,6 +107,25 @@ Terbuka:
 
 ---
 
+## 6 Oktober 2026 — Optimasi foto (semua foto ringan)
+
+- Skrip `scripts/optimasi-foto.mjs <folder-asli>` (memakai `sharp`) mengecilkan foto dari berkas ASLI dan
+  mencetak dimensi hasil. Salinan asli tetap di riwayat git (commit sebelumnya) — jalankan ulang dari sana
+  bila perlu. Sebelumnya total `public/images` ±20 MB; lightbox galeri memuat berkas mentah 1–3 MB.
+- **Hero:** `hero1.JPG` (6000×4000, 1,9 MB) → `hero-start.jpg` 2880×1884 (±500 KB), DIPOTONG ke area yang tampil
+  (x 23–77%, y 25–78%). Teks "SMADA RUN 2026" (tengah-atas) dan "18 JANUARI 2026" (tengah-bawah) ada di
+  TENGAH foto asli, bukan di tepi — potongan ini membuang keduanya. Zoom CSS `scale-[1.9]` dihapus
+  (`object-[64%_center] sm:object-bottom`); `sizes="100vw"` kini benar karena foto tidak diregangkan.
+- **Galeri:** `hero3–7.JPG` (1,1–3 MB) → `galeri-{podium,finis,juara,peserta,start}.jpg` lebar 2400 (±0,3–0,6 MB);
+  `width/height` di `src/data/gallery.ts` = dimensi berkas baru (rasio sama, jadi grid `fr` tak berubah).
+- Lain-lain: `pocari-1.jpg` (panduan jersey) 5,9 MB → 234 KB (dimensi di `DaftarForm` dikoreksi 1200×1600),
+  avatar testimoni 98 KB → 9 KB, logo sponsor 145 KB → ±10 KB.
+- Nama berkas BARU sengaja dipakai (bukan menimpa): cache optimizer Next/Vercel dikunci oleh URL, jadi nama
+  yang sama bisa menyajikan foto lama. Jangan mengganti isi berkas tanpa mengganti namanya.
+- Belum dihapus (tidak dipakai kode): `njr-1.png`, `njr-2*.png`, `kembarin2/3.png` di `public/images`.
+
+---
+
 ## 6 Oktober 2026 — Hero: celah di bawah foto & foto buram
 
 - **Celah krem di bawah foto hero** bukan karena foto kecil: section Hero punya `pb-16/pb-24`, sedangkan
@@ -115,7 +134,7 @@ Terbuka:
 - **Foto diregangkan (buram):** foto di-zoom `scale-[1.9]/1.85` agar teks "2026" terpotong, tetapi `sizes="100vw"`
   membuat browser memilih berkas selebar layar lalu diregangkan 1,85×. Kini `sizes="(min-width: 640px) 185vw, 190vw"`
   → rasio tampil/berkas 1,00. Berkas asli 6000×4000 (cukup). Harga: layar 1920px memuat varian 3840w (±0,9 MB).
-  Penghematan lanjutan (belum dikerjakan): pra-crop `hero1.JPG` ke area yang terlihat lalu hapus `scale`.
+  (Diselesaikan di entri "Optimasi foto" di atasnya: foto kini pra-crop dan zoom CSS dihapus.)
 
 ---
 

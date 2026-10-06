@@ -4,7 +4,7 @@ import { IGalleryPhoto } from "@/types";
 // GALERI "MOMEN TAHUN LALU" — foto dokumentasi asli SMADARUN 2026.
 // ============================================================================
 //
-// Ukuran adalah dimensi file asli; digunakan untuk menjaga proporsi gambar di
+// Ukuran adalah dimensi file di public/images (hasil scripts/optimasi-foto.mjs, lebar 2400); digunakan untuk menjaga proporsi gambar di
 // galeri dan lightbox. Foto panggung membuka galeri; foto garis start
 // menutupnya selebar area konten.
 //
@@ -17,38 +17,38 @@ export const galleryIntro = {
 
 export const galleryPhotos: IGalleryPhoto[] = [
     {
-        src: "/images/hero4.JPG",
+        src: "/images/galeri-podium.jpg",
         caption: "Podium para pemenang",
         alt: "Para pemenang SMADARUN berfoto bersama di panggung",
-        width: 5439,
-        height: 2166,
+        width: 2400,
+        height: 956,
     },
     {
-        src: "/images/hero5.JPG",
+        src: "/images/galeri-finis.jpg",
         caption: "Menuju garis finis",
         alt: "Pelari mendekati garis finis di lintasan kota",
-        width: 3021,
-        height: 2004,
+        width: 2400,
+        height: 1592,
     },
     {
-        src: "/images/hero3.JPG",
+        src: "/images/galeri-juara.jpg",
         caption: "Juara putri",
         alt: "Juara putri SMADARUN menerima penghargaan",
-        width: 2934,
-        height: 2185,
+        width: 2400,
+        height: 1787,
     },
     {
-        src: "/images/hero7.JPG",
+        src: "/images/galeri-peserta.jpg",
         caption: "Sebelum lomba",
         alt: "Peserta dan pendamping berfoto bersama sebelum lomba",
-        width: 3180,
-        height: 2199,
+        width: 2400,
+        height: 1660,
     },
     {
-        src: "/images/hero6.JPG",
+        src: "/images/galeri-start.jpg",
         caption: "Di balik pita start",
         alt: "Peserta bersiap di belakang pita garis start",
-        width: 4215,
-        height: 2201,
+        width: 2400,
+        height: 1253,
     },
 ];

@@ -234,10 +234,10 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   `public/images/sponsors/`, ilustrasi cadangan (`public/images/hero-illustration.svg`),
   dan gambar panduan ukuran jersey. Jangan menganggap konten contoh sebagai data nyata;
   sebelum go-live, konten itu perlu diganti aset/teks asli panitia.
-- Foto hero `public/images/hero1.JPG` adalah dokumentasi start asli dari panitia. Aset
-  mengandung teks "2026" dan tanggal pada tepinya; crop responsif di `Hero.tsx` sengaja
-  menyembunyikan keduanya agar tidak berbenturan dengan identitas 2027.
-- Foto galeri `public/images/hero3.JPG` sampai `hero7.JPG` adalah dokumentasi asli dari
+- Foto hero `public/images/hero-start.jpg` adalah dokumentasi start asli dari panitia. Aset
+  mengandung teks "2026" dan tanggal pada tepinya; potongan foto (`scripts/optimasi-foto.mjs`) sengaja
+  membuang keduanya agar tidak berbenturan dengan identitas 2027.
+- Foto galeri `public/images/galeri-*.jpg` (podium, finis, juara, peserta, start) adalah dokumentasi asli dari
   panitia. `src/data/gallery.ts` mencatat dimensi asli untuk menjaga proporsi tanpa crop;
   klik membuka lightbox untuk melihat foto berukuran besar dan memperbesar lagi.
 - `.env` di repo ini **tidak ter-track git** (sengaja dikeluarkan, lihat `.gitignore`).
