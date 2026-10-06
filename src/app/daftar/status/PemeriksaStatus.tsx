@@ -18,6 +18,7 @@ import {
   urlPaymentReturn,
 } from "@/lib/statusPesanan";
 import { siteDetails } from "@/data/siteDetails";
+import { KerangkaRingkasan } from "@/components/Kerangka";
 
 // localStorage dibaca lewat useSyncExternalStore: render server & hidrasi memakai null
 // (HTML statis tetap sama), lalu browser memakai nilai sebenarnya tanpa setState di effect.
@@ -72,7 +73,7 @@ function formatWib(iso: string): string {
 }
 
 const tombolUtama =
-  "inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-on-primary shadow-rest transition hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card";
+  "inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-on-primary transition hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card";
 const tautanKedua =
   "text-sm font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded";
 
@@ -142,13 +143,8 @@ export default function PemeriksaStatus({
   // Baru kembali dari gateway: sampai hasil pertama tiba, cukup kartu memeriksa — tanpa
   // pengantar & panduan yang berkedip sebelum ringkasan (sama dengan halaman kembar.in).
   if (kodeKembali && !dilupakan && (!diKlien || (pesanan?.statusToken && hasil === null))) {
-    return (
-      <section aria-live="polite" className="flex flex-col items-center py-10 text-center" role="status">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary-accent" aria-hidden="true" />
-        <p className="mt-5 font-semibold text-foreground">Memeriksa pembayaran…</p>
-        <p className="mt-1 font-mono text-xs text-muted-foreground">{kodeKembali}</p>
-      </section>
-    );
+    // Kerangka berbentuk ringkasan pembayaran: judul & kode nyata, sisanya menyusul tanpa melompat.
+    return <KerangkaRingkasan judul="Memeriksa pembayaran…" kode={kodeKembali} />;
   }
 
   if (!pesanan) {

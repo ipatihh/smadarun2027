@@ -55,21 +55,15 @@ export default async function StatusPendaftaranPage({
 }) {
   const kodeKembali = kodeDariNilai((await searchParams).order);
   return (
-    <div className="relative min-h-screen px-5 pb-20 pt-28">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-hero-background bg-[repeating-linear-gradient(115deg,#80808014_0px,#80808014_1.5px,transparent_1.5px,transparent_40px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_60%,transparent_100%)]"
-      />
+    <div className="registration-atmosphere relative min-h-screen px-5 pb-20 pt-28">
+      <div className="registration-grid pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
 
       <div className="mx-auto w-full max-w-2xl">
-        <div className="text-center">
-          <p className="font-display text-3xl font-semibold uppercase tracking-[0.02em] text-foreground">
-            SMADARUN <span className="accent-mark">2027</span>
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">Status pendaftaran</p>
-        </div>
+        <p className="mb-8 text-center text-xs font-semibold uppercase tracking-[0.16em] text-foreground-accent sm:text-[13px]">
+          SMADARUN 2027 / Status pendaftaran
+        </p>
 
-        <div className="mt-8 rounded-card border border-border bg-card p-6  md:p-9">
+        <div className="rounded-card border border-border bg-card p-6 md:p-9">
           {/* Pesanan yang sudah lunas menggantikan pengantar dan panduan dengan ringkasan
               pembayaran — bentuknya sama dengan halaman payment-return kembar.in. */}
           <PemeriksaStatus
@@ -130,13 +124,13 @@ export default async function StatusPendaftaranPage({
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/"
-              className="w-full rounded-full bg-primary px-6 py-3.5 text-center text-sm font-bold text-on-primary transition-all hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              className="w-full rounded-full bg-primary px-6 py-3.5 text-center text-sm font-semibold text-on-primary transition-all hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
             >
               Kembali ke beranda
             </Link>
             <Link
               href="/daftar"
-              className="w-full rounded-full border border-border-strong px-6 py-3.5 text-center text-sm font-bold text-foreground transition-colors hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              className="w-full rounded-full border border-border-strong px-6 py-3.5 text-center text-sm font-semibold text-foreground transition-colors hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
             >
               Daftarkan peserta lain
             </Link>

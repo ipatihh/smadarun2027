@@ -160,6 +160,9 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 - **Mobile `/daftar`**: isian form harus ≥16px di ponsel (kalau tidak, iOS zoom saat fokus); bar bayar
   ponsel = total kiri + tombol "Bayar" pendek rata kanan (jangan dibuat selebar penuh/tengah); tombol
   bayar harus tetap `type="button"` sebelum hidrasi (`siap`) agar tidak ada submit GET berisi PII.
+- **Skeleton (`loading.tsx`) harus meniru tata letak halamannya**: beranda, `/daftar`, dan `/daftar/status`
+  masing-masing punya sendiri (potongan bersama di `components/Kerangka.tsx`). Mengubah hero/form/halaman
+  status tanpa memperbarui skeletonnya membuat layar melompat saat konten asli muncul.
 - **Favicon & OG image**: jangan tulis `images` di `openGraph`/`twitter` pada `layout.tsx` — Next
   memasangnya otomatis dari berkas di `src/app/` (lihat `docs/PANDUAN_ASET.md`). Referensi ke file
   yang tidak ada membuat pratinjau tautan rusak tanpa error.

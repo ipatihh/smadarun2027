@@ -107,6 +107,26 @@ Terbuka:
 
 ---
 
+## 6 Oktober 2026 — Skeleton loading diselaraskan dengan tema Warm Editorial
+
+- `src/app/loading.tsx` (beranda) masih meniru hero lama (teks tengah + kartu tiket). Kini meniru hero
+  sekarang: kicker → judul besar + garis tipis → foto selebar layar → panel hari lomba menumpuk di tepi foto
+  → pembuka Fasilitas. Ukuran/jarak harus tetap sama dengan `Hero.tsx` dan `EventInfo.tsx`.
+- `src/app/daftar/loading.tsx`: tambah latar + grid halus, kepala lengkap (label, judul, pengantar, caption),
+  tiga tahap formulir, dan bar bayar ponsel (total kiri, tombol pendek kanan) agar tidak ada elemen yang muncul tiba-tiba.
+- **Halaman status/pembayaran:** rute `/daftar/status` tidak punya `loading.tsx` sendiri, jadi memakai skeleton
+  FORMULIR milik `/daftar` — bentuknya salah. Kini ada `src/app/daftar/status/loading.tsx` berbentuk ringkasan
+  pembayaran. Kartu "Memeriksa pembayaran…" (kembali dari gateway) juga memakai kerangka yang sama
+  (`KerangkaRingkasan`, judul & kode nyata) sehingga saat berubah menjadi "Pembayaran terverifikasi" tidak melompat.
+- Halaman status diseragamkan: latar `registration-atmosphere` + grid (sebelumnya gradien dengan warna hex mentah,
+  melanggar aturan token), label ala `/daftar`, tombol `font-semibold` tanpa bayangan.
+- Potongan bersama di `src/components/Kerangka.tsx` (`Baris`, `Blok`, `KerangkaRingkasan`); warna lewat token,
+  animasi `animate-pulse` mati pada reduced motion. Setiap kali tata letak halaman berubah, perbarui skeletonnya.
+- Diuji dengan menunda render server sementara (dikembalikan): beranda, `/daftar`, `/daftar/status?order=`.
+  Keadaan "pembayaran lunas" sungguhan belum diuji (butuh token & balasan core).
+
+---
+
 ## 6 Oktober 2026 — Optimasi foto (semua foto ringan)
 
 - Skrip `scripts/optimasi-foto.mjs <folder-asli>` (memakai `sharp`) mengecilkan foto dari berkas ASLI dan
