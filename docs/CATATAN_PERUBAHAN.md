@@ -5,6 +5,28 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 6 Oktober 2026 — Halaman sukses disamakan dengan kembar.in
+
+Permintaan pemilik: notifikasi sukses sesederhana halaman `payment-return` kembar.in, beserta
+ringkasan pembayarannya.
+
+- Pesanan lunas kini menggantikan pengantar dan panduan langkah dengan ringkasan: ikon centang,
+  "Pembayaran terverifikasi", "N tiket telah diamankan. Konfirmasi dan e-ticket dikirim ke email
+  pemesan.", lalu baris tipis Event / Kode pesanan / Total / Metode, dan catatan email + tautan
+  Portal Peserta kembar.in (`/me/event/smadarun`). Komponen `RingkasanLunas` di `PemeriksaStatus.tsx`;
+  pengantar & panduan dikirim `page.tsx` sebagai prop supaya bisa disembunyikan saat lunas.
+- Total & metode datang dari core: `POST /api/public/orders/status` kini mengirim `totalAmount` dan
+  `paymentMethod` (core commit `6cfca51`). Allowlist di `bersihkanStatus`: total angka ≥ 0, metode
+  teks pendek `[A-Za-z0-9 ./-]`. Yang tidak dikirim core tidak ditampilkan (core lama = tanpa baris
+  Total/Metode, bukan angka karangan).
+- Beli lagi di tab yang sama: pesanan baru menggantikan pesanan terakhir di `sessionStorage`, jadi
+  halaman sukses selalu milik pesanan yang baru dibayar.
+
+Diuji: 97 vitest; browser (build production + mock core): pesanan 2 tiket lunas → ringkasan
+Rp 372.000 / VA BCA, desktop dan ponsel 375px tanpa geser samping.
+
+---
+
 ## 6 Oktober 2026 — Pembeli kembali ke smadarun.id setelah bayar
 
 Sebelumnya gateway selalu memulangkan pembeli ke `kembar.in/events/smadarun/payment-return`.

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { FiCheckCircle, FiClock, FiRefreshCw, FiXCircle, FiAlertTriangle } from "react-icons/fi";
+import { FiCheckCircle, FiClock, FiRefreshCw, FiXCircle, FiAlertTriangle, FiMail } from "react-icons/fi";
 import {
   bacaPesananTerakhir,
   HasilStatus,
@@ -14,8 +14,10 @@ import {
   PesananTersimpan,
   pilihPesananTampil,
   tafsirkanResponsStatus,
+  StatusTerverifikasi,
   urlPaymentReturn,
 } from "@/lib/statusPesanan";
+import { siteDetails } from "@/data/siteDetails";
 
 // sessionStorage dibaca lewat useSyncExternalStore: render server & hidrasi memakai null
 // (HTML statis tetap sama), lalu browser memakai nilai sebenarnya tanpa setState di effect.
@@ -76,7 +78,7 @@ const tautanKedua =
  * bisa dibuka cukup dengan kode. Pemeriksaan otomatis berulang hanya sebentar setelah
  * kembali dari gateway (perluPeriksaUlang); selebihnya "Periksa lagi" ditekan pengguna.
  */
-export default function PemeriksaStatus() {
+export default function PemeriksaStatus({ pengantar, panduan }: { pengantar: React.ReactNode; panduan: React.ReactNode }) {
   const mentah = useSyncExternalStore(berlangganan, bacaMentah, () => null);
   const kodeKembali = useSyncExternalStore(tanpaLangganan, bacaKodeKembali, () => null);
   const [dilupakan, setDilupakan] = useState(false);
@@ -122,7 +124,19 @@ export default function PemeriksaStatus() {
     setHasil(await ambilStatus(p));
   };
 
-  if (!pesanan) return null;
+  if (!pesanan) {
+    return (
+      <>
+        {pengantar}
+        {panduan}
+      </>
+    );
+  }
+
+  // Lunas: ringkasan pembayaran menggantikan pengantar & panduan (sama dengan kembar.in).
+  if (hasil !== null && hasil !== "memeriksa" && hasil.jenis === "ada" && hasil.order.status === "paid") {
+    return <RingkasanLunas kode={pesanan.kode} order={hasil.order} />;
+  }
 
   const tautanKembarIn = (
     <a href={urlPaymentReturn(pesanan.kode)} target="_blank" rel="noopener noreferrer" className={tautanKedua}>
@@ -149,13 +163,7 @@ export default function PemeriksaStatus() {
     );
   } else if (hasil.jenis === "ada") {
     const { order } = hasil;
-    if (order.status === "paid") {
-      isi = (
-        <Judul ikon={<FiCheckCircle />} warna="success" judul="Pembayaran diterima">
-          Bukti pendaftaran dikirim ke email pemesan. Periksa juga folder Spam atau Promosi.
-        </Judul>
-      );
-    } else if (order.status === "pending") {
+    if (order.status === "pending") {
       const batas = order.paymentExpiresAt ? ` sebelum ${formatWib(order.paymentExpiresAt)}` : "";
       // Kembali dari gateway tidak berarti sudah membayar (bisa baru memilih metode bayar),
       // jadi kedua kemungkinan disebut tanpa menebak.
@@ -236,6 +244,8 @@ export default function PemeriksaStatus() {
   }
 
   return (
+    <>
+    {pengantar}
     <section aria-labelledby="status-pesanan-judul" className="mt-8 rounded-field border border-border bg-surface-sunken p-5">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="status-pesanan-judul" className="text-sm font-bold text-foreground">
@@ -256,6 +266,57 @@ export default function PemeriksaStatus() {
           Lupakan pesanan ini di perangkat ini
         </button>
       )}
+    </section>
+    {panduan}
+    </>
+  );
+}
+
+const formatRupiah = (nilai: number) => `Rp ${nilai.toLocaleString("id-ID")}`;
+
+/**
+ * Halaman sukses — bentuk dan kalimatnya mengikuti halaman payment-return kembar.in: ikon,
+ * judul, satu kalimat, lalu ringkasan dalam garis tipis (Event, Kode pesanan, Total, Metode).
+ * Total & metode datang dari core (status pesanan §8); yang tidak dikirim core tidak ditampilkan.
+ */
+function RingkasanLunas({ kode, order }: { kode: string; order: StatusTerverifikasi }) {
+  const baris: Array<[string, React.ReactNode]> = [
+    ["Event", siteDetails.siteName],
+    ["Kode pesanan", <span key="kode" className="font-mono text-xs">{kode}</span>],
+  ];
+  if (order.totalAmount !== undefined) baris.push(["Total", <span key="total" className="tabular-nums">{formatRupiah(order.totalAmount)}</span>]);
+  if (order.paymentMethod) baris.push(["Metode", <span key="metode" className="uppercase">{order.paymentMethod}</span>]);
+
+  return (
+    <section aria-labelledby="status-pesanan-judul" aria-live="polite">
+      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-success/30 bg-success-surface text-success">
+        <FiCheckCircle className="h-6 w-6" aria-hidden="true" />
+      </span>
+      <h1 id="status-pesanan-judul" className="mt-6 font-display text-2xl font-semibold tracking-[-0.02em] text-foreground">
+        Pembayaran terverifikasi
+      </h1>
+      <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
+        {order.ticketCount ? `${order.ticketCount} tiket telah diamankan. ` : ""}
+        Konfirmasi dan e-ticket dikirim ke email pemesan.
+      </p>
+      <dl className="mt-7 divide-y divide-border border-y border-border text-sm">
+        {baris.map(([label, nilai]) => (
+          <div key={label} className="flex items-center justify-between gap-5 py-3">
+            <dt className="text-foreground-accent">{label}</dt>
+            <dd className="text-right font-bold text-foreground">{nilai}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-6 flex items-start gap-3 rounded-field border border-border bg-surface-sunken p-4 text-xs leading-5 text-foreground-accent">
+        <FiMail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+        <span>
+          Email belum masuk? Periksa folder spam, atau buka tiket di{" "}
+          <a href="https://kembar.in/me/event/smadarun" target="_blank" rel="noopener noreferrer" className={tautanKedua}>
+            Portal Peserta kembar.in
+          </a>{" "}
+          dengan masuk memakai email pemesan.
+        </span>
+      </div>
     </section>
   );
 }

@@ -59,52 +59,61 @@ export default function StatusPendaftaranPage() {
         </div>
 
         <div className="mt-8 rounded-card border border-border bg-card p-6  md:p-9">
-          <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-foreground">
-            Status pendaftaran
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
-            Pesanan yang dibuat dari tab peramban ini diperiksa langsung ke sistem pendaftaran dan
-            tampil di bawah. Untuk pesanan lain, ikuti panduan berikut; status resmi selalu
-            mengikuti email konfirmasi dan catatan sistem pembayaran.
-          </p>
-
-          <PemeriksaStatus />
-
-          <ol className="mt-8 space-y-6">
-            {langkah.map((item, index) => (
-              <li key={item.judul} className="flex gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
-                  <item.icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {index + 1}. {item.judul}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-foreground-accent">{item.isi}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-
-          <div className="mt-8 rounded-field border border-border bg-surface-sunken p-5">
-            <div className="flex items-start gap-3">
-              <FiHelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-foreground-accent" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-bold text-foreground">Belum menerima email, atau halaman pembayaran tertutup?</p>
-                <p className="mt-1 text-sm leading-relaxed text-foreground-accent">
-                  Hubungi panitia dan sebutkan nama pemesan, email yang dipakai mendaftar, serta kode
-                  pesanan bila ada. Jangan mengulang pendaftaran sebelum dicek — pesanan dan
-                  pembayaran bisa terhitung dua kali.
+          {/* Pesanan yang sudah lunas menggantikan pengantar dan panduan dengan ringkasan
+              pembayaran — bentuknya sama dengan halaman payment-return kembar.in. */}
+          <PemeriksaStatus
+            pengantar={
+              <>
+                <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-foreground">
+                  Status pendaftaran
+                </h1>
+                <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
+                  Pesanan yang dibuat dari tab peramban ini diperiksa langsung ke sistem pendaftaran dan
+                  tampil di bawah. Untuk pesanan lain, ikuti panduan berikut; status resmi selalu
+                  mengikuti email konfirmasi dan catatan sistem pembayaran.
                 </p>
-                <a
-                  href={`mailto:${footerDetails.email}?subject=Konfirmasi%20Pendaftaran%20SMADARUN%202027`}
-                  className="mt-2 inline-block text-sm font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent"
-                >
-                  {footerDetails.email}
-                </a>
-              </div>
-            </div>
-          </div>
+              </>
+            }
+            panduan={
+              <>
+                <ol className="mt-8 space-y-6">
+                  {langkah.map((item, index) => (
+                    <li key={item.judul} className="flex gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
+                        <item.icon className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {index + 1}. {item.judul}
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-foreground-accent">{item.isi}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+
+                <div className="mt-8 rounded-field border border-border bg-surface-sunken p-5">
+                  <div className="flex items-start gap-3">
+                    <FiHelpCircle className="mt-0.5 h-5 w-5 shrink-0 text-foreground-accent" aria-hidden="true" />
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Belum menerima email, atau halaman pembayaran tertutup?</p>
+                      <p className="mt-1 text-sm leading-relaxed text-foreground-accent">
+                        Hubungi panitia dan sebutkan nama pemesan, email yang dipakai mendaftar, serta kode
+                        pesanan bila ada. Jangan mengulang pendaftaran sebelum dicek — pesanan dan
+                        pembayaran bisa terhitung dua kali.
+                      </p>
+                      <a
+                        href={`mailto:${footerDetails.email}?subject=Konfirmasi%20Pendaftaran%20SMADARUN%202027`}
+                        className="mt-2 inline-block text-sm font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent"
+                      >
+                        {footerDetails.email}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </>
+            }
+          />
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link

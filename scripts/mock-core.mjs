@@ -206,7 +206,14 @@ async function statusPesanan(req, res) {
   if (!p || d.statusToken !== tokenUntuk(d.orderCode)) {
     return json(res, 404, { success: false, code: "ORDER_NOT_FOUND", message: "Pesanan tidak ditemukan." });
   }
-  const order = { orderCode: d.orderCode, status: p.status, ticketCount: p.order.ticketCount };
+  // Ringkasan seperti core (§8): total rupiah + kanal tercatat; kanal baru ada setelah lunas.
+  const order = {
+    orderCode: d.orderCode,
+    status: p.status,
+    ticketCount: p.order.ticketCount,
+    totalAmount: 186000 * p.order.ticketCount,
+    paymentMethod: p.status === "paid" ? "VA BCA" : "Pembayaran Online",
+  };
   if (p.status === "pending" || p.status === "expired") order.paymentExpiresAt = p.order.paymentExpiresAt;
   if (p.status === "pending") order.paymentUrl = p.order.paymentUrl;
   return json(res, 200, { success: true, order });

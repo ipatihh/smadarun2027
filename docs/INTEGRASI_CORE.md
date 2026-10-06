@@ -91,7 +91,9 @@ hasilnya dari kolom "Tindakan partner" di §7 dokumen core, tambahkan uji di
 - `/daftar/status` (`PemeriksaStatus.tsx`) memanggil `api/status-pesanan` sekali saat dibuka;
   "Periksa lagi" (gangguan, batas laju, pending) ditekan pengguna. Satu-satunya pemeriksaan
   berulang otomatis: sebentar setelah kembali dari gateway (di bawah).
-- Core: `200` → `pending` (tombol bayar + batas WIB), `paid`, `expired`, `cancelled`;
+- Core: `200` → `pending` (tombol bayar + batas WIB), `paid` (ringkasan seperti halaman
+  payment-return kembar.in: Event, Kode pesanan, Total, Metode — `totalAmount`/`paymentMethod`
+  dari core sejak commit `6cfca51`), `expired`, `cancelled`;
   `404 ORDER_NOT_FOUND` = tidak ada **atau** token salah (dijawab sama, anti-enumerasi);
   `503 ORDER_STATUS_UNAVAILABLE` = `ORDER_STATUS_TOKEN_SECRET` core belum dipasang.
 - Tanpa token atau fitur belum aktif: tautan

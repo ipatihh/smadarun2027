@@ -67,6 +67,19 @@ describe("terjemahkanStatusCore — allowlist & pemetaan kode core", () => {
     }
   });
 
+  it("ringkasan lunas: total & metode diteruskan; bentuk aneh dibuang", () => {
+    expect(terjemahkanStatusCore(200, sukses({ status: "paid", totalAmount: 370000, paymentMethod: "VA BCA" })).body).toEqual({
+      success: true,
+      order: { status: "paid", ticketCount: 2, totalAmount: 370000, paymentMethod: "VA BCA" },
+    });
+    const aneh = terjemahkanStatusCore(200, sukses({ status: "paid", totalAmount: "370000", paymentMethod: "<img src=x>" }));
+    expect(aneh.body).toEqual({ success: true, order: { status: "paid", ticketCount: 2 } });
+    expect(terjemahkanStatusCore(200, sukses({ status: "paid", totalAmount: -1 })).body).toEqual({
+      success: true,
+      order: { status: "paid", ticketCount: 2 },
+    });
+  });
+
   it("field di luar allowlist (mis. data pribadi) tidak diteruskan", () => {
     const hasil = terjemahkanStatusCore(200, sukses({ status: "paid", buyerEmail: "pemesan@contoh.test", nik: "9999000000000001" }));
     expect(JSON.stringify(hasil)).not.toMatch(/contoh\.test|9999/);

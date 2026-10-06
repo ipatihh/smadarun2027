@@ -10,6 +10,10 @@ export type StatusPesanan = "pending" | "paid" | "cancelled" | "expired";
 export interface StatusTerverifikasi {
   status: StatusPesanan;
   ticketCount?: number;
+  /** Total tagihan (rupiah) — ringkasan yang sama dengan halaman payment-return kembar.in. */
+  totalAmount?: number;
+  /** Kanal bayar (`VA BCA`, `QRIS`, ...) atau `Pembayaran Online`/`Transfer Manual`. */
+  paymentMethod?: string;
   /** Batas bayar (ISO) — hanya pesanan gateway yang masih/pernah bisa dibayar. */
   paymentExpiresAt?: string;
   /** Hanya selama pesanan masih bisa dibayar, dan sudah lolos whitelist domain gateway. */
@@ -92,6 +96,8 @@ function parseJson(teks: string): unknown {
   }
 }
 
+const POLA_METODE = /^[A-Za-z0-9 .\/-]{1,40}$/;
+
 const STATUS_SAH: readonly StatusPesanan[] = ["pending", "paid", "cancelled", "expired"];
 
 /** Allowlist field status pesanan; null = bentuknya tidak sesuai kontrak. */
@@ -100,6 +106,13 @@ function bersihkanStatus(order: unknown, base: string): StatusTerverifikasi | nu
   const status = order.status as StatusPesanan;
   const hasil: StatusTerverifikasi = { status };
   if (Number.isInteger(order.ticketCount) && (order.ticketCount as number) >= 0) hasil.ticketCount = order.ticketCount as number;
+  if (typeof order.totalAmount === "number" && Number.isFinite(order.totalAmount) && order.totalAmount >= 0) {
+    hasil.totalAmount = order.totalAmount;
+  }
+  // Teks pendek dari core yang ditampilkan apa adanya: hanya huruf, angka, spasi, dan . - /.
+  if (typeof order.paymentMethod === "string" && POLA_METODE.test(order.paymentMethod.trim())) {
+    hasil.paymentMethod = order.paymentMethod.trim();
+  }
   if (typeof order.paymentExpiresAt === "string" && !Number.isNaN(Date.parse(order.paymentExpiresAt))) {
     hasil.paymentExpiresAt = order.paymentExpiresAt;
   }
