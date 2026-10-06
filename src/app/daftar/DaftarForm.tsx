@@ -539,7 +539,7 @@ export default function DaftarForm({
 
       switch (hasil.jenis) {
         case "bayar":
-          // Untuk halaman /daftar/status (sessionStorage tab ini; token = kunci akses status).
+          // Untuk halaman /daftar/status (localStorage peramban ini; token = kunci baca status).
           simpanPesananTerakhir({ kode: hasil.kode, statusToken: hasil.statusToken });
           // Tandai supaya blok `finally` TIDAK mengembalikan tombol ke keadaan diam
           // selagi browser berpindah ke halaman pembayaran.

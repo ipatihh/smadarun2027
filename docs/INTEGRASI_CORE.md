@@ -84,7 +84,9 @@ hasilnya dari kolom "Tindakan partner" di §7 dokumen core, tambahkan uji di
 
 ## 5. Halaman status pesanan
 
-- Setelah pendaftaran, browser menyimpan `{ kode, statusToken }` di `sessionStorage`
+- Setelah pendaftaran, browser menyimpan `{ kode, statusToken }` di `localStorage`
+  (`smadarun:pesanan`, maks 5 pesanan terbaru, 30 hari; dulu `sessionStorage` per tab — isi kunci
+  lama dipindahkan sekali)
   (`smadarun:pesanan-terakhir`, `src/lib/statusPesanan.ts`). Bukan localStorage, bukan URL —
   token adalah kunci akses pesanan. Kode tanpa token (hasil belum pasti/ditolak berkode) juga
   disimpan, tanpa menghapus token milik kode yang sama.
@@ -103,7 +105,7 @@ hasilnya dari kolom "Tindakan partner" di §7 dokumen core, tambahkan uji di
   tetap server, bukan dari browser). Core menambahkan `?order=<kode>&result=success|failed`, dan
   hanya memakainya karena host-nya host `partner_landing_url` event (`https://www.smadarun.id`) —
   mengganti domain situs berarti mengganti tautan "Tiket dijual di" di kembar.in juga, atau
-  pembeli diam-diam kembali ke kembar.in. Wajib `www`: token di `sessionStorage` per origin.
+  pembeli diam-diam kembali ke kembar.in. Wajib `www`: token di `localStorage` per origin.
 - `/daftar/status?order=<kode>`: kode sama dengan pesanan tersimpan = diperiksa ke core; kode lain
   tampil tanpa token (tautan kembar.in saja). `result` tidak pernah dibaca. Setelah kembali dari
   gateway, `pending` diperiksa ulang tiap 5 dtk, maksimal 12 kali (`perluPeriksaUlang`).

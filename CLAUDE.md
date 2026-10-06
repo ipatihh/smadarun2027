@@ -86,7 +86,9 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   JANGAN pernah mencatat `statusToken`. Event `partner_bug` = core menolak `sessionId`
   (`REGISTRATION_IDEMPOTENCY_MISMATCH`/`SESSION_INVALID`); itu tanda rotasi kunci di sini salah.
 - **Halaman `/daftar/status` memeriksa status sungguhan** untuk pesanan terakhir TAB ini:
-  `{ kode, statusToken }` disimpan di `sessionStorage` (bukan localStorage, bukan URL — token
+  `{ kode, statusToken }` disimpan di `localStorage` (keputusan pemilik 6 Oktober 2026: maks 5
+  pesanan, 30 hari, `src/lib/statusPesanan.ts`; dulu `sessionStorage` sehingga tab baru tidak bisa
+  memeriksa) — bukan URL, bukan log (token
   adalah kunci akses pesanan) lalu diperiksa lewat `api/status-pesanan` → core
   `POST /api/public/orders/status`. Tanpa token (tab lama, atau core belum memasang
   `ORDER_STATUS_TOKEN_SECRET`) halaman menautkan `kembar.in/events/smadarun/payment-return?order=`.
@@ -94,7 +96,7 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   (`URL_KEMBALI_PEMBAYARAN`, dikirim `api/daftar` sebagai `partnerReturnUrl`). Tiga hal yang
   tidak terlihat dari kode: (1) core hanya menerimanya bila host-nya sama dengan tautan "Tiket
   dijual di" event smadarun di kembar.in — ganti domain = ganti tautan itu juga, kalau tidak
-  pembeli diam-diam kembali ke kembar.in; (2) wajib `www`, karena token ada di `sessionStorage`
+  pembeli diam-diam kembali ke kembar.in; (2) wajib `www`, karena token ada di `localStorage`
   per origin dan smadarun.id dialihkan ke www; (3) JANGAN pernah membaca `result` sebagai
   status — siapa pun bisa mengetiknya, dan gateway juga memulangkan pembeli yang belum membayar.
 - IP pengunjung dibaca lewat `getClientIp()`: `x-vercel-forwarded-for` dulu, lalu entri

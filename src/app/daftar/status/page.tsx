@@ -15,7 +15,7 @@ export const metadata: Metadata = {
  * tidak punya tempat kembali sama sekali di situs ini.
  *
  * Status SUNGGUHAN hanya ditampilkan oleh <PemeriksaStatus>, untuk pesanan terakhir yang
- * dibuat dari tab ini (kode + token status di sessionStorage, diperiksa ke core lewat
+ * dibuat dari peramban ini (kode + token status di localStorage, diperiksa ke core lewat
  * api/status-pesanan). Teks statis di bawahnya tetap BERSYARAT ("bila pembayaran sudah
  * selesai…"): halaman ini juga dibuka orang yang belum atau gagal membayar, dan dulu
  * judul "pendaftaran Anda sedang diproses" + ikon centang terbaca sebagai konfirmasi sukses.
@@ -68,7 +68,7 @@ export default function StatusPendaftaranPage() {
                   Status pendaftaran
                 </h1>
                 <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
-                  Pesanan yang dibuat dari tab peramban ini diperiksa langsung ke sistem pendaftaran dan
+                  Pesanan yang dibuat dari peramban ini diperiksa langsung ke sistem pendaftaran dan
                   tampil di bawah. Untuk pesanan lain, ikuti panduan berikut; status resmi selalu
                   mengikuti email konfirmasi dan catatan sistem pembayaran.
                 </p>

@@ -2,13 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import {
   BATAS_PERIKSA_ULANG,
+  BATAS_PESANAN_TERSIMPAN,
+  bacaDaftarPesanan,
   bacaPesananTerakhir,
   type HasilStatus,
   kodeDariKueri,
+  KUNCI_PESANAN,
   KUNCI_SESI_PESANAN,
-  lupakanPesananTerakhir,
+  lupakanPesanan,
+  MASA_SIMPAN_MS,
   perluPeriksaUlang,
   pilihPesananTampil,
+  pindahkanPesananSesiLama,
   simpanPesananTerakhir,
   tafsirkanResponsStatus,
   terjemahkanStatusCore,
@@ -133,18 +138,20 @@ describe("kembali dari gateway (?order=)", () => {
     expect(kodeDariKueri(`?order=${"A".repeat(65)}`)).toBeNull();
   });
 
-  it("kode sama dengan pesanan tersimpan = pesanan itu beserta tokennya", () => {
-    const tersimpan = { kode: KODE, statusToken: TOKEN };
-    expect(pilihPesananTampil(tersimpan, KODE)).toEqual({ pesanan: tersimpan, dariPenyimpanan: true, dariGateway: true });
-    expect(pilihPesananTampil(tersimpan, null)).toEqual({ pesanan: tersimpan, dariPenyimpanan: true, dariGateway: false });
-    expect(pilihPesananTampil(null, null)).toBeNull();
+  it("kode yang tersimpan di peramban ini = pesanan itu beserta tokennya, pesanan lama maupun baru", () => {
+    const baru = { kode: "ORD-BARU", statusToken: TOKEN };
+    const lama = { kode: KODE, statusToken: TOKEN.replace("A", "B") };
+    expect(pilihPesananTampil([baru, lama], KODE)).toEqual({ pesanan: lama, dariPenyimpanan: true, dariGateway: true });
+    expect(pilihPesananTampil([baru, lama], "ORD-BARU")).toEqual({ pesanan: baru, dariPenyimpanan: true, dariGateway: true });
+    expect(pilihPesananTampil([baru, lama], null)).toEqual({ pesanan: baru, dariPenyimpanan: true, dariGateway: false });
+    expect(pilihPesananTampil([], null)).toBeNull();
   });
 
-  it("kode lain (tab/perangkat lain) tampil tanpa token: tidak bisa diperiksa, tidak bisa dilupakan", () => {
-    const tampil = pilihPesananTampil({ kode: "ORD-LAIN", statusToken: TOKEN }, KODE);
+  it("kode yang tidak tersimpan (perangkat lain) tampil tanpa token: tidak bisa diperiksa, tidak bisa dilupakan", () => {
+    const tampil = pilihPesananTampil([{ kode: "ORD-LAIN", statusToken: TOKEN }], KODE);
     expect(tampil).toEqual({ pesanan: { kode: KODE }, dariPenyimpanan: false, dariGateway: true });
     expect(JSON.stringify(tampil)).not.toContain(TOKEN);
-    expect(pilihPesananTampil(null, KODE)).toEqual({ pesanan: { kode: KODE }, dariPenyimpanan: false, dariGateway: true });
+    expect(pilihPesananTampil([], KODE)).toEqual({ pesanan: { kode: KODE }, dariPenyimpanan: false, dariGateway: true });
   });
 
   it("periksa ulang otomatis hanya untuk pending setelah kembali dari gateway, dan berbatas", () => {
@@ -161,32 +168,63 @@ describe("kembali dari gateway (?order=)", () => {
   });
 });
 
-describe("penyimpanan pesanan terakhir (sessionStorage)", () => {
+describe("penyimpanan pesanan (localStorage peramban ini)", () => {
+  const T0 = Date.parse("2026-10-06T07:00:00.000Z");
+
   it("menyimpan kode + token; kode tanpa token tidak menghapus token kode yang sama", () => {
     const store = new StorageTiruan();
-    simpanPesananTerakhir({ kode: KODE, statusToken: TOKEN }, store);
-    expect(bacaPesananTerakhir(store)).toEqual({ kode: KODE, statusToken: TOKEN });
-    simpanPesananTerakhir({ kode: KODE }, store);
-    expect(bacaPesananTerakhir(store)).toEqual({ kode: KODE, statusToken: TOKEN });
-    simpanPesananTerakhir({ kode: "ORD-LAIN" }, store);
-    expect(bacaPesananTerakhir(store)).toEqual({ kode: "ORD-LAIN", statusToken: undefined });
-    lupakanPesananTerakhir(store);
-    expect(bacaPesananTerakhir(store)).toBeNull();
+    simpanPesananTerakhir({ kode: KODE, statusToken: TOKEN }, store, T0);
+    expect(bacaPesananTerakhir(store, T0)).toEqual({ kode: KODE, statusToken: TOKEN });
+    simpanPesananTerakhir({ kode: KODE }, store, T0);
+    expect(bacaPesananTerakhir(store, T0)).toEqual({ kode: KODE, statusToken: TOKEN });
+  });
+
+  it("beli lagi: pesanan baru di depan, pesanan lama tetap bisa diperiksa; paling banyak 5", () => {
+    const store = new StorageTiruan();
+    simpanPesananTerakhir({ kode: KODE, statusToken: TOKEN }, store, T0);
+    simpanPesananTerakhir({ kode: "ORD-BARU" }, store, T0 + 1000);
+    expect(bacaDaftarPesanan(store, T0 + 2000)).toEqual([{ kode: "ORD-BARU" }, { kode: KODE, statusToken: TOKEN }]);
+    for (let i = 0; i < 10; i++) simpanPesananTerakhir({ kode: `ORD-${i}00` }, store, T0 + 3000 + i);
+    const daftar = bacaDaftarPesanan(store, T0 + 9000);
+    expect(daftar).toHaveLength(BATAS_PESANAN_TERSIMPAN);
+    expect(daftar[0].kode).toBe("ORD-900");
+  });
+
+  it("lewat 30 hari tidak dipakai lagi; lupakan hanya menghapus satu pesanan", () => {
+    const store = new StorageTiruan();
+    simpanPesananTerakhir({ kode: KODE, statusToken: TOKEN }, store, T0);
+    simpanPesananTerakhir({ kode: "ORD-LAIN" }, store, T0 + 1000);
+    expect(bacaPesananTerakhir(store, T0 + MASA_SIMPAN_MS + 2000)).toBeNull();
+    lupakanPesanan("ORD-LAIN", store, T0 + 2000);
+    expect(bacaDaftarPesanan(store, T0 + 2000)).toEqual([{ kode: KODE, statusToken: TOKEN }]);
+    lupakanPesanan(KODE, store, T0 + 2000);
+    expect(store.getItem(KUNCI_PESANAN)).toBeNull();
   });
 
   it("isi rusak atau token salah bentuk tidak dipakai; tidak ada data pribadi yang disimpan", () => {
     const store = new StorageTiruan();
-    store.setItem(KUNCI_SESI_PESANAN, "{bukan json");
-    expect(bacaPesananTerakhir(store)).toBeNull();
-    store.setItem(KUNCI_SESI_PESANAN, JSON.stringify({ kode: KODE, statusToken: "pendek" }));
-    expect(bacaPesananTerakhir(store)).toEqual({ kode: KODE, statusToken: undefined });
-    simpanPesananTerakhir({ kode: KODE, statusToken: TOKEN }, store);
-    expect(Object.keys(JSON.parse(store.getItem(KUNCI_SESI_PESANAN)!))).toEqual(["kode", "statusToken"]);
+    store.setItem(KUNCI_PESANAN, "{bukan json");
+    expect(bacaPesananTerakhir(store, T0)).toBeNull();
+    store.setItem(KUNCI_PESANAN, JSON.stringify([{ kode: KODE, statusToken: "pendek", t: T0 }, { kode: "<x>", t: T0 }]));
+    expect(bacaDaftarPesanan(store, T0)).toEqual([{ kode: KODE }]);
+    simpanPesananTerakhir({ kode: KODE, statusToken: TOKEN }, store, T0);
+    expect(Object.keys(JSON.parse(store.getItem(KUNCI_PESANAN)!)[0])).toEqual(["kode", "statusToken", "t"]);
+  });
+
+  it("pesanan di sessionStorage lama (tab sebelum rilis) dipindahkan sekali", () => {
+    const sesi = new StorageTiruan();
+    const lokal = new StorageTiruan();
+    sesi.setItem(KUNCI_SESI_PESANAN, JSON.stringify({ kode: KODE, statusToken: TOKEN }));
+    pindahkanPesananSesiLama(sesi, lokal, T0);
+    expect(bacaPesananTerakhir(lokal, T0)).toEqual({ kode: KODE, statusToken: TOKEN });
+    expect(sesi.getItem(KUNCI_SESI_PESANAN)).toBeNull();
+    expect(() => pindahkanPesananSesiLama(null, null, T0)).not.toThrow();
   });
 
   it("penyimpanan diblokir tidak membuat error", () => {
     expect(() => simpanPesananTerakhir({ kode: KODE }, null)).not.toThrow();
     expect(bacaPesananTerakhir(null)).toBeNull();
+    expect(() => lupakanPesanan(KODE, null)).not.toThrow();
   });
 });
 

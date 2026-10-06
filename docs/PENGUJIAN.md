@@ -19,7 +19,7 @@ npm run build
 | `tests/apiDaftar.test.ts` | Route `api/daftar` dengan data live & core di-mock: bentuk body, Content-Type, Origin, batas ukuran, timeout termasuk body macet, kunci per NIK, batas laju, `consent_policy_version`, kode baru, tidak ada PII di log. |
 | `tests/kolomTambahan.test.ts` | Kolom generik dari `form_schema` core: hanya `semantic: null`, core lama tanpa penanda = kosong, validasi per tipe. |
 | `tests/namaBib.test.ts` | Pembacaan kolom Nama BIB dari `form_schema` core, cadangan `maxLength`, rapikan & validasi. |
-| `tests/statusPesanan.test.ts` | Allowlist & pemetaan status core, penyimpanan `sessionStorage`, route `api/status-pesanan` (validasi, timeout 10 dtk, batas laju, token tidak masuk log). |
+| `tests/statusPesanan.test.ts` | Allowlist & pemetaan status core, penyimpanan `localStorage` (maks 5, 30 hari, pindahan kunci sesi lama), route `api/status-pesanan` (validasi, timeout 10 dtk, batas laju, token tidak masuk log). |
 
 Saat memperbaiki bug, tulis uji yang GAGAL pada kode lama lebih dulu. Cara cepat memastikan uji
 tidak lolos semu: masukkan kembali perilaku lama sementara (uji mutasi), pastikan uji gagal,

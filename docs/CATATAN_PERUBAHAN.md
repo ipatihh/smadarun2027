@@ -5,6 +5,26 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 6 Oktober 2026 — Token status pindah ke localStorage
+
+Pemilik membuka tautan kembali di tab baru dan hanya mendapat tautan kembar.in: token status ada di
+`sessionStorage`, yang per tab. Keputusan pemilik: simpan di `localStorage` supaya status terbaca
+di tab mana pun pada perangkat & peramban yang sama.
+
+- Kunci `smadarun:pesanan`: daftar `{ kode, statusToken?, t }`, terbaru dulu, maks 5 pesanan,
+  lewat 30 hari diabaikan. Beli lagi = pesanan baru di depan; tautan kembali pesanan lama tetap
+  bisa diperiksa (`pilihPesananTampil` mencari kodenya di daftar). "Lupakan" menghapus satu pesanan.
+- Isi kunci lama `smadarun:pesanan-terakhir` (sessionStorage, tab yang terbuka sebelum rilis)
+  dipindahkan sekali (`pindahkanPesananSesiLama`).
+- Risiko yang diterima: orang lain di peramban yang sama bisa melihat status, total, dan metode
+  pesanan itu — tanpa nama/email/NIK; halaman payment-return kembar.in menampilkan hal yang sama
+  cukup dengan kode pesanan. Token tetap tidak pernah masuk URL atau log.
+
+Diuji: 100 vitest; browser (build production + mock core): dua pesanan dibuat di satu tab, tab
+baru `?order=` pesanan lama → ringkasan lunas, pesanan baru → pending, kode asing → tautan kembar.in.
+
+---
+
 ## 6 Oktober 2026 — Halaman sukses disamakan dengan kembar.in
 
 Permintaan pemilik: notifikasi sukses sesederhana halaman `payment-return` kembar.in, beserta

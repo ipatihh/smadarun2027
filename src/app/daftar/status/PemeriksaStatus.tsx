@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { FiCheckCircle, FiClock, FiRefreshCw, FiXCircle, FiAlertTriangle, FiMail } from "react-icons/fi";
 import {
-  bacaPesananTerakhir,
+  bacaDaftarPesanan,
   HasilStatus,
   JEDA_PERIKSA_ULANG_MS,
   kodeDariKueri,
-  KUNCI_SESI_PESANAN,
-  lupakanPesananTerakhir,
+  KUNCI_PESANAN,
+  lupakanPesanan,
+  pindahkanPesananSesiLama,
   perluPeriksaUlang,
   PesananTersimpan,
   pilihPesananTampil,
@@ -19,15 +20,22 @@ import {
 } from "@/lib/statusPesanan";
 import { siteDetails } from "@/data/siteDetails";
 
-// sessionStorage dibaca lewat useSyncExternalStore: render server & hidrasi memakai null
+// localStorage dibaca lewat useSyncExternalStore: render server & hidrasi memakai null
 // (HTML statis tetap sama), lalu browser memakai nilai sebenarnya tanpa setState di effect.
+// Event `storage` juga datang dari tab lain, jadi pesanan baru di tab lain ikut terbaca.
 const berlangganan = (cb: () => void) => {
   window.addEventListener("storage", cb);
   return () => window.removeEventListener("storage", cb);
 };
+let sesiLamaDipindahkan = false;
 const bacaMentah = () => {
   try {
-    return window.sessionStorage.getItem(KUNCI_SESI_PESANAN);
+    // Tab yang terbuka sebelum rilis menyimpan pesanannya di sessionStorage; pindahkan sekali.
+    if (!sesiLamaDipindahkan) {
+      sesiLamaDipindahkan = true;
+      pindahkanPesananSesiLama(window.sessionStorage, window.localStorage);
+    }
+    return window.localStorage.getItem(KUNCI_PESANAN);
   } catch {
     return null;
   }
@@ -71,9 +79,9 @@ const tautanKedua =
   "text-sm font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded";
 
 /**
- * Status pesanan terakhir yang dibuat dari TAB INI (kode + token di sessionStorage), juga
+ * Status pesanan terakhir yang dibuat dari PERAMBAN INI (kode + token di localStorage), juga
  * tujuan kembali gateway setelah bayar (`?order=<kode>`, lihat URL_KEMBALI_PEMBAYARAN).
- * Tanpa token (tab lama, tab/perangkat lain, atau core belum memasang
+ * Tanpa token (perangkat/peramban lain, lewat masa simpan, atau core belum memasang
  * ORDER_STATUS_TOKEN_SECRET) pendaftar diarahkan ke halaman payment-return kembar.in, yang
  * bisa dibuka cukup dengan kode. Pemeriksaan otomatis berulang hanya sebentar setelah
  * kembali dari gateway (perluPeriksaUlang); selebihnya "Periksa lagi" ditekan pengguna.
@@ -83,8 +91,8 @@ export default function PemeriksaStatus({ pengantar, panduan }: { pengantar: Rea
   const kodeKembali = useSyncExternalStore(tanpaLangganan, bacaKodeKembali, () => null);
   const [dilupakan, setDilupakan] = useState(false);
   // `mentah` dipakai sebagai pemicu: isi yang sama → objek yang sama → effect tidak berulang.
-  const tersimpan = useMemo(() => (mentah ? bacaPesananTerakhir() : null), [mentah]);
-  const tampil = useMemo(() => pilihPesananTampil(tersimpan, kodeKembali), [tersimpan, kodeKembali]);
+  const daftar = useMemo(() => (mentah ? bacaDaftarPesanan() : []), [mentah]);
+  const tampil = useMemo(() => pilihPesananTampil(daftar, kodeKembali), [daftar, kodeKembali]);
   const pesanan = dilupakan ? null : (tampil?.pesanan ?? null);
   const dariGateway = tampil?.dariGateway === true;
   // null = belum ada hasil (ditampilkan sebagai "memeriksa" bila ada token).
@@ -249,7 +257,11 @@ export default function PemeriksaStatus({ pengantar, panduan }: { pengantar: Rea
     <section aria-labelledby="status-pesanan-judul" className="mt-8 rounded-field border border-border bg-surface-sunken p-5">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="status-pesanan-judul" className="text-sm font-bold text-foreground">
-          {tampil?.dariPenyimpanan ? "Pesanan terakhir dari perangkat ini" : "Pesanan dari halaman pembayaran"}
+          {!tampil?.dariPenyimpanan
+            ? "Pesanan dari halaman pembayaran"
+            : tampil.dariGateway
+              ? "Pesanan dari perangkat ini"
+              : "Pesanan terakhir dari perangkat ini"}
         </h2>
         <span className="font-mono text-sm font-semibold text-foreground">{pesanan.kode}</span>
       </div>
@@ -258,7 +270,7 @@ export default function PemeriksaStatus({ pengantar, panduan }: { pengantar: Rea
         <button
           type="button"
           onClick={() => {
-            lupakanPesananTerakhir();
+            lupakanPesanan(pesanan.kode);
             setDilupakan(true);
           }}
           className="mt-4 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded"

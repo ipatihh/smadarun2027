@@ -27,8 +27,8 @@ sesi ini; perubahan core dikerjakan di sesi kembarin-v2 — lihat bagian akhir `
 | `src/app/api/daftar/route.ts` | Proxy pendaftaran ke core: validasi ketat, hitung ulang harga, payload eksplisit, batas waktu 25 dtk termasuk body, tafsir respons. |
 | `src/lib/kontrakPendaftaran.ts` | Kontrak respons pendaftaran: verifikasi sukses (allowlist), klasifikasi kode error core, tafsir respons di browser. |
 | `src/lib/proxyCore.ts` | Aturan bersama proxy ke core: IP pengunjung, batas laju, Origin, Content-Type, batas body, header trusted-proxy, URL core, log tanpa PII. |
-| `src/app/daftar/status/page.tsx` + `PemeriksaStatus.tsx` | Halaman status: status sungguhan untuk pesanan terakhir tab ini (token di `sessionStorage`), sisanya panduan bersyarat. |
-| `src/app/api/status-pesanan/route.ts` + `src/lib/statusPesanan.ts` | Proxy status pesanan ke core + allowlist + penyimpanan `sessionStorage`. |
+| `src/app/daftar/status/page.tsx` + `PemeriksaStatus.tsx` | Halaman status: status sungguhan untuk pesanan yang tersimpan di peramban ini (token di `localStorage`), sisanya panduan bersyarat. |
+| `src/app/api/status-pesanan/route.ts` + `src/lib/statusPesanan.ts` | Proxy status pesanan ke core + allowlist + penyimpanan `localStorage`. |
 | `src/lib/persetujuan.ts` | Label versi teks persetujuan (`consent_policy_version`). Naikkan saat teks persetujuan berubah. |
 | `src/lib/kembarinEvents.ts` | Satu-satunya pembaca data live event (harga, kategori, status buka/tutup). |
 | `src/lib/identitas.ts`, `src/lib/wilayah.ts`, `src/lib/paymentUrl.ts` | Aturan nomor identitas, dataset wilayah, whitelist domain gateway. |

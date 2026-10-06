@@ -1,6 +1,6 @@
 // Status pesanan untuk halaman /daftar/status: core → api/status-pesanan → browser.
 // Kontrak core: kembarin-v2 docs/PARTNER_INTEGRATION.md §8 (POST /api/public/orders/status).
-// Fungsi murni + akses sessionStorage, diuji di tests/statusPesanan.test.ts.
+// Fungsi murni + akses localStorage, diuji di tests/statusPesanan.test.ts.
 
 import { isTrustedPaymentUrl } from "./paymentUrl";
 import { POLA_KODE_PESANAN, POLA_TOKEN_STATUS } from "./kontrakPendaftaran";
@@ -35,7 +35,7 @@ export const urlPaymentReturn = (kode: string) =>
  * menambahkan `?order=<kode>&result=success|failed` dan hanya memakainya karena host-nya
  * sama dengan tautan "Tiket dijual di" event smadarun di kembar.in — selain itu pembeli
  * kembali ke halaman kembar.in di atas. Harus `www`: smadarun.id dialihkan ke www, dan
- * token status di sessionStorage hanya terbaca di origin tempat pendaftar mengisi form.
+ * token status di localStorage hanya terbaca di origin tempat pendaftar mengisi form.
  */
 export const URL_KEMBALI_PEMBAYARAN = "https://www.smadarun.id/daftar/status";
 
@@ -58,17 +58,19 @@ export interface PesananTampil {
 }
 
 /**
- * Pesanan yang ditampilkan halaman status. Kembali dari gateway dengan kode yang sama dengan
- * pesanan tersimpan = pesanan itu, lengkap dengan tokennya. Kode lain (tab/perangkat lain,
- * penyimpanan diblokir) tampil TANPA token — tidak bisa diperiksa dari sini, hanya ditautkan
- * ke kembar.in.
+ * Pesanan yang ditampilkan halaman status. Kembali dari gateway dengan kode yang tersimpan di
+ * peramban ini = pesanan itu, lengkap dengan tokennya (pesanan lama maupun baru). Kode yang tidak
+ * tersimpan (perangkat/peramban lain, penyimpanan diblokir, lewat masa simpan) tampil TANPA
+ * token — tidak bisa diperiksa dari sini, hanya ditautkan ke kembar.in.
  */
-export function pilihPesananTampil(tersimpan: PesananTersimpan | null, kodeKembali: string | null): PesananTampil | null {
-  if (kodeKembali && tersimpan?.kode !== kodeKembali) {
-    return { pesanan: { kode: kodeKembali }, dariPenyimpanan: false, dariGateway: true };
+export function pilihPesananTampil(daftar: PesananTersimpan[], kodeKembali: string | null): PesananTampil | null {
+  if (kodeKembali) {
+    const tersimpan = daftar.find((p) => p.kode === kodeKembali);
+    return tersimpan
+      ? { pesanan: tersimpan, dariPenyimpanan: true, dariGateway: true }
+      : { pesanan: { kode: kodeKembali }, dariPenyimpanan: false, dariGateway: true };
   }
-  if (!tersimpan) return null;
-  return { pesanan: tersimpan, dariPenyimpanan: true, dariGateway: kodeKembali === tersimpan.kode };
+  return daftar[0] ? { pesanan: daftar[0], dariPenyimpanan: true, dariGateway: false } : null;
 }
 
 /**
@@ -178,60 +180,110 @@ export function tafsirkanResponsStatus(
 }
 
 // ─── Penyimpanan di browser ──────────────────────────────────────────────────
-// sessionStorage, BUKAN localStorage maupun URL: token status adalah kunci akses pesanan.
-// Ia hanya hidup selama tab itu terbuka dan tidak ikut terbawa ke tab, perangkat, atau
-// tautan lain. Tidak ada data pribadi yang disimpan — hanya kode pesanan dan token.
+// localStorage (keputusan pemilik, 6 Oktober 2026), BUKAN URL: token status adalah kunci baca
+// pesanan. Dulu sessionStorage, sehingga status hanya terbaca di tab tempat mendaftar — membuka
+// tautan kembali di tab lain hanya memberi tautan kembar.in. Yang disimpan hanya kode + token
+// (tanpa data pribadi), paling banyak BATAS_PESANAN_TERSIMPAN pesanan dan hanya MASA_SIMPAN_MS.
+// Token hanya membuka status, total, dan metode bayar — sama dengan yang ditampilkan halaman
+// payment-return kembar.in cukup dengan kode pesanan. Ia tetap tidak pernah masuk URL atau log.
 
+export const KUNCI_PESANAN = "smadarun:pesanan";
+/** Kunci lama di sessionStorage; isinya dipindahkan sekali ke localStorage. */
 export const KUNCI_SESI_PESANAN = "smadarun:pesanan-terakhir";
+export const BATAS_PESANAN_TERSIMPAN = 5;
+export const MASA_SIMPAN_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface PesananTersimpan {
   kode: string;
   statusToken?: string;
 }
 
+interface EntriTersimpan extends PesananTersimpan {
+  /** Jam simpan (ms) untuk masa simpan. */
+  t: number;
+}
+
 function penyimpanan(): Storage | null {
   try {
-    return typeof window === "undefined" ? null : window.sessionStorage;
+    return typeof window === "undefined" ? null : window.localStorage;
   } catch {
     return null; // diblokir (mode privat, kebijakan peramban)
   }
 }
 
-export function bacaPesananTerakhir(store: Storage | null = penyimpanan()): PesananTersimpan | null {
+function bacaEntri(store: Storage | null, now: number): EntriTersimpan[] {
   try {
-    const data = parseJson(store?.getItem(KUNCI_SESI_PESANAN) ?? "");
-    if (!isRecord(data) || typeof data.kode !== "string" || !POLA_KODE_PESANAN.test(data.kode)) return null;
-    const statusToken =
-      typeof data.statusToken === "string" && POLA_TOKEN_STATUS.test(data.statusToken) ? data.statusToken : undefined;
-    return { kode: data.kode, statusToken };
+    const data = parseJson(store?.getItem(KUNCI_PESANAN) ?? "");
+    if (!Array.isArray(data)) return [];
+    const hasil: EntriTersimpan[] = [];
+    for (const item of data) {
+      if (!isRecord(item) || typeof item.kode !== "string" || !POLA_KODE_PESANAN.test(item.kode)) continue;
+      const t = typeof item.t === "number" && Number.isFinite(item.t) ? item.t : 0;
+      if (now - t > MASA_SIMPAN_MS || t > now + 60_000) continue;
+      if (hasil.some((e) => e.kode === item.kode)) continue;
+      const statusToken =
+        typeof item.statusToken === "string" && POLA_TOKEN_STATUS.test(item.statusToken) ? item.statusToken : undefined;
+      hasil.push(statusToken ? { kode: item.kode, statusToken, t } : { kode: item.kode, t });
+      if (hasil.length >= BATAS_PESANAN_TERSIMPAN) break;
+    }
+    return hasil;
   } catch {
-    return null;
+    return [];
   }
 }
 
+const tanpaJam = ({ kode, statusToken }: EntriTersimpan): PesananTersimpan => (statusToken ? { kode, statusToken } : { kode });
+
+/** Pesanan tersimpan di peramban ini, terbaru dulu; yang kedaluwarsa/rusak dilewati. */
+export function bacaDaftarPesanan(store: Storage | null = penyimpanan(), now = Date.now()): PesananTersimpan[] {
+  return bacaEntri(store, now).map(tanpaJam);
+}
+
+export function bacaPesananTerakhir(store: Storage | null = penyimpanan(), now = Date.now()): PesananTersimpan | null {
+  return bacaDaftarPesanan(store, now)[0] ?? null;
+}
+
 /**
- * Simpan pesanan terakhir tab ini. Kode tanpa token (mis. hasil belum pasti) tidak
+ * Simpan pesanan sebagai yang terbaru. Kode tanpa token (mis. hasil belum pasti) tidak
  * menghapus token yang sudah tersimpan untuk kode yang SAMA.
  */
-export function simpanPesananTerakhir(baru: PesananTersimpan, store: Storage | null = penyimpanan()): void {
+export function simpanPesananTerakhir(baru: PesananTersimpan, store: Storage | null = penyimpanan(), now = Date.now()): void {
   if (!store || !POLA_KODE_PESANAN.test(baru.kode)) return;
-  const lama = bacaPesananTerakhir(store);
+  const entri = bacaEntri(store, now);
+  const lama = entri.find((e) => e.kode === baru.kode);
   const statusToken =
-    baru.statusToken && POLA_TOKEN_STATUS.test(baru.statusToken)
-      ? baru.statusToken
-      : lama?.kode === baru.kode
-        ? lama.statusToken
-        : undefined;
+    baru.statusToken && POLA_TOKEN_STATUS.test(baru.statusToken) ? baru.statusToken : lama?.statusToken;
+  const depan: EntriTersimpan = statusToken ? { kode: baru.kode, statusToken, t: now } : { kode: baru.kode, t: now };
+  const isi = [depan, ...entri.filter((e) => e.kode !== baru.kode)].slice(0, BATAS_PESANAN_TERSIMPAN);
   try {
-    store.setItem(KUNCI_SESI_PESANAN, JSON.stringify(statusToken ? { kode: baru.kode, statusToken } : { kode: baru.kode }));
+    store.setItem(KUNCI_PESANAN, JSON.stringify(isi));
   } catch {
     // Penyimpanan penuh/diblokir: halaman status jatuh ke panduan umum.
   }
 }
 
-export function lupakanPesananTerakhir(store: Storage | null = penyimpanan()): void {
+/** Hapus satu pesanan dari peramban ini. */
+export function lupakanPesanan(kode: string, store: Storage | null = penyimpanan(), now = Date.now()): void {
+  if (!store) return;
   try {
-    store?.removeItem(KUNCI_SESI_PESANAN);
+    const sisa = bacaEntri(store, now).filter((e) => e.kode !== kode);
+    if (sisa.length) store.setItem(KUNCI_PESANAN, JSON.stringify(sisa));
+    else store.removeItem(KUNCI_PESANAN);
+  } catch {
+    // abaikan
+  }
+}
+
+/** Pindahkan pesanan dari kunci sessionStorage lama (tab yang terbuka sebelum rilis). */
+export function pindahkanPesananSesiLama(sesi: Storage | null, lokal: Storage | null, now = Date.now()): void {
+  try {
+    const data = parseJson(sesi?.getItem(KUNCI_SESI_PESANAN) ?? "");
+    if (isRecord(data) && typeof data.kode === "string" && POLA_KODE_PESANAN.test(data.kode)) {
+      const statusToken =
+        typeof data.statusToken === "string" && POLA_TOKEN_STATUS.test(data.statusToken) ? data.statusToken : undefined;
+      if (!bacaEntri(lokal, now).some((e) => e.kode === data.kode)) simpanPesananTerakhir({ kode: data.kode, statusToken }, lokal, now);
+    }
+    sesi?.removeItem(KUNCI_SESI_PESANAN);
   } catch {
     // abaikan
   }
