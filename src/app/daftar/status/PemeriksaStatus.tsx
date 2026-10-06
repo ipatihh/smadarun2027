@@ -7,7 +7,6 @@ import {
   bacaDaftarPesanan,
   HasilStatus,
   JEDA_PERIKSA_ULANG_MS,
-  kodeDariKueri,
   KUNCI_PESANAN,
   lupakanPesanan,
   pindahkanPesananSesiLama,
@@ -40,9 +39,8 @@ const bacaMentah = () => {
     return null;
   }
 };
-// `?order=` dari tujuan kembali gateway. URL tidak berubah selama halaman terbuka.
+// false saat render server & hidrasi, true setelahnya — localStorage baru terbaca di klien.
 const tanpaLangganan = () => () => {};
-const bacaKodeKembali = () => kodeDariKueri(window.location.search);
 
 const BATAS_TUNGGU_MS = 15_000; // > batas api/status-pesanan (10 dtk)
 
@@ -86,9 +84,18 @@ const tautanKedua =
  * bisa dibuka cukup dengan kode. Pemeriksaan otomatis berulang hanya sebentar setelah
  * kembali dari gateway (perluPeriksaUlang); selebihnya "Periksa lagi" ditekan pengguna.
  */
-export default function PemeriksaStatus({ pengantar, panduan }: { pengantar: React.ReactNode; panduan: React.ReactNode }) {
+export default function PemeriksaStatus({
+  kodeKembali,
+  pengantar,
+  panduan,
+}: {
+  /** `?order=` tujuan kembali gateway, sudah divalidasi server. */
+  kodeKembali: string | null;
+  pengantar: React.ReactNode;
+  panduan: React.ReactNode;
+}) {
   const mentah = useSyncExternalStore(berlangganan, bacaMentah, () => null);
-  const kodeKembali = useSyncExternalStore(tanpaLangganan, bacaKodeKembali, () => null);
+  const diKlien = useSyncExternalStore(tanpaLangganan, () => true, () => false);
   const [dilupakan, setDilupakan] = useState(false);
   // `mentah` dipakai sebagai pemicu: isi yang sama → objek yang sama → effect tidak berulang.
   const daftar = useMemo(() => (mentah ? bacaDaftarPesanan() : []), [mentah]);
@@ -131,6 +138,18 @@ export default function PemeriksaStatus({ pengantar, panduan }: { pengantar: Rea
     setHasil("memeriksa");
     setHasil(await ambilStatus(p));
   };
+
+  // Baru kembali dari gateway: sampai hasil pertama tiba, cukup kartu memeriksa — tanpa
+  // pengantar & panduan yang berkedip sebelum ringkasan (sama dengan halaman kembar.in).
+  if (kodeKembali && !dilupakan && (!diKlien || (pesanan?.statusToken && hasil === null))) {
+    return (
+      <section aria-live="polite" className="flex flex-col items-center py-10 text-center" role="status">
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary-accent" aria-hidden="true" />
+        <p className="mt-5 font-semibold text-foreground">Memeriksa pembayaran…</p>
+        <p className="mt-1 font-mono text-xs text-muted-foreground">{kodeKembali}</p>
+      </section>
+    );
+  }
 
   if (!pesanan) {
     return (

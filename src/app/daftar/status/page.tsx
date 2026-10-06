@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FiMail, FiClock, FiHelpCircle, FiCreditCard } from "react-icons/fi";
 import { footerDetails } from "@/data/footer";
+import { kodeDariNilai } from "@/lib/statusPesanan";
 import PemeriksaStatus from "./PemeriksaStatus";
 
 export const metadata: Metadata = {
@@ -42,7 +43,17 @@ const langkah = [
   },
 ];
 
-export default function StatusPendaftaranPage() {
+/**
+ * `?order=` dibaca di server (halaman jadi dinamis) supaya pembeli yang baru kembali dari
+ * gateway langsung melihat kartu "Memeriksa pembayaran…" lalu ringkasannya — bukan pengantar
+ * dan panduan langkah yang berkedip dulu, seperti halaman payment-return kembar.in.
+ */
+export default async function StatusPendaftaranPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const kodeKembali = kodeDariNilai((await searchParams).order);
   return (
     <div className="relative min-h-screen px-5 pb-20 pt-28">
       <div
@@ -62,6 +73,7 @@ export default function StatusPendaftaranPage() {
           {/* Pesanan yang sudah lunas menggantikan pengantar dan panduan dengan ringkasan
               pembayaran — bentuknya sama dengan halaman payment-return kembar.in. */}
           <PemeriksaStatus
+            kodeKembali={kodeKembali}
             pengantar={
               <>
                 <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-foreground">

@@ -7,6 +7,7 @@ import {
   bacaPesananTerakhir,
   type HasilStatus,
   kodeDariKueri,
+  kodeDariNilai,
   KUNCI_PESANAN,
   KUNCI_SESI_PESANAN,
   lupakanPesanan,
@@ -136,6 +137,10 @@ describe("kembali dari gateway (?order=)", () => {
     expect(kodeDariKueri("")).toBeNull();
     expect(kodeDariKueri("?order=%3Cscript%3E")).toBeNull();
     expect(kodeDariKueri(`?order=${"A".repeat(65)}`)).toBeNull();
+    // searchParams halaman: string, array (?order=a&order=b), atau tidak ada.
+    expect(kodeDariNilai(" KBR-A1 ")).toBe("KBR-A1");
+    expect(kodeDariNilai(["KBR-A1", "KBR-A2"])).toBeNull();
+    expect(kodeDariNilai(undefined)).toBeNull();
   });
 
   it("kode yang tersimpan di peramban ini = pesanan itu beserta tokennya, pesanan lama maupun baru", () => {

@@ -5,6 +5,20 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 6 Oktober 2026 — Kembali dari gateway langsung ke ringkasan, tanpa panduan berkedip
+
+Pemilik melihat pengantar + panduan langkah + "Memeriksa status pesanan…" setiap membuka tautan
+kembali, sebelum ringkasan lunas muncul (pemeriksaan ke core ±1–3 detik). Halaman kembar.in tidak
+punya jeda ini karena dirender server.
+
+- `/daftar/status` kini membaca `?order=` di server (halaman dinamis, `kodeDariNilai`). Dengan
+  `?order=`, HTML awal dan masa pemeriksaan pertama hanya kartu "Memeriksa pembayaran…" + kode;
+  lalu ringkasan lunas, atau tampilan pending/tanpa token seperti biasa. Tanpa `?order=` tidak berubah.
+- Uji: HTML server dengan `?order=` tidak menampilkan panduan (hanya ada di data RSC prop);
+  browser tab baru → kartu memeriksa → ringkasan lunas.
+
+---
+
 ## 6 Oktober 2026 — Tautan "Sudah bayar?" di form dihapus
 
 Tautan ke `/daftar/status` di bawah tombol bayar (desktop) dan di atas persetujuan (ponsel) dulu

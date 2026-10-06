@@ -45,7 +45,12 @@ export const URL_KEMBALI_PEMBAYARAN = "https://www.smadarun.id/daftar/status";
  * metode bayar tanpa membayar. Status hanya dari core.
  */
 export function kodeDariKueri(search: string): string | null {
-  const kode = new URLSearchParams(search).get("order")?.trim() ?? "";
+  return kodeDariNilai(new URLSearchParams(search).get("order"));
+}
+
+/** Nilai `order` dari searchParams halaman (bisa string, array, atau tidak ada). */
+export function kodeDariNilai(nilai: unknown): string | null {
+  const kode = typeof nilai === "string" ? nilai.trim() : "";
   return POLA_KODE_PESANAN.test(kode) ? kode : null;
 }
 

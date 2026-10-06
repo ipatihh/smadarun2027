@@ -106,7 +106,8 @@ hasilnya dari kolom "Tindakan partner" di §7 dokumen core, tambahkan uji di
   hanya memakainya karena host-nya host `partner_landing_url` event (`https://www.smadarun.id`) —
   mengganti domain situs berarti mengganti tautan "Tiket dijual di" di kembar.in juga, atau
   pembeli diam-diam kembali ke kembar.in. Wajib `www`: token di `localStorage` per origin.
-- `/daftar/status?order=<kode>`: kode sama dengan pesanan tersimpan = diperiksa ke core; kode lain
+- `/daftar/status?order=<kode>` (dibaca di server; sampai hasil pertama hanya kartu "Memeriksa
+  pembayaran…"): kode sama dengan pesanan tersimpan = diperiksa ke core; kode lain
   tampil tanpa token (tautan kembar.in saja). `result` tidak pernah dibaca. Setelah kembali dari
   gateway, `pending` diperiksa ulang tiap 5 dtk, maksimal 12 kali (`perluPeriksaUlang`).
 - `api/status-pesanan`: timeout 10 dtk termasuk body, tanpa retry, 30 permintaan/menit per IP,
