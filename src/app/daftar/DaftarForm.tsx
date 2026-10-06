@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState, ChangeEvent, FocusEvent, FormEvent } from "react";
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/WilayahSelect";
@@ -148,7 +148,7 @@ interface DaftarFormProps {
 const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
 const fieldClass = (hasError: boolean) =>
-  `min-h-12 w-full rounded-field border bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
+  `min-h-12 w-full rounded-field border bg-card px-4 py-3 text-base text-foreground sm:text-sm outline-none transition placeholder:text-muted-foreground focus:ring-4 ${
     hasError
       ? "border-danger focus:border-danger focus:ring-danger/20"
       : "border-field-border focus:border-focus focus:ring-focus/15"
@@ -679,9 +679,18 @@ export default function DaftarForm({
 
   const labelStatus = status === "redirecting" ? "Mengalihkan ke pembayaran…" : "Memproses…";
 
+  // Sebelum hidrasi selesai onSubmit belum terpasang, dan form tanpa method mengirim GET biasa:
+  // nama/email/WhatsApp ikut ke URL & riwayat browser lalu halaman memuat ulang dengan isian kosong.
+  // Selama belum siap tombol bertipe "button" (tampilannya tetap sama), jadi tidak ada submit native.
+  const siap = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+
   const submitButton = (label = "Lanjut ke pembayaran", extraClass = "min-h-11 px-5") => (
     <button
-      type="submit"
+      type={siap ? "submit" : "button"}
       form="formDaftar"
       disabled={loading || isFormClosed}
       aria-busy={loading}
@@ -1320,21 +1329,23 @@ export default function DaftarForm({
           keyboard dan menutup daftar pilihan. */}
       {PENDAFTARAN_DIBUKA && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md group-has-[[role=listbox]]/daftar:hidden lg:hidden">
-          <div className="mx-auto flex max-w-xl flex-col items-center gap-2 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
-            <div className="flex w-full min-w-0 items-baseline justify-between gap-4">
+          <div className="mx-auto flex max-w-xl items-center gap-4 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
+            <div className="min-w-0">
               <div className="text-xs text-muted-foreground">
                 Total · {pesertaList.length} tiket
-                {ringkasanError && (
-                  <span className="ml-2 font-bold text-danger">· {ringkasanError.jumlah} isian belum benar</span>
-                )}
               </div>
               <div className="text-lg font-semibold leading-none tracking-tight text-foreground tabular-nums">
                 {rupiah(totalAmount)}
               </div>
+              {ringkasanError && (
+                <div className="mt-1 text-[11px] font-bold text-danger">
+                  {ringkasanError.jumlah} isian belum benar
+                </div>
+              )}
             </div>
-            <div className="flex w-full flex-col items-center gap-1.5">
+            <div className="ml-auto flex w-36 shrink-0 flex-col items-center gap-1.5 sm:w-44">
               <div className="w-full">{submitButton("Bayar", "min-h-11 w-full px-5")}</div>
-              <div className="text-center text-[10px] leading-tight text-muted-foreground">
+              <div className="text-center text-[9px] leading-tight text-muted-foreground">
                 Powered by <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-foreground">PT KEMBAR INOVASI</a>
               </div>
             </div>

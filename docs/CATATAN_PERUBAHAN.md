@@ -5,6 +5,22 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 6 Oktober 2026 — Perbaikan mobile `/daftar`
+
+- **Layar zoom saat mengetik** (iOS Safari): kolom isian `text-sm` (14px) memicu zoom otomatis saat fokus.
+  `fieldClass` kini `text-base sm:text-sm` (16px di ponsel). JANGAN menurunkan isian di bawah 16px di
+  ponsel, dan jangan menonaktifkan zoom lewat meta viewport (aksesibilitas). `WilayahSelect` sudah 16px.
+- **Bar bayar ponsel dikembalikan** ke bentuk semula: total di kiri, tombol "Bayar" pendek di kanan,
+  "Powered by" di bawahnya. Versi bertumpuk (tombol selebar penuh di tengah) dibatalkan atas permintaan
+  pemilik — tombol bayar ponsel sengaja rata kanan.
+- **Celah privasi lama ditutup:** form tanpa `method` mengirim GET biasa bila tombol ditekan sebelum
+  hidrasi selesai, sehingga nama/email/WhatsApp masuk URL dan riwayat lalu halaman memuat ulang dengan
+  isian kosong (terlihat sebagai "kotak bayar bug" di koneksi lambat). Tombol bayar kini bertipe `button`
+  sampai hidrasi selesai (`useSyncExternalStore`), lalu `submit`. Diuji: HTML server berisi `type="button"`,
+  setelah hidrasi validasi berjalan dan URL tetap bersih; lebar 320px dan 375px tanpa overflow.
+
+---
+
 ## 6 Oktober 2026 — Tema "Warm Editorial": hangat, elegan, minimalis
 
 Nama tema untuk dirujuk agent lain: **Warm Editorial**. Ini penajaman dari entri "Penyegaran UI

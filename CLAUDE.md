@@ -148,6 +148,9 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   (`border-border-strong/60`) cukup. Setiap seksi dibuka `Eyebrow` + `SectionTitle`. Foto hero/galeri
   memakai `.photo-warm` dan `rounded-photo`; galeri wajib punya `caption`. Judul hero **SMADARUN**
   huruf kapital penuh; teks hero rata kiri (sorotan foto di kanan), semua CTA lain rata tengah.
+- **Mobile `/daftar`**: isian form harus ≥16px di ponsel (kalau tidak, iOS zoom saat fokus); bar bayar
+  ponsel = total kiri + tombol "Bayar" pendek rata kanan (jangan dibuat selebar penuh/tengah); tombol
+  bayar harus tetap `type="button"` sebelum hidrasi (`siap`) agar tidak ada submit GET berisi PII.
 - **Favicon & OG image**: jangan tulis `images` di `openGraph`/`twitter` pada `layout.tsx` — Next
   memasangnya otomatis dari berkas di `src/app/` (lihat `docs/PANDUAN_ASET.md`). Referensi ke file
   yang tidak ada membuat pratinjau tautan rusak tanpa error.
