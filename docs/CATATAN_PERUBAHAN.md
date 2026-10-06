@@ -107,6 +107,18 @@ Terbuka:
 
 ---
 
+## 6 Oktober 2026 — Hero: celah di bawah foto & foto buram
+
+- **Celah krem di bawah foto hero** bukan karena foto kecil: section Hero punya `pb-16/pb-24`, sedangkan
+  panel hari lomba hanya menimpanya `-mt-8/-mt-12`, jadi tersisa ±48px. Kini Hero tanpa padding bawah dan
+  panel menumpuk di tepi bawah foto (`EventInfo`: `-mt-10 sm:-mt-14`). Terukur: celah +48px → −40..−56px.
+- **Foto diregangkan (buram):** foto di-zoom `scale-[1.9]/1.85` agar teks "2026" terpotong, tetapi `sizes="100vw"`
+  membuat browser memilih berkas selebar layar lalu diregangkan 1,85×. Kini `sizes="(min-width: 640px) 185vw, 190vw"`
+  → rasio tampil/berkas 1,00. Berkas asli 6000×4000 (cukup). Harga: layar 1920px memuat varian 3840w (±0,9 MB).
+  Penghematan lanjutan (belum dikerjakan): pra-crop `hero1.JPG` ke area yang terlihat lalu hapus `scale`.
+
+---
+
 ## 6 Oktober 2026 — Perbaikan mobile `/daftar`
 
 - **Layar zoom saat mengetik** (iOS Safari): kolom isian `text-sm` (14px) memicu zoom otomatis saat fokus.

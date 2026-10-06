@@ -11,7 +11,7 @@ import { logoSekolah } from "@/data/logo";
  * tepi aset tidak berbenturan dengan identitas acara 2027.
  */
 const Hero: React.FC = () => (
-  <section id="beranda" className="hero-atmosphere relative isolate overflow-hidden pb-16 pt-28 sm:pb-24 sm:pt-36">
+  <section id="beranda" className="hero-atmosphere relative isolate overflow-hidden pt-28 sm:pt-36">
     <div className="hero-grid pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
 
     <div className="mx-auto max-w-7xl px-5">
@@ -45,7 +45,9 @@ const Hero: React.FC = () => (
           src={heroDetails.centerImageSrc}
           alt={heroDetails.centerImageAlt}
           fill
-          sizes="100vw"
+          // Foto diperbesar ±1.9x lewat scale (crop untuk menyembunyikan teks 2026), jadi sumber harus
+          // ±1.9x lebar layar; dengan "100vw" browser memilih berkas terlalu kecil lalu diregangkan (buram).
+          sizes="(min-width: 640px) 185vw, 190vw"
           priority
           unoptimized={heroDetails.centerImageSrc.toLowerCase().endsWith(".svg")}
           className="photo-warm scale-[1.9] object-cover object-[58%_center] sm:scale-[1.85] sm:object-[center_80%]"

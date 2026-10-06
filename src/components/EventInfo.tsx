@@ -68,7 +68,7 @@ async function EventInfo() {
   const adaFakta = fakta.length > 0;
 
   return (
-    <section id="jadwal" aria-labelledby="jadwal-judul" className="relative z-20 -mt-8 px-5 sm:-mt-12">
+    <section id="jadwal" aria-labelledby="jadwal-judul" className="relative z-20 -mt-10 px-5 sm:-mt-14">
       <div className="relative mx-auto max-w-5xl overflow-hidden rounded-panel border border-on-secondary/10 bg-secondary px-6 py-8 text-on-secondary shadow-hover sm:px-10 sm:py-10">
         <div
           aria-hidden="true"
