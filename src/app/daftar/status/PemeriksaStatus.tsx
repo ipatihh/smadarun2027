@@ -6,9 +6,13 @@ import { FiCheckCircle, FiClock, FiRefreshCw, FiXCircle, FiAlertTriangle } from 
 import {
   bacaPesananTerakhir,
   HasilStatus,
+  JEDA_PERIKSA_ULANG_MS,
+  kodeDariKueri,
   KUNCI_SESI_PESANAN,
   lupakanPesananTerakhir,
+  perluPeriksaUlang,
   PesananTersimpan,
+  pilihPesananTampil,
   tafsirkanResponsStatus,
   urlPaymentReturn,
 } from "@/lib/statusPesanan";
@@ -26,6 +30,9 @@ const bacaMentah = () => {
     return null;
   }
 };
+// `?order=` dari tujuan kembali gateway. URL tidak berubah selama halaman terbuka.
+const tanpaLangganan = () => () => {};
+const bacaKodeKembali = () => kodeDariKueri(window.location.search);
 
 const BATAS_TUNGGU_MS = 15_000; // > batas api/status-pesanan (10 dtk)
 
@@ -62,19 +69,25 @@ const tautanKedua =
   "text-sm font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded";
 
 /**
- * Status pesanan terakhir yang dibuat dari TAB INI (kode + token di sessionStorage).
- * Tanpa token (tab lama, atau core belum memasang ORDER_STATUS_TOKEN_SECRET) pendaftar
- * diarahkan ke halaman payment-return kembar.in, yang bisa dibuka cukup dengan kode.
- * Tidak ada pemeriksaan berkala otomatis — "Periksa lagi" ditekan pengguna.
+ * Status pesanan terakhir yang dibuat dari TAB INI (kode + token di sessionStorage), juga
+ * tujuan kembali gateway setelah bayar (`?order=<kode>`, lihat URL_KEMBALI_PEMBAYARAN).
+ * Tanpa token (tab lama, tab/perangkat lain, atau core belum memasang
+ * ORDER_STATUS_TOKEN_SECRET) pendaftar diarahkan ke halaman payment-return kembar.in, yang
+ * bisa dibuka cukup dengan kode. Pemeriksaan otomatis berulang hanya sebentar setelah
+ * kembali dari gateway (perluPeriksaUlang); selebihnya "Periksa lagi" ditekan pengguna.
  */
 export default function PemeriksaStatus() {
   const mentah = useSyncExternalStore(berlangganan, bacaMentah, () => null);
+  const kodeKembali = useSyncExternalStore(tanpaLangganan, bacaKodeKembali, () => null);
   const [dilupakan, setDilupakan] = useState(false);
   // `mentah` dipakai sebagai pemicu: isi yang sama → objek yang sama → effect tidak berulang.
   const tersimpan = useMemo(() => (mentah ? bacaPesananTerakhir() : null), [mentah]);
-  const pesanan = dilupakan ? null : tersimpan;
+  const tampil = useMemo(() => pilihPesananTampil(tersimpan, kodeKembali), [tersimpan, kodeKembali]);
+  const pesanan = dilupakan ? null : (tampil?.pesanan ?? null);
+  const dariGateway = tampil?.dariGateway === true;
   // null = belum ada hasil (ditampilkan sebagai "memeriksa" bila ada token).
   const [hasil, setHasil] = useState<HasilStatus | "memeriksa" | null>(null);
+  const [sudahDiulang, setSudahDiulang] = useState(0);
 
   useEffect(() => {
     if (!pesanan?.statusToken) return;
@@ -86,6 +99,23 @@ export default function PemeriksaStatus() {
       batal = true;
     };
   }, [pesanan]);
+
+  // Baru kembali dari gateway: `pending` diperiksa ulang sebentar tanpa menghapus tampilan.
+  useEffect(() => {
+    if (!pesanan || hasil === "memeriksa" || !perluPeriksaUlang(hasil, dariGateway, sudahDiulang)) return;
+    let batal = false;
+    const timer = window.setTimeout(() => {
+      void ambilStatus(pesanan).then((h) => {
+        if (batal) return;
+        setSudahDiulang((n) => n + 1);
+        setHasil(h);
+      });
+    }, JEDA_PERIKSA_ULANG_MS);
+    return () => {
+      batal = true;
+      window.clearTimeout(timer);
+    };
+  }, [pesanan, hasil, dariGateway, sudahDiulang]);
 
   const periksaLagi = async (p: PesananTersimpan) => {
     setHasil("memeriksa");
@@ -126,10 +156,20 @@ export default function PemeriksaStatus() {
         </Judul>
       );
     } else if (order.status === "pending") {
+      const batas = order.paymentExpiresAt ? ` sebelum ${formatWib(order.paymentExpiresAt)}` : "";
+      // Kembali dari gateway tidak berarti sudah membayar (bisa baru memilih metode bayar),
+      // jadi kedua kemungkinan disebut tanpa menebak.
+      const sudahBayar = perluPeriksaUlang(hasil, dariGateway, sudahDiulang)
+        ? "Sudah membayar? Status diperbarui otomatis dalam beberapa saat."
+        : "Sudah membayar? Konfirmasi bisa butuh beberapa menit; tekan Periksa lagi.";
       isi = (
         <>
           <Judul ikon={<FiClock />} warna="warning" judul="Menunggu pembayaran">
-            {order.paymentExpiresAt ? <>Selesaikan sebelum {formatWib(order.paymentExpiresAt)}.</> : "Pesanan belum dibayar."}
+            {dariGateway
+              ? `${sudahBayar} Belum? Selesaikan${batas}.`
+              : batas
+                ? `Selesaikan${batas}.`
+                : "Pesanan belum dibayar."}
           </Judul>
           {order.paymentUrl ? (
             <a href={order.paymentUrl} rel="noopener noreferrer" className={`mt-4 ${tombolUtama}`}>
@@ -138,6 +178,14 @@ export default function PemeriksaStatus() {
           ) : (
             <div className="mt-3">{tautanKembarIn}</div>
           )}
+          <button
+            type="button"
+            onClick={() => void periksaLagi(pesanan)}
+            className={`mt-3 inline-flex items-center gap-1.5 ${tautanKedua}`}
+          >
+            <FiRefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            Periksa lagi
+          </button>
         </>
       );
     } else if (order.status === "expired") {
@@ -191,21 +239,23 @@ export default function PemeriksaStatus() {
     <section aria-labelledby="status-pesanan-judul" className="mt-8 rounded-field border border-border bg-surface-sunken p-5">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="status-pesanan-judul" className="text-sm font-bold text-foreground">
-          Pesanan terakhir dari perangkat ini
+          {tampil?.dariPenyimpanan ? "Pesanan terakhir dari perangkat ini" : "Pesanan dari halaman pembayaran"}
         </h2>
         <span className="font-mono text-sm font-semibold text-foreground">{pesanan.kode}</span>
       </div>
       <div aria-live="polite">{isi}</div>
-      <button
-        type="button"
-        onClick={() => {
-          lupakanPesananTerakhir();
-          setDilupakan(true);
-        }}
-        className="mt-4 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded"
-      >
-        Lupakan pesanan ini di perangkat ini
-      </button>
+      {tampil?.dariPenyimpanan && (
+        <button
+          type="button"
+          onClick={() => {
+            lupakanPesananTerakhir();
+            setDilupakan(true);
+          }}
+          className="mt-4 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded"
+        >
+          Lupakan pesanan ini di perangkat ini
+        </button>
+      )}
     </section>
   );
 }

@@ -180,6 +180,13 @@ describe("kontrak ke core", () => {
     expect(dikirim.paymentGateway).toBe("auto");
   });
 
+  it("tujuan kembali setelah bayar selalu halaman status situs ini; nilai dari browser diabaikan", async () => {
+    await POST(permintaan(payloadValid({ partnerReturnUrl: "https://evil.example/curi" })));
+    const dikirim = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(dikirim.partnerReturnUrl).toBe("https://www.smadarun.id/daftar/status");
+    expect(JSON.stringify(dikirim)).not.toContain("evil.example");
+  });
+
   it("respons sukses {} dari core = 502 belum pasti (isian tidak boleh dihapus browser)", async () => {
     fetchMock.mockResolvedValueOnce(responsCore({}));
     const res = await POST(permintaan(payloadValid()));

@@ -1,14 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import {
+  BATAS_PERIKSA_ULANG,
   bacaPesananTerakhir,
+  type HasilStatus,
+  kodeDariKueri,
   KUNCI_SESI_PESANAN,
   lupakanPesananTerakhir,
+  perluPeriksaUlang,
+  pilihPesananTampil,
   simpanPesananTerakhir,
   tafsirkanResponsStatus,
   terjemahkanStatusCore,
+  URL_KEMBALI_PEMBAYARAN,
   urlPaymentReturn,
 } from "@/lib/statusPesanan";
+import { existsSync } from "node:fs";
 import { POST } from "@/app/api/status-pesanan/route";
 
 // Data sintetis. Token 43 karakter base64url.
@@ -90,6 +97,54 @@ describe("tafsirkanResponsStatus — browser", () => {
 
   it("tautan cadangan kembar.in memakai kode pesanan saja (tanpa token)", () => {
     expect(urlPaymentReturn(KODE)).toBe("https://kembar.in/events/smadarun/payment-return?order=ORD-ABC123");
+  });
+});
+
+describe("kembali dari gateway (?order=)", () => {
+  it("tujuan kembali: https di www (smadarun.id dialihkan ke www), ke halaman status yang memang ada", () => {
+    const url = new URL(URL_KEMBALI_PEMBAYARAN);
+    expect(url.protocol).toBe("https:");
+    expect(url.host).toBe("www.smadarun.id");
+    expect(url.pathname).toBe("/daftar/status");
+    expect(url.search + url.hash).toBe("");
+    expect(existsSync("src/app/daftar/status/page.tsx")).toBe(true);
+  });
+
+  it("kode dari ?order= divalidasi; result tidak pernah dibaca", () => {
+    expect(kodeDariKueri("?order=KBR-MG8X2K1A-3F9A2B&result=success")).toBe("KBR-MG8X2K1A-3F9A2B");
+    // Gateway boleh menambah parameternya sendiri di belakang.
+    expect(kodeDariKueri("?order=KBR-A1&result=success&order_id=KBR-A1&transaction_status=pending")).toBe("KBR-A1");
+    expect(kodeDariKueri("?result=success")).toBeNull();
+    expect(kodeDariKueri("")).toBeNull();
+    expect(kodeDariKueri("?order=%3Cscript%3E")).toBeNull();
+    expect(kodeDariKueri(`?order=${"A".repeat(65)}`)).toBeNull();
+  });
+
+  it("kode sama dengan pesanan tersimpan = pesanan itu beserta tokennya", () => {
+    const tersimpan = { kode: KODE, statusToken: TOKEN };
+    expect(pilihPesananTampil(tersimpan, KODE)).toEqual({ pesanan: tersimpan, dariPenyimpanan: true, dariGateway: true });
+    expect(pilihPesananTampil(tersimpan, null)).toEqual({ pesanan: tersimpan, dariPenyimpanan: true, dariGateway: false });
+    expect(pilihPesananTampil(null, null)).toBeNull();
+  });
+
+  it("kode lain (tab/perangkat lain) tampil tanpa token: tidak bisa diperiksa, tidak bisa dilupakan", () => {
+    const tampil = pilihPesananTampil({ kode: "ORD-LAIN", statusToken: TOKEN }, KODE);
+    expect(tampil).toEqual({ pesanan: { kode: KODE }, dariPenyimpanan: false, dariGateway: true });
+    expect(JSON.stringify(tampil)).not.toContain(TOKEN);
+    expect(pilihPesananTampil(null, KODE)).toEqual({ pesanan: { kode: KODE }, dariPenyimpanan: false, dariGateway: true });
+  });
+
+  it("periksa ulang otomatis hanya untuk pending setelah kembali dari gateway, dan berbatas", () => {
+    const pending: HasilStatus = { jenis: "ada", order: { status: "pending" } };
+    expect(perluPeriksaUlang(pending, true, 0)).toBe(true);
+    expect(perluPeriksaUlang(pending, true, BATAS_PERIKSA_ULANG - 1)).toBe(true);
+    expect(perluPeriksaUlang(pending, true, BATAS_PERIKSA_ULANG)).toBe(false);
+    expect(perluPeriksaUlang(pending, false, 0)).toBe(false);
+    expect(perluPeriksaUlang({ jenis: "ada", order: { status: "paid" } }, true, 0)).toBe(false);
+    expect(perluPeriksaUlang({ jenis: "gangguan" }, true, 0)).toBe(false);
+    expect(perluPeriksaUlang(null, true, 0)).toBe(false);
+    // Awal + ulangan tetap di bawah batas core 20/menit per pesanan.
+    expect(1 + BATAS_PERIKSA_ULANG).toBeLessThanOrEqual(20);
   });
 });
 

@@ -90,6 +90,13 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   adalah kunci akses pesanan) lalu diperiksa lewat `api/status-pesanan` → core
   `POST /api/public/orders/status`. Tanpa token (tab lama, atau core belum memasang
   `ORDER_STATUS_TOKEN_SECRET`) halaman menautkan `kembar.in/events/smadarun/payment-return?order=`.
+- **Gateway memulangkan pembeli ke `https://www.smadarun.id/daftar/status?order=<kode>&result=…`**
+  (`URL_KEMBALI_PEMBAYARAN`, dikirim `api/daftar` sebagai `partnerReturnUrl`). Tiga hal yang
+  tidak terlihat dari kode: (1) core hanya menerimanya bila host-nya sama dengan tautan "Tiket
+  dijual di" event smadarun di kembar.in — ganti domain = ganti tautan itu juga, kalau tidak
+  pembeli diam-diam kembali ke kembar.in; (2) wajib `www`, karena token ada di `sessionStorage`
+  per origin dan smadarun.id dialihkan ke www; (3) JANGAN pernah membaca `result` sebagai
+  status — siapa pun bisa mengetiknya, dan gateway juga memulangkan pembeli yang belum membayar.
 - IP pengunjung dibaca lewat `getClientIp()`: `x-vercel-forwarded-for` dulu, lalu entri
   PALING KANAN dari `x-forwarded-for`. Memakai seluruh string `x-forwarded-for` (perilaku
   lama) membuat rate limiter bisa dilewati cukup dengan mengarang header.

@@ -130,6 +130,7 @@ async function daftar(req, res) {
     sessionId,
     adaKunciTrustedProxy: Boolean(req.headers["x-trusted-proxy-key"]),
     kunciTopLevel: Object.keys(data),
+    partnerReturnUrl: data.partnerReturnUrl ?? null,
     peserta: (data.participants || []).map((p) => ({ nama: p.nama, nik: p.customFields?.nik, size: p.customFields?.size, namaBib: p.customFields?.nama_bib, darurat: [p.customFields?.kontak_darurat_nama, p.customFields?.kontak_darurat_nomor, p.customFields?.golongan_darah] })),
   });
   if (sessionId && pesananPerSesi.has(sessionId) && mode !== "timeout-lalu-ada") {

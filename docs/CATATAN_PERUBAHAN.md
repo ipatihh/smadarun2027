@@ -5,6 +5,41 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 6 Oktober 2026 — Pembeli kembali ke smadarun.id setelah bayar
+
+Sebelumnya gateway selalu memulangkan pembeli ke `kembar.in/events/smadarun/payment-return`.
+Core kembarin-v2 kini menerima `partnerReturnUrl` dari partner terverifikasi (kontrak core §4b,
+commit core `8ead231`).
+
+- **`api/daftar` mengirim `partnerReturnUrl: "https://www.smadarun.id/daftar/status"`**
+  (`URL_KEMBALI_PEMBAYARAN`, `src/lib/statusPesanan.ts`). Nilai tetap dari server; isian browser
+  dengan nama yang sama dibuang. Harus `www`: smadarun.id dialihkan ke www, dan token status di
+  `sessionStorage` hanya terbaca di origin tempat pendaftar mengisi form. Core hanya memakainya
+  karena host-nya host tautan "Tiket dijual di" event smadarun (`https://www.smadarun.id`) dan
+  karena kunci trusted-proxy cocok; selain itu core diam-diam memakai halaman kembar.in.
+- **`/daftar/status` membaca `?order=`** (`kodeDariKueri`, `pilihPesananTampil`). Kode sama dengan
+  pesanan tersimpan tab ini = diperiksa ke core seperti biasa. Kode lain (tab/perangkat lain)
+  tampil tanpa token, hanya ditautkan ke kembar.in. **`result` tidak pernah dibaca**: bisa
+  dikarang, dan gateway juga memulangkan pembeli yang baru memilih VA tanpa membayar.
+- **Periksa ulang otomatis hanya setelah kembali dari gateway** (`perluPeriksaUlang`): status
+  `pending` diperiksa lagi tiap 5 detik, paling banyak 12 kali (±1 menit; core 20/menit per
+  pesanan). Konfirmasi gateway biasanya tiba beberapa detik setelah pembeli. Di luar itu tetap
+  tidak ada pemeriksaan berkala; tombol "Periksa lagi" kini juga ada untuk status pending.
+- Halaman tetap statis (kueri dibaca di browser lewat `useSyncExternalStore`).
+
+Diuji: 96 uji vitest (uji baru gagal pada mutasi: nilai dari browser diteruskan; token pesanan
+lain ikut terpakai); browser (build production + mock core): kembali dengan kode tersimpan →
+pending lalu otomatis "Pembayaran diterima" setelah mock diubah ke `paid` lalu berhenti
+memeriksa; kode palsu + `result=success` → hanya tautan kembar.in; tanpa `?order=` → satu kali
+periksa; batas 1 + 12 pemeriksaan; ponsel 375px; console bersih.
+
+Terbuka:
+- Berlaku setelah core `8ead231` tayang. Core lama mengabaikan field ini, jadi urutan rilis aman
+  dua arah; sebelum core tayang pembeli tetap kembali ke kembar.in.
+- Pesanan yang tagihannya terbit sebelum rilis tetap kembali ke kembar.in.
+
+---
+
 ## 6 Oktober 2026 — Perbaikan mobile `/daftar`
 
 - **Layar zoom saat mengetik** (iOS Safari): kolom isian `text-sm` (14px) memicu zoom otomatis saat fokus.

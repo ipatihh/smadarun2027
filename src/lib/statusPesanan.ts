@@ -22,9 +22,63 @@ export type ResponsStatus =
   | { success: true; order: StatusTerverifikasi }
   | { success: false; hasil: JenisGagalStatus; message: string };
 
-/** Halaman yang sama dengan tujuan kembali dari gateway; bisa dibuka tanpa token. */
+/** Halaman status pesanan di kembar.in; bisa dibuka cukup dengan kode, tanpa token. */
 export const urlPaymentReturn = (kode: string) =>
   `https://kembar.in/events/smadarun/payment-return?order=${encodeURIComponent(kode)}`;
+
+/**
+ * Tujuan kembali dari gateway setelah bayar (`partnerReturnUrl`, kontrak core §4b). Core
+ * menambahkan `?order=<kode>&result=success|failed` dan hanya memakainya karena host-nya
+ * sama dengan tautan "Tiket dijual di" event smadarun di kembar.in — selain itu pembeli
+ * kembali ke halaman kembar.in di atas. Harus `www`: smadarun.id dialihkan ke www, dan
+ * token status di sessionStorage hanya terbaca di origin tempat pendaftar mengisi form.
+ */
+export const URL_KEMBALI_PEMBAYARAN = "https://www.smadarun.id/daftar/status";
+
+/**
+ * Kode pesanan dari `?order=` tujuan kembali gateway. `result` sengaja tidak dibaca: siapa pun
+ * bisa mengetik `?result=success`, dan gateway juga memulangkan pembeli yang baru memilih
+ * metode bayar tanpa membayar. Status hanya dari core.
+ */
+export function kodeDariKueri(search: string): string | null {
+  const kode = new URLSearchParams(search).get("order")?.trim() ?? "";
+  return POLA_KODE_PESANAN.test(kode) ? kode : null;
+}
+
+export interface PesananTampil {
+  pesanan: PesananTersimpan;
+  /** Tersimpan di tab ini — hanya ini yang bisa "dilupakan". */
+  dariPenyimpanan: boolean;
+  /** Halaman dibuka dari tujuan kembali gateway untuk pesanan ini. */
+  dariGateway: boolean;
+}
+
+/**
+ * Pesanan yang ditampilkan halaman status. Kembali dari gateway dengan kode yang sama dengan
+ * pesanan tersimpan = pesanan itu, lengkap dengan tokennya. Kode lain (tab/perangkat lain,
+ * penyimpanan diblokir) tampil TANPA token — tidak bisa diperiksa dari sini, hanya ditautkan
+ * ke kembar.in.
+ */
+export function pilihPesananTampil(tersimpan: PesananTersimpan | null, kodeKembali: string | null): PesananTampil | null {
+  if (kodeKembali && tersimpan?.kode !== kodeKembali) {
+    return { pesanan: { kode: kodeKembali }, dariPenyimpanan: false, dariGateway: true };
+  }
+  if (!tersimpan) return null;
+  return { pesanan: tersimpan, dariPenyimpanan: true, dariGateway: kodeKembali === tersimpan.kode };
+}
+
+/**
+ * Baru kembali dari gateway, konfirmasi pembayaran bisa tiba beberapa detik setelah pembeli.
+ * Status `pending` diperiksa ulang otomatis sebentar: 12 × 5 detik ≈ 1 menit, di bawah batas
+ * core 20/menit per pesanan dan batas api/status-pesanan 30/menit per IP. Setelah itu
+ * pengguna menekan "Periksa lagi".
+ */
+export const JEDA_PERIKSA_ULANG_MS = 5_000;
+export const BATAS_PERIKSA_ULANG = 12;
+
+export function perluPeriksaUlang(hasil: HasilStatus | null, dariGateway: boolean, sudahDiulang: number): boolean {
+  return dariGateway && sudahDiulang < BATAS_PERIKSA_ULANG && hasil?.jenis === "ada" && hasil.order.status === "pending";
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);

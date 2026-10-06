@@ -34,6 +34,7 @@ import {
 import { VERSI_PERSETUJUAN_DIKENAL, VERSI_PERSETUJUAN_TANPA_LABEL } from "@/lib/persetujuan";
 import { rapikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
 import { rapikanIsian, validasiKolomTambahan } from "@/lib/kolomTambahan";
+import { URL_KEMBALI_PEMBAYARAN } from "@/lib/statusPesanan";
 
 // ─── Batas & proteksi per instance ───────────────────────────────────────────
 // Semua Map di bawah hidup di memori SATU instance serverless (Vercel bisa menjalankan
@@ -514,6 +515,12 @@ export async function POST(req: NextRequest) {
       privacy_consent: true,
       consent_recorded_at: new Date(now).toISOString(),
       consent_policy_version: versiPersetujuan,
+
+      // Setelah bayar, gateway memulangkan pembeli ke /daftar/status situs ini, bukan ke
+      // kembar.in (kontrak core §4b). Nilai tetap dari server — tidak pernah dari browser.
+      // Core hanya memakainya dari partner terverifikasi dan bila host-nya host tautan
+      // partner event; selain itu core diam-diam memakai halaman kembar.in.
+      partnerReturnUrl: URL_KEMBALI_PEMBAYARAN,
     };
 
     // Header trusted-proxy (IP pengunjung asli) — lihat headerKeCore di src/lib/proxyCore.ts.

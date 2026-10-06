@@ -1,7 +1,7 @@
 # Integrasi dengan core kembarin-v2 (sisi smadarun2027)
 
-**Terakhir diselaraskan:** 2 Oktober 2026, dengan kontrak partner core (kembarin-v2 branch `v2`,
-commit `e1e8c23`, dokumen `docs/PARTNER_INTEGRATION.md`). Dokumen core itulah acuan kanonis;
+**Terakhir diselaraskan:** 6 Oktober 2026, dengan kontrak partner core (kembarin-v2 branch `v2`,
+commit `8ead231`, dokumen `docs/PARTNER_INTEGRATION.md`). Dokumen core itulah acuan kanonis;
 berkas ini menjelaskan bagaimana situs ini memenuhinya dan di mana kodenya.
 
 ## 1. Endpoint core yang dipakai
@@ -23,7 +23,7 @@ Dibangun EKSPLISIT di `api/daftar` dari field yang sudah divalidasi (jangan pern
 `eventCode: "smadarun"`, `sessionId`, `buyer`, `participants[]` (`nama`, `email`,
 `ticketTypeId`, `customFields` termasuk `__wilayah_prov`/`__wilayah_kota`),
 `paymentGateway: "auto"`, `health_declaration`, `privacy_consent`, `consent_recorded_at`
-(jam server situs ini), `consent_policy_version`.
+(jam server situs ini), `consent_policy_version`, `partnerReturnUrl` (§5).
 
 Harga/subtotal dari browser hanya dicocokkan sebagai deteksi manipulasi; core menghitung ulang.
 
@@ -89,12 +89,22 @@ hasilnya dari kolom "Tindakan partner" di §7 dokumen core, tambahkan uji di
   token adalah kunci akses pesanan. Kode tanpa token (hasil belum pasti/ditolak berkode) juga
   disimpan, tanpa menghapus token milik kode yang sama.
 - `/daftar/status` (`PemeriksaStatus.tsx`) memanggil `api/status-pesanan` sekali saat dibuka;
-  "Periksa lagi" hanya untuk gangguan/batas laju dan ditekan pengguna.
+  "Periksa lagi" (gangguan, batas laju, pending) ditekan pengguna. Satu-satunya pemeriksaan
+  berulang otomatis: sebentar setelah kembali dari gateway (di bawah).
 - Core: `200` → `pending` (tombol bayar + batas WIB), `paid`, `expired`, `cancelled`;
   `404 ORDER_NOT_FOUND` = tidak ada **atau** token salah (dijawab sama, anti-enumerasi);
   `503 ORDER_STATUS_UNAVAILABLE` = `ORDER_STATUS_TOKEN_SECRET` core belum dipasang.
 - Tanpa token atau fitur belum aktif: tautan
   `https://kembar.in/events/smadarun/payment-return?order=<kode>`.
+- **Tujuan kembali dari gateway** (kontrak core §4b, sejak 6 Oktober 2026): `api/daftar` mengirim
+  `partnerReturnUrl: "https://www.smadarun.id/daftar/status"` (`URL_KEMBALI_PEMBAYARAN`; nilai
+  tetap server, bukan dari browser). Core menambahkan `?order=<kode>&result=success|failed`, dan
+  hanya memakainya karena host-nya host `partner_landing_url` event (`https://www.smadarun.id`) —
+  mengganti domain situs berarti mengganti tautan "Tiket dijual di" di kembar.in juga, atau
+  pembeli diam-diam kembali ke kembar.in. Wajib `www`: token di `sessionStorage` per origin.
+- `/daftar/status?order=<kode>`: kode sama dengan pesanan tersimpan = diperiksa ke core; kode lain
+  tampil tanpa token (tautan kembar.in saja). `result` tidak pernah dibaca. Setelah kembali dari
+  gateway, `pending` diperiksa ulang tiap 5 dtk, maksimal 12 kali (`perluPeriksaUlang`).
 - `api/status-pesanan`: timeout 10 dtk termasuk body, tanpa retry, 30 permintaan/menit per IP,
   hanya field allowlist yang diteruskan, token tidak pernah dicatat.
 
