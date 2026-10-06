@@ -7,6 +7,9 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ## 6 Oktober 2026 — Penyegaran UI hangat dan minimalis
 
+- Catatan kecil miring "NB: Pembayaran online · Konfirmasi otomatis" tampil langsung
+  di bawah CTA kartu kategori yang tersedia. Caption serupa juga ada dekat pengantar
+  formulir `/daftar`, tanpa menambah panel atau tombol.
 - Galeri "Momen SMADARUN Sebelumnya" kini memakai lima foto asli panitia (`hero3.JPG`
   sampai `hero7.JPG`). Foto panggung membuka galeri, tiga foto di tengah disusun
   dalam satu baris dengan lebar kolom mengikuti rasio masing-masing agar tingginya

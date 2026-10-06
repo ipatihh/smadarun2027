@@ -59,12 +59,17 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
                 Tidak Tersedia
               </button>
             ) : (
-              <Link
-                href={tier.url || "/daftar"}
-                className="inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-center text-sm font-semibold text-on-primary shadow-rest transition-all duration-200 hover:bg-primary-accent hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-              >
-                Daftar {tier.name}
-              </Link>
+              <>
+                <Link
+                  href={tier.url || "/daftar"}
+                  className="inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-center text-sm font-semibold text-on-primary shadow-rest transition-all duration-200 hover:bg-primary-accent hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                >
+                  Daftar {tier.name}
+                </Link>
+                <p className="mt-2 text-[11px] italic leading-relaxed text-foreground-accent">
+                  <span className="font-semibold">NB:</span> Pembayaran online · Konfirmasi otomatis
+                </p>
+              </>
             )}
           </div>
         </div>

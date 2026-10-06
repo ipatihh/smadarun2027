@@ -716,6 +716,9 @@ export default function DaftarForm({
           <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
             Isi data pemesan dan peserta, lalu periksa ringkasan sebelum membayar.
           </p>
+          <p className="mt-3 text-xs font-medium tracking-[0.03em] text-foreground-accent">
+            Pembayaran online · Konfirmasi otomatis
+          </p>
         </div>
 
         {isFormClosed && (
