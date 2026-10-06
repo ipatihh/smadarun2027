@@ -1217,13 +1217,6 @@ export default function DaftarForm({
                     {RincianBiaya}
                   </div>
                 )}
-                {/* Tautan status untuk ponsel — versi desktop ada di kartu ringkasan (lg). */}
-                <p className="text-center text-xs text-muted-foreground lg:hidden">
-                  Sudah membayar?{" "}
-                  <Link href="/daftar/status" className="font-semibold text-foreground underline underline-offset-2 hover:text-foreground-accent">
-                    Lihat langkah setelah pembayaran
-                  </Link>
-                </p>
 
                 <div
                   className={`flex items-start gap-3 rounded-field border p-4 ${
@@ -1308,10 +1301,7 @@ export default function DaftarForm({
                   {ringkasanError && <div className="mt-4">{KotakRingkasanError}</div>}
                   <div className="mt-6">{submitButton("Lanjut ke pembayaran", "min-h-11 w-full px-5")}</div>
                   <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-                    Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Anda akan diarahkan ke halaman pembayaran resmi.{" "}
-                    <Link href="/daftar/status" className="font-semibold underline underline-offset-2 hover:text-foreground-accent">
-                      Sudah bayar?
-                    </Link>
+                    Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Anda akan diarahkan ke halaman pembayaran resmi.
                   </p>
                 </>
               ) : (
@@ -1492,7 +1482,7 @@ export default function DaftarForm({
                   href="/daftar/status"
                   className="w-full rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-on-primary transition hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                 >
-                  {modal.jenis === "berhasil" ? "Lihat langkah berikutnya" : "Cara memeriksa pesanan"}
+                  {modal.jenis === "berhasil" ? "Lihat ringkasan pembayaran" : "Cara memeriksa pesanan"}
                 </Link>
               )}
               <button

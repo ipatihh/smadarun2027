@@ -5,6 +5,17 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 6 Oktober 2026 — Tautan "Sudah bayar?" di form dihapus
+
+Tautan ke `/daftar/status` di bawah tombol bayar (desktop) dan di atas persetujuan (ponsel) dulu
+satu-satunya jalan kembali setelah membayar (hasil audit P5). Sejak gateway memulangkan pembeli
+langsung ke `/daftar/status` (partnerReturnUrl), tautan itu tidak diperlukan dan form disamakan
+dengan form kembar.in (keputusan pemilik). Halaman `/daftar/status` tetap ada sebagai tujuan
+kembali; pesanan yang belum dibayar dilanjutkan lewat tautan bayar di email. Tombol modal
+"Pesanan Sudah Lunas" kini berbunyi "Lihat ringkasan pembayaran".
+
+---
+
 ## 6 Oktober 2026 — Token status pindah ke localStorage
 
 Pemilik membuka tautan kembali di tab baru dan hanya mendapat tautan kembar.in: token status ada di
