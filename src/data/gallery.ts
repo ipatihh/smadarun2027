@@ -1,16 +1,12 @@
 import { IGalleryPhoto } from "@/types";
 
 // ============================================================================
-// GALERI "MOMEN TAHUN LALU" — tempat foto dokumentasi SMADARUN sebelumnya.
+// GALERI "MOMEN TAHUN LALU" — foto dokumentasi asli SMADARUN 2026.
 // ============================================================================
 //
-// SAMPLE: semua foto di bawah masih contoh. Ganti `src` dengan foto dokumentasi asli
-// (taruh filenya di public/images/) dan tulis `alt` yang menggambarkan isi foto.
-//
-// Tata letak menyesuaikan jumlah foto:
-//   - Foto PERTAMA tampil paling besar — pilih foto yang paling "bercerita".
-//   - 3 foto → 1 besar + 2 kecil. 5 foto → 1 besar + 4 kecil. Dua jumlah ini paling rapi.
-//   - Kosongkan array untuk menyembunyikan seksi ini sepenuhnya.
+// Ukuran adalah dimensi file asli; digunakan untuk menjaga proporsi gambar di
+// galeri dan lightbox. Foto panggung membuka galeri; foto garis start
+// menutupnya selebar area konten.
 //
 // ============================================================================
 
@@ -21,15 +17,33 @@ export const galleryIntro = {
 
 export const galleryPhotos: IGalleryPhoto[] = [
     {
-        src: "/images/pocari-1.jpg",
-        alt: "Pelari tersenyum saat melintas di rute malam",
+        src: "/images/hero4.JPG",
+        alt: "Para pemenang SMADARUN berfoto bersama di panggung",
+        width: 5439,
+        height: 2166,
     },
     {
-        src: "/images/pocari-1.jpg",
-        alt: "Foto bersama peserta dan panitia",
+        src: "/images/hero5.JPG",
+        alt: "Pelari mendekati garis finis di lintasan kota",
+        width: 3021,
+        height: 2004,
     },
     {
-        src: "/images/pocari-1.jpg",
-        alt: "Peserta berkumpul sebelum lomba dimulai",
+        src: "/images/hero3.JPG",
+        alt: "Juara putri SMADARUN menerima penghargaan",
+        width: 2934,
+        height: 2185,
+    },
+    {
+        src: "/images/hero7.JPG",
+        alt: "Peserta dan pendamping berfoto bersama sebelum lomba",
+        width: 3180,
+        height: 2199,
+    },
+    {
+        src: "/images/hero6.JPG",
+        alt: "Peserta bersiap di belakang pita garis start",
+        width: 4215,
+        height: 2201,
     },
 ];

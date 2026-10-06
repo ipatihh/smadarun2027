@@ -199,20 +199,18 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Gotcha operasional
 
-- **Sebagian besar konten masih SAMPLE dan memang disengaja** (per Agustus 2026): testimoni
+- **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): testimoni
   beserta avatarnya, angka statistik (`stats.ts`, tampil di kepala seksi testimoni), nomor
   telepon & tautan sosial media di `src/data/footer.ts`, logo sponsor di
   `public/images/sponsors/`, ilustrasi cadangan (`public/images/hero-illustration.svg`),
-  foto galeri "momen tahun lalu" (`src/data/gallery.ts`),
-  dan gambar panduan ukuran jersey. **Slot foto adalah bagian dari wadah**: panitia
-  merencanakannya untuk foto event tahun lalu, jadi saat menyederhanakan tata letak jangan
-  menghapus tempat foto walau isinya jelas contoh (pernah terjadi di Benefits; fotonya
-  kemudian dipindah ke galeri). Event-nya sendiri belum berjalan. Jangan "membetulkan" isinya
-  atau menganggapnya data nyata — yang harus dijaga adalah wadahnya (struktur data, tata
-  letak, aksesibilitas). Sebelum go-live, semua itu wajib diganti aset/teks asli panitia.
+  dan gambar panduan ukuran jersey. Jangan menganggap konten contoh sebagai data nyata;
+  sebelum go-live, konten itu perlu diganti aset/teks asli panitia.
 - Foto hero `public/images/hero1.JPG` adalah dokumentasi start asli dari panitia. Aset
   mengandung teks "2026" dan tanggal pada tepinya; crop responsif di `Hero.tsx` sengaja
   menyembunyikan keduanya agar tidak berbenturan dengan identitas 2027.
+- Foto galeri `public/images/hero3.JPG` sampai `hero7.JPG` adalah dokumentasi asli dari
+  panitia. `src/data/gallery.ts` mencatat dimensi asli untuk menjaga proporsi tanpa crop;
+  klik membuka lightbox untuk melihat foto berukuran besar dan memperbesar lagi.
 - `.env` di repo ini **tidak ter-track git** (sengaja dikeluarkan, lihat `.gitignore`).
   Jangan pernah taruh secret asli (`TRUSTED_PROXY_API_KEY`, dst) di file yang ter-track git —
   pakai `.env.local` untuk dev, Vercel Dashboard untuk production.

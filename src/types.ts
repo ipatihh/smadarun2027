@@ -14,6 +14,8 @@ export interface IBenefit {
 export interface IGalleryPhoto {
     src: string;
     alt: string;
+    width: number;
+    height: number;
 }
 
 export interface IPricing {
