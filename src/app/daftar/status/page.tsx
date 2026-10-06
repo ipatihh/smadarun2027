@@ -52,14 +52,14 @@ export default function StatusPendaftaranPage() {
 
       <div className="mx-auto w-full max-w-2xl">
         <div className="text-center">
-          <p className="font-display text-3xl font-bold uppercase text-foreground">
+          <p className="font-display text-3xl font-semibold uppercase tracking-[0.02em] text-foreground">
             SMADARUN <span className="accent-mark">2027</span>
           </p>
           <p className="mt-2 text-sm text-muted-foreground">Status pendaftaran</p>
         </div>
 
-        <div className="mt-8 rounded-card border border-border bg-card p-6 shadow-rest md:p-9">
-          <h1 className="font-display text-2xl font-bold text-foreground">
+        <div className="mt-8 rounded-card border border-border bg-card p-6  md:p-9">
+          <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-foreground">
             Status pendaftaran
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
@@ -109,7 +109,7 @@ export default function StatusPendaftaranPage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/"
-              className="w-full rounded-full bg-primary px-6 py-3.5 text-center text-sm font-bold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              className="w-full rounded-full bg-primary px-6 py-3.5 text-center text-sm font-bold text-on-primary transition-all hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
             >
               Kembali ke beranda
             </Link>

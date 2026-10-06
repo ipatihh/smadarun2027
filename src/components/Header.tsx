@@ -9,6 +9,8 @@ import { HiOutlineXMark, HiBars3 } from 'react-icons/hi2';
 import Container from './Container';
 import { siteDetails } from '@/data/siteDetails';
 import { menuItems } from '@/data/menuItems';
+import { logoEvent, teksHeaderDisembunyikan } from '@/data/logo';
+import BrandLogo from './BrandLogo';
 
 const Header: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -50,9 +52,12 @@ const Header: React.FC = () => {
             <Container className="!px-0">
                 <nav aria-label="Navigasi utama" className={`mx-auto flex items-center justify-between gap-4 px-4 transition-[padding] duration-500 sm:px-5 ${isScrolled ? 'py-2.5 md:py-3' : 'py-3 md:py-4'}`}>
                     <Link href="/" className="group flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background">
-                        <span className="font-display text-base font-semibold tracking-tight text-foreground sm:text-lg">
-                            {siteDetails.siteName}
-                        </span>
+                        <BrandLogo logo={logoEvent} className="h-8 sm:h-9" decorative={!teksHeaderDisembunyikan} priority />
+                        {!teksHeaderDisembunyikan && (
+                            <span className="font-display text-base font-semibold tracking-[0.02em] text-foreground sm:text-lg">
+                                {siteDetails.siteName}
+                            </span>
+                        )}
                         <span className="h-1.5 w-1.5 rounded-full bg-primary-accent opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true" />
                     </Link>
 
@@ -76,7 +81,7 @@ const Header: React.FC = () => {
                         {!isDaftarPage && (
                             <Link
                                 href="/daftar"
-                                className="inline-flex min-h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-on-primary shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="inline-flex min-h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-on-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>
@@ -88,7 +93,7 @@ const Header: React.FC = () => {
                         {!isDaftarPage && (
                             <Link
                                 href="/daftar"
-                                className="inline-flex min-h-10 items-center rounded-full bg-primary px-4 text-sm font-semibold text-on-primary shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="inline-flex min-h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-on-primary shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>

@@ -25,7 +25,7 @@ export default function ErrorHalaman({
 
   return (
     <div className="flex min-h-screen items-center justify-center px-5 py-28">
-      <div className="w-full max-w-md rounded-card border border-border bg-card p-8 text-center shadow-rest">
+      <div className="w-full max-w-md rounded-card border border-border bg-card p-8 text-center">
         <div
           className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-warning-surface text-warning"
           aria-hidden="true"
@@ -33,7 +33,7 @@ export default function ErrorHalaman({
           <FiAlertTriangle className="h-7 w-7" />
         </div>
 
-        <h1 className="font-display text-2xl font-bold text-foreground">
+        <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-foreground">
           Halaman gagal dimuat
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
@@ -46,7 +46,7 @@ export default function ErrorHalaman({
         <div className="mt-7 flex flex-col gap-3">
           <button
             onClick={reset}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-on-primary transition-all hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
           >
             <FiRefreshCw className="h-4 w-4" aria-hidden="true" />
             Coba lagi

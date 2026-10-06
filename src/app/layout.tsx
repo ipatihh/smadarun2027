@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { GoogleAnalytics } from '@next/third-parties/google';
-import { Oswald, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 
 import Header from "@/components/Header";
 import FooterLive from "@/components/FooterLive";
@@ -8,7 +8,6 @@ import { siteDetails } from '@/data/siteDetails';
 
 import "./globals.css";
 
-const oswald = Oswald({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-oswald' });
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta' });
 
 export const metadata: Metadata = {
@@ -24,20 +23,14 @@ export const metadata: Metadata = {
     description: siteDetails.metadata.description,
     url: siteDetails.siteUrl,
     type: 'website',
-    images: [
-      {
-        url: '/images/og-image.jpg',
-        width: 1200,
-        height: 675,
-        alt: siteDetails.siteName,
-      },
-    ],
+    // Gambar pratinjau (og:image) SENGAJA tidak ditulis di sini: Next.js memasangnya otomatis
+    // dari src/app/opengraph-image.jpg dan twitter-image.jpg bila filenya ada. Dulu di sini
+    // menunjuk /images/og-image.jpg yang tidak pernah ada (404). Lihat docs/PANDUAN_ASET.md.
   },
   twitter: {
     card: 'summary_large_image',
     title: siteDetails.metadata.title,
     description: siteDetails.metadata.description,
-    images: ['/images/twitter-image.jpg'],
   },
   // Verifikasi kepemilikan situs via meta tag Google Search Console — metode
   // cadangan di luar TXT record DNS (yang ditambahkan terpisah di panel
@@ -56,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body
-        className={`${oswald.variable} ${plusJakartaSans.variable} antialiased`}
+        className={`${plusJakartaSans.variable} antialiased`}
       >
         {siteDetails.googleAnalyticsId && <GoogleAnalytics gaId={siteDetails.googleAnalyticsId} />}
         {/* Skip link: pengguna keyboard/pembaca layar langsung ke konten tanpa melewati menu. */}

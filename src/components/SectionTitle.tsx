@@ -6,7 +6,7 @@ interface SectionTitleProps {
 
 const SectionTitle: React.FC<SectionTitleProps> = ({ children }) => {
     return React.cloneElement(children, {
-        className: (children.props.className ?? "") + " text-2xl sm:text-3xl lg:text-4xl lg:leading-tight font-semibold tracking-tight"
+        className: (children.props.className ?? "") + " font-display text-3xl font-semibold leading-[1.12] tracking-[-0.03em] text-foreground sm:text-4xl lg:text-5xl"
     });
 };
 

@@ -3,13 +3,15 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from "@headlessui/react
 import { BiMinus, BiPlus } from "react-icons/bi";
 
 import SectionTitle from "./SectionTitle";
+import Eyebrow from "./Eyebrow";
 import { faqs } from "@/data/faq";
 
 const FAQ: React.FC = () => {
     return (
-        <section id="faq" className="py-16 lg:py-24">
+        <section id="faq" className="py-16 lg:py-28">
             <div className="flex flex-col lg:flex-row gap-10">
                 <div className="reveal-left lg:w-80 lg:shrink-0">
+                    <Eyebrow className="justify-center lg:justify-start">Bantuan</Eyebrow>
                     <SectionTitle>
                         <h2 className="mb-3 text-center lg:text-left">
                             Pertanyaan Populer
@@ -26,13 +28,13 @@ const FAQ: React.FC = () => {
                     </a>
                 </div>
 
-                <div className="reveal-right w-full lg:max-w-2xl mx-auto border-b border-border">
+                <div className="reveal-right w-full lg:max-w-2xl mx-auto border-b border-border-strong/60">
                     {faqs.map((faq, index) => (
-                        <Disclosure key={index} as="div" className="border-t border-border">
+                        <Disclosure key={index} as="div" className="border-t border-border-strong/60">
                             {({ open }) => (
                                 <>
                                     <DisclosureButton className="group flex w-full items-center justify-between gap-4 rounded px-1 py-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
-                                        <span className="text-sm font-semibold leading-relaxed text-foreground transition-colors duration-200 group-hover:text-foreground-accent sm:text-base">
+                                        <span className="font-display text-lg font-medium leading-snug text-foreground transition-colors duration-200 group-hover:text-foreground-accent sm:text-xl">
                                             {faq.question}
                                         </span>
                                         {open ? (

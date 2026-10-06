@@ -6,6 +6,8 @@ import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 
+import Eyebrow from "./Eyebrow";
+import SectionTitle from "./SectionTitle";
 import { galleryIntro, galleryPhotos } from "@/data/gallery";
 
 /**
@@ -18,7 +20,7 @@ import { galleryIntro, galleryPhotos } from "@/data/gallery";
  * Enter/Spasi. Dulu pemicunya `figure onClick` — tidak terjangkau keyboard sama sekali.
  */
 const tombolFoto =
-    "group block w-full cursor-zoom-in overflow-hidden rounded-card bg-surface-sunken text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+    "group block w-full cursor-zoom-in overflow-hidden rounded-photo bg-surface-sunken text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 const Gallery: React.FC = () => {
     const [lightboxIndex, setLightboxIndex] = useState(-1);
 
@@ -27,15 +29,20 @@ const Gallery: React.FC = () => {
     const slides = galleryPhotos.map(({ src, alt, width, height }) => ({ src, alt, width, height }));
 
     return (
-        <section id="galeri" aria-labelledby="galeri-judul" className="pb-10 lg:pb-20">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
-                <h2 id="galeri-judul" className="reveal-left text-2xl font-bold text-foreground lg:text-3xl">
-                    {galleryIntro.title}
-                </h2>
-                <p className="reveal-right text-base text-foreground-accent">{galleryIntro.description}</p>
+        <section id="galeri" aria-labelledby="galeri-judul" className="py-16 lg:py-24">
+            <div className="grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16">
+                <div className="reveal-left">
+                    <Eyebrow>Galeri</Eyebrow>
+                    <SectionTitle>
+                        <h2 id="galeri-judul" className="max-w-md">{galleryIntro.title}</h2>
+                    </SectionTitle>
+                </div>
+                <p className="reveal-right max-w-md text-sm leading-relaxed text-foreground-accent sm:text-base lg:justify-self-end">
+                    {galleryIntro.description}
+                </p>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 items-start gap-4 md:grid-cols-[1.507fr_1.343fr_1.446fr]">
+            <div className="mt-12 grid grid-cols-1 items-start gap-x-4 gap-y-6 md:grid-cols-[1.507fr_1.343fr_1.446fr]">
                 {galleryPhotos.map((foto, index) => (
                     <figure key={foto.src} className={index === 0 || index === galleryPhotos.length - 1 ? "md:col-span-3" : undefined}>
                         <button type="button" onClick={() => setLightboxIndex(index)} className={tombolFoto} aria-label={`Perbesar foto: ${foto.alt}`}>
@@ -44,11 +51,12 @@ const Gallery: React.FC = () => {
                                 alt=""
                                 width={foto.width}
                                 height={foto.height}
-                                loading={index === 0 ? "eager" : "lazy"}
+                                loading="lazy"
                                 sizes={index === 0 || index === galleryPhotos.length - 1 ? "(max-width: 1280px) 100vw, 1280px" : "(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 420px"}
-                                className="block h-auto w-full transition-opacity duration-300 group-hover:opacity-90"
+                                className="photo-warm block h-auto w-full transition-opacity duration-300 group-hover:opacity-90"
                             />
                         </button>
+                        <figcaption className="mt-2 text-xs tracking-[0.02em] text-muted-foreground">{foto.caption}</figcaption>
                     </figure>
                 ))}
             </div>

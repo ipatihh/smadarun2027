@@ -12,7 +12,7 @@ const CTA: React.FC = () => {
                     </div>
 
                     <div className="h-full flex flex-col items-center justify-center text-on-secondary text-center px-5">
-                        <h2 className="reveal mb-4 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
+                        <h2 className="reveal mb-4 max-w-3xl font-display text-4xl font-medium leading-[1.1] tracking-[-0.02em] sm:text-5xl md:text-6xl">
                             {ctaDetails.heading}
                         </h2>
 
@@ -23,7 +23,7 @@ const CTA: React.FC = () => {
                         <div className="reveal reveal-2 mx-auto">
                             <Link
                                 href="/daftar"
-                                className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-7 text-center text-sm font-semibold text-on-primary shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+                                className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-7 text-center text-sm font-semibold text-on-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
                             >
                                 Daftar sekarang
                             </Link>

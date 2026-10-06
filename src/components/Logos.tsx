@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { sponsors, sponsorTiers, sponsorLogoPath, ISponsor, ISponsorTierConfig } from "@/data/sponsors";
 import { footerDetails } from "@/data/footer";
+import Eyebrow from "./Eyebrow";
 
 /**
  * Galeri sponsor bertingkat. Semua isinya digerakkan oleh src/data/sponsors.ts —
@@ -14,7 +15,7 @@ import { footerDetails } from "@/data/footer";
 
 const SponsorLogo: React.FC<{ sponsor: ISponsor; tier: ISponsorTierConfig }> = ({ sponsor, tier }) => {
   // bg-logo-surface tetap terang di mode gelap — logo sponsor hampir selalu dibuat untuk latar putih.
-  const boxClass = `flex ${tier.boxHeight} ${tier.boxWidth} items-center justify-center rounded-field border border-border bg-logo-surface px-4 py-2 shadow-rest transition-shadow hover:shadow-hover`;
+  const boxClass = `flex ${tier.boxHeight} ${tier.boxWidth} items-center justify-center rounded-field border border-border bg-logo-surface px-4 py-2 transition-colors hover:border-border-strong`;
 
   // Belum ada file logonya → tampilkan nama sponsor supaya barisnya tetap rapi.
   if (!sponsor.logo) {
@@ -60,7 +61,10 @@ const Logos: React.FC = () => {
   return (
     <section id="logos" className="scroll-mt-24 bg-background px-5 py-12 lg:py-16">
       <div className="mx-auto max-w-5xl">
-        <h2 className="reveal-left text-center text-xl sm:text-2xl font-bold text-foreground">Didukung oleh</h2>
+        <div className="reveal-left text-center">
+          <Eyebrow center>Sponsor</Eyebrow>
+          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">Didukung oleh</h2>
+        </div>
 
         <div className="mt-8 space-y-10">
           {tiersWithSponsors.map((tier) => (

@@ -142,6 +142,23 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Aturan sistem desain (UI)
 
+- **Tema saat ini: "Warm Editorial"** (hangat, elegan, minimalis; detail di `docs/CATATAN_PERUBAHAN.md`).
+  Aturannya: **hanya Plus Jakarta Sans** (jangan tambah serif/Oswald/font display lain; `.font-display`
+  sama dengan Jakarta), tanpa teks miring, **tanpa motif futuristik**. Hindari kartu bila garis tipis
+  (`border-border-strong/60`) cukup. Setiap seksi dibuka `Eyebrow` + `SectionTitle`. Foto hero/galeri
+  memakai `.photo-warm` dan `rounded-photo`; galeri wajib punya `caption`. Judul hero **SMADARUN**
+  huruf kapital penuh; teks hero rata kiri (sorotan foto di kanan), semua CTA lain rata tengah.
+- **Favicon & OG image**: jangan tulis `images` di `openGraph`/`twitter` pada `layout.tsx` — Next
+  memasangnya otomatis dari berkas di `src/app/` (lihat `docs/PANDUAN_ASET.md`). Referensi ke file
+  yang tidak ada membuat pratinjau tautan rusak tanpa error.
+- **Logo sekolah & event**: isi hanya lewat `src/data/logo.ts` (komponen `BrandLogo`), jangan taruh
+  `<img>` logo langsung di Header/Hero/Footer. Tidak ada placeholder bila kosong; wajib diisi sebelum go-live.
+- **Flyer rute/jersey/medali**: isi hanya lewat `src/data/flyer.ts` (petunjuk di komentar kepalanya);
+  jangan hardcode gambar di `Flyer.tsx`. Kotak "Flyer segera hadir" termasuk konten SAMPLE yang wajib
+  diisi atau dihapus sebelum go-live. Teks seksi Tiket menyesuaikan jumlah kategori live (1 vs banyak).
+- **Countdown & jadwal hari-H live dari core**: `EventInfo.tsx` membaca `event_date`, lokasi, gun
+  start, RPC lewat `getLiveEventData()`. Jangan hardcode tanggal; atur dari super admin kembar.in.
+
 - **Warna, radius, dan bayangan HANYA boleh lewat token.** Semua nilai mentah tinggal di
   `src/app/globals.css` (`:root` + blok `prefers-color-scheme: dark`) dan dipetakan di
   `tailwind.config.ts`. Di komponen JANGAN pakai palet Tailwind mentah (`bg-white`,

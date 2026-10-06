@@ -27,7 +27,7 @@ export default function LoadingDaftar() {
         </div>
 
         <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="space-y-8 rounded-panel border border-border bg-card p-5 shadow-rest sm:p-8 lg:p-10">
+          <div className="space-y-8 rounded-panel border border-border bg-card p-5 sm:p-8 lg:p-10">
             {[0, 1].map((seksi) => (
               <div key={seksi} className="space-y-5">
                 <div className="flex items-center gap-3">
@@ -44,7 +44,7 @@ export default function LoadingDaftar() {
           </div>
 
           <aside className="hidden lg:block">
-            <div className="rounded-panel border border-border bg-card p-6 shadow-rest">
+            <div className="rounded-panel border border-border bg-card p-6">
               <Baris className="h-2.5 w-32" />
               <div className="mt-5 space-y-3">
                 <Baris className="h-3 w-full" />

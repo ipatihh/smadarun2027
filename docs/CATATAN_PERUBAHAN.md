@@ -5,9 +5,81 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 6 Oktober 2026 — Tema "Warm Editorial": hangat, elegan, minimalis
+
+Nama tema untuk dirujuk agent lain: **Warm Editorial**. Ini penajaman dari entri "Penyegaran UI
+hangat dan minimalis" di bawahnya. Arah futuristik SENGAJA dibuang karena bertabrakan dengan
+kehangatan; jangan menambahkannya lagi (motif data-readout, aksen dingin, dst).
+
+**Keputusan pemilik**
+- Tipografi: **hanya Plus Jakarta Sans** — memberi kesan tenang dan dewasa. Serif (Fraunces) sempat
+  dicoba lalu dibuang; Oswald juga sudah dicopot. `.font-display` kini = Plus Jakarta Sans.
+  Judul besar memakai bobot medium–semibold dengan letter-spacing rapat. Tidak ada teks miring.
+- Judul hero tetap **SMADARUN huruf kapital penuh** (`heroDetails.heading`).
+- Teks hero (tagline, subjudul, tombol) **tetap rata kiri** karena sorotan foto ada di sisi kanan;
+  bayangan foto berupa gradien dari kiri. Jangan dipindah ke tengah.
+- Semua CTA lain **rata tengah** dalam pembungkusnya (tombol tiket, CTA penutup, tombol bayar).
+- Nominal hadiah dan teks "2026" di foto galeri dibiarkan: itu dokumentasi tahun lalu.
+
+**Yang berubah**
+- Palet: amber diganti champagne-madu (`--primary` 228 195 140, `--primary-accent` 188 144 80);
+  mode gelap jadi cokelat kopi hangat, bukan abu-abu netral.
+- Kartu dikurangi: Fasilitas = daftar bergaris tipis bernomor `01–06`; Testimoni = kutipan terbuka
+  tanpa kotak; kotak putus-putus di Tiket diganti garis tipis; kartu tiket, form, dan ringkasan
+  datar (tanpa `shadow-rest`). Panel gelap (hari lomba, CTA penutup) dipertahankan.
+- Komponen baru `src/components/Eyebrow.tsx`: label kecil berspasi + garis emas di atas judul tiap
+  seksi (Fasilitas, Galeri, Kategori, Cerita pelari, Bantuan, Sponsor) dan di kepala `/daftar`.
+  `SectionTitle` kini memakai gaya judul baru (semibold, `tracking-[-0.03em]`, sampai `lg:text-5xl`).
+- Foto: kelas `.photo-warm` (sepia/saturasi tipis) di hero dan galeri; galeri memakai radius baru
+  `rounded-photo` dan keterangan per foto (`caption` di `src/data/gallery.ts`, wajib diisi).
+  Foto galeri semuanya `loading="lazy"`.
+- Satu gaya caption: "NB: Pembayaran online · Konfirmasi otomatis" tidak lagi miring, 12px.
+  Kicker hero 12px (13px di `sm`).
+- Tombol CTA: kolom kiri kartu tiket rata tengah; "Lanjut ke pembayaran" selebar kartu ringkasan;
+  bar bawah ponsel di `/daftar` disusun ulang (total di atas, tombol "Bayar" selebar penuh di tengah).
+- Dirapikan agar seragam: sponsor, `/daftar` (judul & kartu), halaman status, halaman error, skeleton.
+- Setelah `git pull`: `public/images/hero3–7.JPG` identik dengan yang di commit (aman ditimpa).
+
+**Seksi baru "Rute, Jersey & Medali" (`Flyer`, id `#flyer`)** — tempat flyer dari panitia, dipasang
+setelah Fasilitas. Keputusan: **portrait 4:5 (1080×1350), satu flyer per topik** (bukan satu gambar
+gabungan) agar terbaca di ponsel dan mudah diganti satu per satu; rasio lain tetap didukung karena
+tiap flyer memakai dimensi aslinya. Cara memasang ada di komentar kepala `src/data/flyer.ts`: taruh
+file di `public/images/flyer/`, lalu isi `src`, `width`, `height` pada item-nya. Selama `src` kosong
+tampil kotak "Flyer segera hadir" (4:5). Ponsel = carousel geser, desktop = grid, klik = lightbox + zoom.
+Diuji di browser dengan gambar contoh sementara (sudah dikembalikan kosong). Seksi Tiket juga kini
+menyesuaikan teks bila hanya ada satu kategori ("Amankan tempatmu" / label "Tiket").
+
+**Favicon & OG image** — disiapkan lewat konvensi file Next.js (`src/app/icon.png`, `apple-icon.png`,
+`favicon.ico`, `opengraph-image.jpg`, `twitter-image.jpg`); skrip `scripts/pasang-ikon.sh` membuat tiga
+ikon dari satu PNG persegi. Panduan: `docs/PANDUAN_ASET.md`. Ditemukan: favicon masih sidik jari bawaan
+template dan `layout.tsx` menunjuk `/images/og-image.jpg` + `twitter-image.jpg` yang tidak ada (404) —
+referensi rusak itu dihapus dari `layout.tsx`. Sebelum file OG dipasang, tidak ada tag `og:image`.
+Diuji dengan file sementara (tag muncul, ukuran terbaca otomatis), sudah dikembalikan.
+
+**Tempat logo SMADA (sekolah) dan SMADARUN (event)** — diisi lewat `src/data/logo.ts` (petunjuk di
+komentar kepalanya; file di `public/images/logo/`). Logo kecil, tanpa lightbox. Penempatan: logo
+event di header (depan tulisan "SMADARUN 2027") + footer; logo sekolah di depan kicker hero
+"SMA Negeri 2 Nganjuk mempersembahkan" (menggantikan garis emas) + footer ("Diselenggarakan oleh").
+Selama `src` kosong tidak ada yang tampil (tidak ada kotak kosong); situs memakai tampilan teks.
+Flag `sembunyikanTeksHeader` untuk logo event yang sudah memuat tulisan. Komponen: `BrandLogo.tsx`.
+Diuji di browser dengan logo contoh sementara (sudah dikembalikan kosong).
+
+**Countdown "Menuju hari lomba" sudah terhubung ke core.** `EventInfo.tsx` → `getLiveEventData()` →
+`event.event_date` dari kembarin-v2 (revalidate 30 detik, halaman `/` ikut). Begitu super admin
+mengisi tanggal event di kembar.in, hitung mundur muncul sendiri (maks. ±30 detik); tanggal, lokasi,
+gun start (hanya jarak yang kategorinya aktif), dan jadwal RPC di panel yang sama juga live. Kalau
+tanggal kosong, panel menampilkan "Tanggal hari-H segera diumumkan". Tidak ada tanggal di-hardcode
+di situs ini. Belum diuji dengan tanggal asli dari core production — hanya dibaca dari kodenya.
+
+**Masih terbuka:** konten sample (testimoni, statistik, kontak/sosial footer) tetap menunggu aset
+asli panitia; `public/images/ivan-1.jpg` terhapus di working tree dan belum diputuskan.
+Diuji: `tsc`, `eslint`, 90 uji vitest; browser (dev server, desktop/ponsel/mode gelap).
+
+---
+
 ## 6 Oktober 2026 — Penyegaran UI hangat dan minimalis
 
-- Catatan kecil miring "NB: Pembayaran online · Konfirmasi otomatis" tampil langsung
+- (Superseded oleh "Warm Editorial": kini tidak miring.) Catatan kecil "NB: Pembayaran online · Konfirmasi otomatis" tampil langsung
   di bawah CTA kartu kategori yang tersedia. Caption serupa juga ada dekat pengantar
   formulir `/daftar`, tanpa menambah panel atau tombol.
 - Galeri "Momen SMADARUN Sebelumnya" kini memakai lima foto asli panitia (`hero3.JPG`

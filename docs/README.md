@@ -12,6 +12,9 @@ Untuk agent (Claude, Codex, dll.) dan pengembang yang baru masuk ke repo ini. Ba
 4. **[`CATATAN_PERUBAHAN.md`](CATATAN_PERUBAHAN.md)** — riwayat perubahan penting, alasan,
    keputusan pemilik, dan hal yang masih terbuka.
 
+5. **[`PANDUAN_ASET.md`](PANDUAN_ASET.md)** — tempat memasang flyer, logo, favicon, dan OG image
+   (semua sudah disiapkan; hanya menaruh file).
+
 Acuan kanonis kontrak core ada di repo kembarin-v2: `docs/PARTNER_INTEGRATION.md` (baca saja dari
 sesi ini; perubahan core dikerjakan di sesi kembarin-v2 — lihat bagian akhir `CLAUDE.md`).
 

@@ -1,6 +1,7 @@
 import { getLiveEventData, ResolvedTicketTier } from "@/lib/kembarinEvents";
 import { tiketMarketing } from "@/data/tiket";
 import SectionTitle from "../SectionTitle";
+import Eyebrow from "../Eyebrow";
 import TiketGrid from "./TiketGrid";
 
 async function Tiket() {
@@ -36,15 +37,24 @@ async function Tiket() {
     features: tier.features.filter((feature) => !sharedFeatures.includes(feature)),
   }));
 
+  // Jumlah kategori live dari core: dengan satu kategori, ajakan "pilih"/"paling pas" tidak masuk akal.
+  const tunggal = tiers.length === 1;
+  const judul = tunggal ? "Amankan tempatmu" : "Pilih jarakmu";
+  const labelSeksi = tunggal ? "Tiket" : "Kategori";
+  const pengantar = tunggal
+    ? "Satu kategori tersedia untuk SMADARUN 2027."
+    : "Temukan kategori yang paling pas untukmu.";
+
   return (
-    <section id="tiket" className="scroll-mt-24 py-16 lg:py-24">
+    <section id="tiket" className="scroll-mt-24 py-16 lg:py-28">
       <div className="reveal-left">
+        <Eyebrow center>{labelSeksi}</Eyebrow>
         <SectionTitle>
-          <h2 className="mb-3 text-center">Pilih jarakmu</h2>
+          <h2 className="mb-3 text-center">{judul}</h2>
         </SectionTitle>
       </div>
-      <p className="reveal-right mb-12 text-center text-sm text-foreground-accent sm:text-base">
-        Temukan kategori yang paling pas untukmu.
+      <p className="reveal-right mb-14 text-center text-sm text-foreground-accent sm:text-base">
+        {pengantar}
       </p>
 
       {tiers.length === 0 ? (

@@ -38,8 +38,8 @@
   --focus: 75 55 35;
 
   /* Amber hanya untuk permukaan/aksen, bukan teks di latar terang. */
-  --primary: 235 190 104;
-  --primary-accent: 222 170 79;
+  --primary: 228 195 140;
+  --primary-accent: 188 144 80;
   --on-primary: 42 33 22;
 
   /* Panel gelap hangat (countdown, CTA, portal pendaftaran) */
@@ -69,22 +69,22 @@
 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 29 27 25;
-    --card: 39 36 32;
-    --surface-sunken: 48 43 37;
-    --hero-background: 37 32 27;
+    --background: 31 25 21;
+    --card: 42 35 29;
+    --surface-sunken: 52 43 35;
+    --hero-background: 38 31 25;
 
     --foreground: 248 241 229;
     --foreground-accent: 214 201 182;
     --muted-foreground: 178 163 142;
 
-    --border: 68 59 49;
-    --border-strong: 101 85 66;
+    --border: 70 58 45;
+    --border-strong: 108 88 66;
     --field-border: 139 119 94;
     --focus: 235 190 104;
 
-    --secondary: 57 48 38;
-    --secondary-accent: 78 64 48;
+    --secondary: 58 46 35;
+    --secondary-accent: 80 63 46;
 
     --success: 111 211 164; /* #6FD3A4 */
     --success-surface: 20 58 42; /* #143A2A */
@@ -215,7 +215,7 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-oswald), sans-serif;
+  font-family: var(--font-plus-jakarta), sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
 }
@@ -279,6 +279,11 @@ h1, h2, h3, h4, h5, h6 {
     animation-timeline: scroll(root block);
     animation-range: 0px 520px;
   }
+}
+
+.photo-warm {
+  /* Grading seragam: foto hero dan galeri sama-sama condong hangat. */
+  filter: sepia(0.14) saturate(1.04) contrast(1.02);
 }
 
 .hero-photo-shade {

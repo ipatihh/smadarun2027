@@ -22,25 +22,25 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
 
   return (
     <div
-      className={`relative flex h-full w-full flex-col justify-between rounded-card border bg-card p-7 shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:shadow-hover ${
-        tier.highlight ? "border-primary-accent ring-1 ring-primary-accent" : "border-border"
+      className={`relative flex h-full w-full flex-col justify-between rounded-card border bg-card p-8 transition-[border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-border-strong ${
+        tier.highlight ? "border-primary-accent" : "border-border"
       }`}
     >
       {/* Slot badge — sebelumnya tidak ada tempat sama sekali untuk penanda
           "Early Bird"/"sisa slot", padahal urgensi adalah inti penjualan tiket. */}
       {tier.badge && (
-        <span className="absolute -top-3 left-8 rounded-full bg-primary px-3 py-1 text-[11px] font-black uppercase tracking-wider text-on-primary shadow-rest">
+        <span className="absolute -top-3 left-8 rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-on-primary">
           {tier.badge}
         </span>
       )}
 
       <div className={`${hasFeatures ? 'md:flex md:items-start md:gap-10' : ''}`}>
         {/* Kolom kiri: harga + CTA */}
-        <div className={hasFeatures ? 'md:w-1/2 lg:w-5/12' : ''}>
-          <h3 className="text-left text-lg font-semibold text-foreground sm:text-xl">{tier.name}</h3>
+        <div className={`text-center ${hasFeatures ? 'md:w-1/2 lg:w-5/12' : ''}`}>
+          <h3 className="font-display text-xl font-medium text-foreground sm:text-2xl">{tier.name}</h3>
 
           <div className="mt-4">
-            <span className="font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            <span className="font-display text-4xl font-medium tracking-[-0.02em] text-foreground sm:text-5xl">
               {rupiah(tier.price)}
             </span>
             {adminFee > 0 && (
@@ -50,10 +50,10 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
             )}
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col items-center">
             {tier.isAvailable === false ? (
               <button
-                className="inline-flex min-h-11 cursor-not-allowed items-center rounded-full bg-surface-sunken px-5 text-center text-sm font-semibold text-muted-foreground"
+                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-surface-sunken px-5 text-center text-sm font-semibold text-muted-foreground"
                 disabled
               >
                 Tidak Tersedia
@@ -62,11 +62,11 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
               <>
                 <Link
                   href={tier.url || "/daftar"}
-                  className="inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-center text-sm font-semibold text-on-primary shadow-rest transition-all duration-200 hover:bg-primary-accent hover:shadow-hover active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-6 text-center text-sm font-semibold text-on-primary transition-all duration-200 hover:bg-primary-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                 >
                   Daftar {tier.name}
                 </Link>
-                <p className="mt-2 text-[11px] italic leading-relaxed text-foreground-accent">
+                <p className="mt-3 text-xs leading-relaxed tracking-[0.02em] text-foreground-accent">
                   <span className="font-semibold">NB:</span> Pembayaran online · Konfirmasi otomatis
                 </p>
               </>
@@ -76,7 +76,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
 
         {/* Kolom kanan: benefit — di ponsel muncul di bawah, di desktop di samping */}
         {hasFeatures && (
-          <ul className="mt-8 space-y-3 border-t border-border pt-6 md:mt-0 md:w-1/2 md:border-l md:border-t-0 md:pl-8 md:pt-0 lg:w-7/12">
+          <ul className="mt-8 space-y-3 border-t border-border-strong/60 pt-6 md:mt-0 md:w-1/2 md:border-l md:border-t-0 md:border-l-border-strong/60 md:pl-8 md:pt-0 lg:w-7/12">
             {tier.features.map((feature) => (
               <li key={feature} className="flex items-start">
                 <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-foreground" aria-hidden="true" />

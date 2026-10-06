@@ -685,7 +685,7 @@ export default function DaftarForm({
       form="formDaftar"
       disabled={loading || isFormClosed}
       aria-busy={loading}
-      className={`inline-flex items-center justify-center gap-3 whitespace-nowrap rounded-full bg-primary text-sm font-semibold text-on-primary shadow-rest transition-all hover:bg-primary-accent hover:shadow-hover disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-muted-foreground disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
+      className={`inline-flex items-center justify-center gap-3 whitespace-nowrap rounded-full bg-primary text-sm font-semibold text-on-primary transition-all hover:bg-primary-accent disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
     >
       <span>{loading ? labelStatus : label}</span>
       {loading && (
@@ -706,17 +706,17 @@ export default function DaftarForm({
 
       <div className="mx-auto w-full max-w-6xl">
         <div className="mb-10 max-w-2xl">
-          <p className="mb-4 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-accent">
+          <p className="mb-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground-accent sm:text-[13px]">
             <span className="h-px w-8 bg-primary-accent" aria-hidden="true" />
             SMADARUN 2027 / PENDAFTARAN
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-5xl">
             Langkahmu dimulai di sini.
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
             Isi data pemesan dan peserta, lalu periksa ringkasan sebelum membayar.
           </p>
-          <p className="mt-3 text-xs font-medium tracking-[0.03em] text-foreground-accent">
+          <p className="mt-3 text-xs tracking-[0.02em] text-foreground-accent">
             Pembayaran online · Konfirmasi otomatis
           </p>
         </div>
@@ -741,7 +741,7 @@ export default function DaftarForm({
             id="formDaftar"
             onSubmit={handleSubmit}
             noValidate
-            className="rounded-panel border border-border bg-card p-5 shadow-rest sm:p-8 lg:p-10"
+            className="rounded-panel border border-border bg-card p-5 sm:p-8 lg:p-10"
           >
             {/* min-w-0: bawaan browser fieldset adalah min-inline-size: min-content — sama seperti
                 kolom grid di atas, tanpa ini fieldset ikut melebar dan meluber dari kartu form. */}
@@ -1284,7 +1284,7 @@ export default function DaftarForm({
 
           {/* KOLOM RINGKASAN — sticky di desktop */}
           <aside className="hidden lg:block">
-            <div className="sticky top-28 rounded-panel border border-border bg-card p-6 shadow-rest">
+            <div className="sticky top-28 rounded-panel border border-border bg-card p-6">
               <div className="mb-4 flex items-baseline justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground">Ringkasan pesanan</p>
                 {PENDAFTARAN_DIBUKA && (
@@ -1297,7 +1297,7 @@ export default function DaftarForm({
                 <>
                   {RincianBiaya}
                   {ringkasanError && <div className="mt-4">{KotakRingkasanError}</div>}
-                  <div className="mt-6">{submitButton()}</div>
+                  <div className="mt-6">{submitButton("Lanjut ke pembayaran", "min-h-11 w-full px-5")}</div>
                   <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
                     Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Anda akan diarahkan ke halaman pembayaran resmi.{" "}
                     <Link href="/daftar/status" className="font-semibold underline underline-offset-2 hover:text-foreground-accent">
@@ -1320,23 +1320,21 @@ export default function DaftarForm({
           keyboard dan menutup daftar pilihan. */}
       {PENDAFTARAN_DIBUKA && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md group-has-[[role=listbox]]/daftar:hidden lg:hidden">
-          <div className="mx-auto flex max-w-xl items-center gap-4 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
-            <div className="min-w-0">
+          <div className="mx-auto flex max-w-xl flex-col items-center gap-2 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
+            <div className="flex w-full min-w-0 items-baseline justify-between gap-4">
               <div className="text-xs text-muted-foreground">
                 Total · {pesertaList.length} tiket
+                {ringkasanError && (
+                  <span className="ml-2 font-bold text-danger">· {ringkasanError.jumlah} isian belum benar</span>
+                )}
               </div>
               <div className="text-lg font-semibold leading-none tracking-tight text-foreground tabular-nums">
                 {rupiah(totalAmount)}
               </div>
-              {ringkasanError && (
-                <div className="mt-1 text-[11px] font-bold text-danger">
-                  {ringkasanError.jumlah} isian belum benar
-                </div>
-              )}
             </div>
-            <div className="ml-auto flex w-36 shrink-0 flex-col items-center gap-1.5 sm:w-44">
+            <div className="flex w-full flex-col items-center gap-1.5">
               <div className="w-full">{submitButton("Bayar", "min-h-11 w-full px-5")}</div>
-              <div className="text-center text-[9px] leading-tight text-muted-foreground">
+              <div className="text-center text-[10px] leading-tight text-muted-foreground">
                 Powered by <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-foreground">PT KEMBAR INOVASI</a>
               </div>
             </div>

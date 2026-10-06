@@ -67,6 +67,8 @@ const config: Config = {
         field: "0.75rem",
         card: "1.5rem",
         panel: "2rem",
+        // Foto dokumentasi: sudut nyaris tegas, ala majalah.
+        photo: "0.25rem",
       },
       // Cukup dua tingkat: keadaan diam & keadaan hover/aktif.
       boxShadow: {

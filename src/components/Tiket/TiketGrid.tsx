@@ -22,13 +22,11 @@ const TiketGrid: React.FC<Props> = ({ tiers, sharedFeatures, adminFee }) => {
       </div>
 
       {sharedFeatures.length > 0 && (
-        <div
-          className="mt-8 rounded-card border border-dashed border-border-strong bg-card p-6"
-        >
-          <p className="text-center text-sm font-semibold text-foreground">
-            Semua Kategori Sudah Termasuk
+        <div className="mt-12 border-t border-border-strong/60 pt-8">
+          <p className="text-center font-display text-xl font-medium text-foreground">
+            Semua kategori sudah termasuk
           </p>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {sharedFeatures.map((feature) => (
               <li key={feature} className="flex items-start gap-2.5">
                 <FiCheck className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden="true" />

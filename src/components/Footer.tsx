@@ -7,6 +7,8 @@ import { FaShieldAlt, FaFileContract } from 'react-icons/fa';
 
 import { siteDetails } from '@/data/siteDetails';
 import { footerDetails } from '@/data/footer';
+import { logoEvent, logoSekolah, teksHeaderDisembunyikan } from '@/data/logo';
+import BrandLogo from '@/components/BrandLogo';
 import { getPlatformIconByName } from '@/utils';
 import IsiKebijakanPrivasi from '@/components/legal/IsiKebijakanPrivasi';
 
@@ -30,13 +32,22 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
             <div className="max-w-7xl w-full mx-auto px-6 flex flex-col gap-10 md:flex-row md:justify-between">
                 <div className="max-w-sm">
                     <Link href="/" className="inline-flex items-center gap-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
-                        <span className="font-display text-xl font-semibold">
-                            {siteDetails.siteName}
-                        </span>
+                        <BrandLogo logo={logoEvent} className="h-10" decorative={!teksHeaderDisembunyikan} />
+                        {!teksHeaderDisembunyikan && (
+                            <span className="font-display text-xl font-semibold tracking-[0.02em]">
+                                {siteDetails.siteName}
+                            </span>
+                        )}
                     </Link>
                     <p className="mt-3.5 text-base text-foreground-accent">
                         {footerDetails.subheading}
                     </p>
+                    {logoSekolah.src && (
+                        <div className="mt-5 flex items-center gap-3 text-sm text-foreground-accent">
+                            <BrandLogo logo={logoSekolah} className="h-10" />
+                            <span>Diselenggarakan oleh SMA Negeri 2 Nganjuk</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Tautan navigasi sengaja tidak diulang di sini — semuanya sudah ada di header. */}

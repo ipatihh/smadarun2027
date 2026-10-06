@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import BrandLogo from "@/components/BrandLogo";
 import { heroDetails } from "@/data/hero";
+import { logoSekolah } from "@/data/logo";
 
 /**
  * Hero editorial: satu judul, foto start selebar layar, satu aksi.
@@ -13,16 +15,20 @@ const Hero: React.FC = () => (
     <div className="hero-grid pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
 
     <div className="mx-auto max-w-7xl px-5">
-      <p className="reveal flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-accent sm:text-xs">
-        <span className="h-px w-8 bg-primary-accent" aria-hidden="true" />
+      <p className="reveal flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground-accent sm:text-[13px]">
+        {logoSekolah.src ? (
+          <BrandLogo logo={logoSekolah} className="h-7 sm:h-8" priority />
+        ) : (
+          <span className="h-px w-8 bg-primary-accent" aria-hidden="true" />
+        )}
         {heroDetails.kicker}
       </p>
 
       <div className="reveal reveal-1 relative mt-6 flex items-end justify-between gap-4 pb-5">
-        <h1 className="font-display text-[clamp(2.9rem,10.5vw,9.5rem)] font-semibold uppercase leading-[0.88] tracking-[-0.045em] text-foreground">
+        <h1 className="font-display text-[clamp(3rem,11vw,10rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-foreground">
           {heroDetails.heading}<span className="sr-only"> {heroDetails.headingAccent}</span>
         </h1>
-        <span className="shrink-0 font-display text-xl font-medium leading-none text-foreground-accent sm:pb-1 sm:text-3xl md:text-4xl" aria-hidden="true">
+        <span className="shrink-0 font-display text-xl font-medium leading-none text-foreground-accent sm:pb-2 sm:text-3xl md:text-5xl" aria-hidden="true">
           {heroDetails.headingAccent}
         </span>
         <svg className="hero-track pointer-events-none absolute inset-x-0 -bottom-5 h-5 w-full overflow-visible" viewBox="0 0 1200 20" preserveAspectRatio="none" aria-hidden="true">
@@ -42,13 +48,13 @@ const Hero: React.FC = () => (
           sizes="100vw"
           priority
           unoptimized={heroDetails.centerImageSrc.toLowerCase().endsWith(".svg")}
-          className="scale-[1.9] object-cover object-[58%_center] sm:scale-[1.85] sm:object-[center_80%]"
+          className="photo-warm scale-[1.9] object-cover object-[58%_center] sm:scale-[1.85] sm:object-[center_80%]"
         />
       )}
       <div className="hero-photo-shade absolute inset-0" aria-hidden="true" />
 
       <div className="relative mx-auto flex min-h-[31rem] max-w-7xl flex-col items-start justify-start px-6 pb-8 pt-9 text-on-secondary sm:min-h-[34rem] sm:px-10 sm:pt-11 lg:min-h-[36rem] lg:px-14 lg:pt-14">
-        <p className="max-w-lg text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+        <p className="max-w-xl font-display text-4xl font-medium leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl">
           {heroDetails.tagline}
         </p>
         <p className="mt-3 max-w-md text-sm leading-relaxed text-on-secondary-muted sm:text-base">
@@ -56,7 +62,7 @@ const Hero: React.FC = () => (
         </p>
         <Link
           href="/daftar"
-          className="mt-7 inline-flex min-h-11 w-fit items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-on-primary shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent hover:shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+          className="mt-7 inline-flex min-h-11 w-fit items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-on-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
         >
           Daftar sekarang
         </Link>
