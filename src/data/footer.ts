@@ -11,7 +11,7 @@ export const footerDetails: {
     // Tautan navigasi tidak lagi diulang di footer — semuanya sudah ada di header.
 
     email: 'info@kembar.in',
-    telephone: '+62 812-3456-7890', // SAMPLE — ganti dengan nomor HP/WhatsApp panitia
+    telephone: '0878-5186-2317', // WhatsApp panitia/pembayaran; di footer ditautkan ke wa.me
 
     // SAMPLE — arahkan ke akun resmi panitia. Urutan di sini = urutan ikon di footer;
     // platform yang dikosongkan/dihapus otomatis tidak tampil. Nama yang didukung ada di

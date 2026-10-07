@@ -231,10 +231,11 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Gotcha operasional
 
-- **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): nomor
-  telepon & tautan sosial media di `src/data/footer.ts`, logo sponsor di
-  `public/images/sponsors/`, ilustrasi cadangan (`public/images/hero-illustration.svg`),
-  dan gambar panduan ukuran jersey. Testimoni kini hanya satu ulasan asli (Fatih, peserta 2025,
+- **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): tautan
+  sosial media di `src/data/footer.ts` (nomor WhatsApp footer sudah asli, ditautkan ke wa.me),
+  ilustrasi cadangan (`public/images/hero-illustration.svg`),
+  dan gambar panduan ukuran jersey. Daftar sponsor/mitra (`src/data/sponsors.ts`) sengaja kosong sehingga seksi sponsor tersembunyi
+  sampai ada sponsor nyata. Testimoni kini hanya satu ulasan asli (Fatih, peserta 2025,
   isi dari pemilik); ulasan lain sengaja dikosongkan sampai ada yang nyata — jangan diisi contoh. Jangan menganggap konten contoh sebagai data nyata;
   sebelum go-live, konten itu perlu diganti aset/teks asli panitia.
 - Foto hero `public/images/hero-start.jpg` adalah dokumentasi start asli dari panitia. Aset

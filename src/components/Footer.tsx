@@ -61,7 +61,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                         )}
                         {footerDetails.telephone && (
                             <li>
-                                <a href={`tel:${footerDetails.telephone.replace(/[^\d+]/g, '')}`} className="hover:text-foreground">{footerDetails.telephone}</a>
+                                <a href={`https://wa.me/${footerDetails.telephone.replace(/\D/g, '').replace(/^0/, '62')}`} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">{footerDetails.telephone}</a>
                             </li>
                         )}
                     </ul>

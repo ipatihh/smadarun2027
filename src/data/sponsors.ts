@@ -81,25 +81,10 @@ export const sponsorTiers: ISponsorTierConfig[] = [
   },
 ];
 
-// CATATAN: semua entri di bawah masih SAMPLE untuk menguji tata letak.
-export const sponsors: ISponsor[] = [
-  {
-    name: "Kembar.in",
-    logo: "kembarin.png",
-    url: "https://kembar.in",
-    tier: "title",
-  },
-  {
-    name: "Nganjuk Runners",
-    logo: "nganjuk-runners.png",
-    tier: "community",
-  },
-  {
-    name: "Kembar.in Community",
-    logo: "kembarin-community.png",
-    tier: "media",
-  },
-];
+// Sengaja kosong untuk sementara (permintaan pemilik, Oktober 2026): selama array ini kosong,
+// seluruh seksi sponsor (`Logos.tsx`) tidak tampil. Isi lagi lewat petunjuk di atas bila ada
+// sponsor/mitra nyata. Berkas contoh di public/images/sponsors/ boleh dihapus.
+export const sponsors: ISponsor[] = [];
 
 /** Path lengkap file logo. Menerima nama file maupun path absolut (untuk fleksibilitas). */
 export function sponsorLogoPath(logo: string): string {
