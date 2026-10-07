@@ -56,7 +56,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
                 className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-surface-sunken px-5 text-center text-sm font-semibold text-muted-foreground"
                 disabled
               >
-                Tidak Tersedia
+                {tier.comingSoon ? "Coming Soon" : "Tidak Tersedia"}
               </button>
             ) : (
               <>

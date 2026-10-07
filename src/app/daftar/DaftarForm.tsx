@@ -128,6 +128,7 @@ const URUTAN_PESERTA: PesertaField[] = ["nama", "namaBib", "nik", "gender", "wil
 interface DaftarFormProps {
   ticketTypes: LiveTicketType[];
   isOpen: boolean;
+  comingSoon?: boolean;
   // Biaya layanan/admin PER TIKET, live dari event_config.admin_fee_amount kembarin-v2
   // (lihat src/lib/kembarinEvents.ts) — bukan hardcode di sisi ini.
   adminFee: number;
@@ -197,6 +198,7 @@ const pesertaBaru = (key: string, kategoriDefault: string): PesertaState => ({
 export default function DaftarForm({
   ticketTypes,
   isOpen,
+  comingSoon = false,
   adminFee,
   opensAtLabel,
   multiTicketEnabled,
@@ -732,9 +734,11 @@ export default function DaftarForm({
 
         {isFormClosed && (
           <div className="mx-auto mb-6 max-w-2xl rounded-card border border-border bg-warning-surface p-4 text-center">
-            <p className="text-sm font-bold text-warning">Pendaftaran belum dibuka</p>
+            <p className="text-sm font-bold text-warning">{comingSoon ? "Coming Soon" : "Pendaftaran belum dibuka"}</p>
             <p className="mt-1 text-xs text-warning">
-              {opensAtLabel
+              {comingSoon
+                ? "Pendaftaran akan segera dibuka. Pantau terus info resmi panitia."
+                : opensAtLabel
                 ? `Pendaftaran dijadwalkan dibuka pada ${opensAtLabel}. Sampai saat itu, formulir ini dinonaktifkan.`
                 : "Semua kategori tiket sedang tidak tersedia. Silakan cek kembali nanti atau pantau info resmi panitia."}
             </p>

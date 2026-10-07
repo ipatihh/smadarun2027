@@ -21,6 +21,7 @@ export default async function DaftarPage() {
     <DaftarForm
       ticketTypes={live.ticketTypes}
       isOpen={live.isOpen}
+      comingSoon={live.comingSoon}
       adminFee={live.adminFee}
       opensAtLabel={formatJadwalBuka(live.opensAt)}
       multiTicketEnabled={live.multiTicketEnabled}

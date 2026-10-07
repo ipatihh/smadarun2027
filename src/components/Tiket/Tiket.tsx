@@ -17,6 +17,7 @@ async function Tiket() {
       features: marketing?.features ?? [],
       url: marketing?.url ?? "/daftar",
       isAvailable: live.isOpen,
+      comingSoon: live.comingSoon,
       badge: marketing?.badge,
       highlight: marketing?.highlight,
     };

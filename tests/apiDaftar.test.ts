@@ -9,6 +9,7 @@ import { POST } from "@/app/api/daftar/route";
 
 const LIVE: LiveEventData = {
   isOpen: true,
+  comingSoon: false,
   ticketTypes: [{ categoryKey: "5 KM Reguler", price: 180000, id: 7 }],
   eventDate: null,
   location: null,

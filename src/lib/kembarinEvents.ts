@@ -23,6 +23,7 @@ export interface ResolvedTicketTier extends LiveTicketType {
   features: string[];
   url: string;
   isAvailable: boolean;
+  comingSoon?: boolean;
   /** Metadata tampilan opsional dari src/data/tiket.ts (bukan dari kembarin-v2). */
   badge?: string;
   highlight?: boolean;
@@ -45,6 +46,9 @@ export interface LiveEventData {
   //   4. ada minimal satu kategori tiket AKTIF (ticket_types[].is_active)
   // Ini gerbang utama buka/tutup pendaftaran di UI sekaligus di validasi server.
   isOpen: boolean;
+  // Saklar "Coming Soon" di Edit Detail Event kembarin-v2 (event_config.coming_soon === true).
+  // Pendaftaran tertutup tanpa jadwal; UI menampilkan "Coming Soon", bukan "Tidak Tersedia".
+  comingSoon: boolean;
   // Daftar kategori tiket apa adanya dari kembarin-v2 (tetap diisi walau isOpen
   // false, supaya UI masih bisa menampilkan kategori dalam keadaan nonaktif/"Tidak
   // Tersedia" alih-alih menghilang total).
@@ -101,6 +105,7 @@ const ABSOLUTE_MAX_TICKETS = 10;
 
 const CLOSED: LiveEventData = {
   isOpen: false,
+  comingSoon: false,
   ticketTypes: [],
   eventDate: null,
   location: null,
@@ -174,8 +179,10 @@ export async function getLiveEventData(): Promise<LiveEventData> {
     // mengubah status event jadi non-active — kalau flag ini diabaikan, partner site
     // tetap menjual tiket dan tetap membuat transaksi padahal panitia sudah menutup.
     let registrationClosed = false;
+    let comingSoon = false;
     if (isRecord(event.event_config)) {
       const cfg = event.event_config;
+      comingSoon = cfg.coming_soon === true;
       registrationClosed = cfg.registration_closed === true;
       const gunStarts: Record<string, string> = {};
       if (isRecord(cfg.timing_config) && isRecord(cfg.timing_config.gun_starts)) {
@@ -219,7 +226,8 @@ export async function getLiveEventData(): Promise<LiveEventData> {
     let opensAt: string | null = null;
     let notYetOpen = false;
     if (rawOpenAt) {
-      const openAtMs = new Date(rawOpenAt).getTime();
+      // Jadwal tanpa offset adalah WIB (kontrak core, parseWibDateTimeToUtc); server Vercel berjalan di UTC.
+      const openAtMs = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(rawOpenAt.trim()) ? rawOpenAt : `${rawOpenAt.trim().replace(" ", "T")}+07:00`).getTime();
       if (Number.isNaN(openAtMs)) {
         console.warn("[kembarinEvents] registration_open_at tidak bisa diparse, gerbang jadwal diabaikan:", rawOpenAt);
       } else if (openAtMs > Date.now()) {
@@ -229,9 +237,11 @@ export async function getLiveEventData(): Promise<LiveEventData> {
     }
 
     return {
+      comingSoon,
       isOpen:
         event.status === "active" &&
         !registrationClosed &&
+        !comingSoon &&
         !notYetOpen &&
         ticketTypes.length > 0,
       ticketTypes,
