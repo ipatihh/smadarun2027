@@ -12,7 +12,7 @@ import { menuItems } from '@/data/menuItems';
 import { logoEvent, teksHeaderDisembunyikan } from '@/data/logo';
 import BrandLogo from './BrandLogo';
 
-const Header: React.FC = () => {
+const Header: React.FC<{ comingSoon?: boolean }> = ({ comingSoon = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const pathname = usePathname();
@@ -78,26 +78,34 @@ const Header: React.FC = () => {
 
                     {/* Aksi utama — sebelumnya tidak ada sama sekali di navigasi */}
                     <div className="hidden md:block">
-                        {!isDaftarPage && (
+                        {!isDaftarPage && (comingSoon ? (
+                            <span className="inline-flex min-h-10 cursor-default items-center justify-center rounded-full bg-surface-sunken px-5 text-sm font-semibold text-muted-foreground">
+                                Coming Soon
+                            </span>
+                            ) : (
                             <Link
                                 href="/daftar"
                                 className="inline-flex min-h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-on-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>
-                        )}
+                            ))}
                     </div>
 
                     {/* Aksi utama + tombol menu (mobile) */}
                     <div className="md:hidden flex items-center gap-2">
-                        {!isDaftarPage && (
+                        {!isDaftarPage && (comingSoon ? (
+                            <span className="inline-flex min-h-10 cursor-default items-center justify-center rounded-full bg-surface-sunken px-5 text-sm font-semibold text-muted-foreground">
+                                Coming Soon
+                            </span>
+                            ) : (
                             <Link
                                 href="/daftar"
                                 className="inline-flex min-h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-on-primary shadow-rest transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                                 Daftar
                             </Link>
-                        )}
+                            ))}
                         <button
                             onClick={toggleMenu}
                             type="button"

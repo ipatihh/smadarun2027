@@ -4,6 +4,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { heroDetails } from "@/data/hero";
 import { logoSekolah } from "@/data/logo";
+import { getLiveEventData } from "@/lib/kembarinEvents";
 
 /**
  * Hero editorial: satu judul, foto start selebar layar, satu aksi.
@@ -11,7 +12,9 @@ import { logoSekolah } from "@/data/logo";
  * sebelumnya di tepi aset asli ikut terbuang dan tidak berbenturan dengan identitas 2027.
  * Tidak ada zoom CSS: zoom meregangkan foto dan memaksa browser mengunduh berkas jauh lebih besar.
  */
-const Hero: React.FC = () => (
+async function Hero() {
+  const live = await getLiveEventData();
+  return (
   <section id="beranda" className="hero-atmosphere relative isolate overflow-hidden pt-28 sm:pt-36">
     <div className="hero-grid pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
 
@@ -61,15 +64,22 @@ const Hero: React.FC = () => (
         <p className="mt-3 max-w-md text-sm leading-relaxed text-on-secondary-muted sm:text-base">
           {heroDetails.subheading}
         </p>
+        {live.comingSoon ? (
+          <span className="mt-7 inline-flex min-h-11 w-fit cursor-default items-center justify-center rounded-full bg-surface-sunken px-6 text-sm font-semibold text-muted-foreground">
+            Coming Soon
+          </span>
+        ) : (
         <Link
           href="/daftar"
           className="mt-7 inline-flex min-h-11 w-fit items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-on-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
         >
           Daftar sekarang
         </Link>
+        )}
       </div>
     </div>
   </section>
-);
+  );
+}
 
 export default Hero;

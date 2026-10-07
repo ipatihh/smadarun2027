@@ -37,6 +37,9 @@ interface Fakta {
 async function EventInfo() {
   const live = await getLiveEventData();
 
+  // Coming Soon: hitung mundur dan fakta hari lomba belum ditampilkan.
+  if (live.comingSoon) return null;
+
   const fakta: Fakta[] = [];
 
   const tanggal = live.eventDate ? formatTanggal(live.eventDate) : null;

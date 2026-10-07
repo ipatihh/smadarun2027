@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ctaDetails } from "@/data/cta";
+import { getLiveEventData } from "@/lib/kembarinEvents";
 
-const CTA: React.FC = () => {
+async function CTA() {
+    const live = await getLiveEventData();
     return (
         <section id="cta" className="my-12 lg:my-24">
             <div className="relative z-10 mx-auto w-full py-14 sm:py-20">
@@ -21,18 +23,24 @@ const CTA: React.FC = () => {
                         </p>
 
                         <div className="reveal reveal-2 mx-auto">
+                            {live.comingSoon ? (
+                                <span className="inline-flex min-h-11 cursor-default items-center justify-center rounded-full bg-surface-sunken px-7 text-center text-sm font-semibold text-muted-foreground">
+                                    Coming Soon
+                                </span>
+                            ) : (
                             <Link
                                 href="/daftar"
                                 className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-7 text-center text-sm font-semibold text-on-primary transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
                             >
                                 Daftar sekarang
                             </Link>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
         </section>
     );
-};
+}
 
 export default CTA;

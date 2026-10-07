@@ -3,6 +3,7 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 import { Plus_Jakarta_Sans } from "next/font/google";
 
 import Header from "@/components/Header";
+import { getLiveEventData } from "@/lib/kembarinEvents";
 import FooterLive from "@/components/FooterLive";
 import { siteDetails } from '@/data/siteDetails';
 
@@ -41,11 +42,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const live = await getLiveEventData();
   return (
     <html lang="id">
       <body
@@ -59,7 +61,7 @@ export default function RootLayout({
         >
           Lewati ke konten utama
         </a>
-        <Header />
+        <Header comingSoon={live.comingSoon} />
         {/* overflow-x-clip di sini, BUKAN di body: overflow milik body dipindahkan browser ke
             viewport, dan Safari iOS tetap membiarkan halaman digeser ke samping walau body
             clip/hidden. Clip (bukan hidden) tidak mematikan position: sticky dan tetap
