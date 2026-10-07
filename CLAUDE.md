@@ -231,11 +231,11 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Gotcha operasional
 
-- **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): testimoni
-  beserta avatarnya, angka statistik (`stats.ts`, tampil di kepala seksi testimoni), nomor
+- **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): angka statistik (`stats.ts`, tampil di kepala seksi testimoni), nomor
   telepon & tautan sosial media di `src/data/footer.ts`, logo sponsor di
   `public/images/sponsors/`, ilustrasi cadangan (`public/images/hero-illustration.svg`),
-  dan gambar panduan ukuran jersey. Jangan menganggap konten contoh sebagai data nyata;
+  dan gambar panduan ukuran jersey. Testimoni kini hanya satu ulasan asli (Fatih, peserta 2025,
+  isi dari pemilik); ulasan lain sengaja dikosongkan sampai ada yang nyata — jangan diisi contoh. Jangan menganggap konten contoh sebagai data nyata;
   sebelum go-live, konten itu perlu diganti aset/teks asli panitia.
 - Foto hero `public/images/hero-start.jpg` adalah dokumentasi start asli dari panitia. Aset
   mengandung teks "2026" dan tanggal pada tepinya; potongan foto (`scripts/optimasi-foto.mjs`) sengaja
