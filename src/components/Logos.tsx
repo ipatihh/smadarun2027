@@ -51,12 +51,25 @@ const SponsorLogo: React.FC<{ sponsor: ISponsor; tier: ISponsorTierConfig }> = (
   );
 };
 
+// Jumlah kotak kosong per tier saat BELUM ADA sponsor sama sekali: memberi gambaran ke calon
+// sponsor di mana logo mereka akan dipasang (ukuran kotak = ukuran asli tier-nya).
+const JUMLAH_SLOT_KOSONG: Record<ISponsorTierConfig["tier"], number> = { title: 1, community: 3, media: 4 };
+
+const SlotKosong: React.FC<{ tier: ISponsorTierConfig }> = ({ tier }) => (
+  <span
+    className={`flex ${tier.boxHeight} ${tier.boxWidth} items-center justify-center rounded-field border border-dashed border-border-strong/60 px-4 py-2 text-center text-xs text-foreground-accent sm:text-sm`}
+  >
+    Logo di sini
+  </span>
+);
+
 const Logos: React.FC = () => {
+  // Daftar kosong → seksi tetap tampil dengan slot kosong (bukan disembunyikan), supaya calon
+  // sponsor tahu tempat logonya. Begitu ada satu sponsor, hanya tier berisi yang tampil.
+  const belumAdaSponsor = sponsors.length === 0;
   const tiersWithSponsors = sponsorTiers
     .map((tier) => ({ ...tier, items: sponsors.filter((s) => s.tier === tier.tier) }))
-    .filter((tier) => tier.items.length > 0);
-
-  if (tiersWithSponsors.length === 0) return null;
+    .filter((tier) => belumAdaSponsor || tier.items.length > 0);
 
   return (
     <section id="logos" className="scroll-mt-24 bg-background px-5 py-12 lg:py-16">
@@ -72,6 +85,8 @@ const Logos: React.FC = () => {
               <p className="mb-4 text-center text-sm text-muted-foreground">{tier.label}</p>
               {/* flex-wrap: berapa pun jumlah logonya otomatis turun baris, tetap rata tengah */}
               <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6">
+                {belumAdaSponsor &&
+                  Array.from({ length: JUMLAH_SLOT_KOSONG[tier.tier] }, (_, i) => <SlotKosong key={i} tier={tier} />)}
                 {tier.items.map((sponsor) =>
                   sponsor.url ? (
                     <a
