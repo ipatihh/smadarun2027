@@ -231,7 +231,7 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Gotcha operasional
 
-- **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): angka statistik (`stats.ts`, tampil di kepala seksi testimoni), nomor
+- **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): nomor
   telepon & tautan sosial media di `src/data/footer.ts`, logo sponsor di
   `public/images/sponsors/`, ilustrasi cadangan (`public/images/hero-illustration.svg`),
   dan gambar panduan ukuran jersey. Testimoni kini hanya satu ulasan asli (Fatih, peserta 2025,
