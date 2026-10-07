@@ -41,9 +41,9 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
 
           <div className="mt-4">
             <span className="font-display text-4xl font-medium tracking-[-0.02em] text-foreground sm:text-5xl">
-              {rupiah(tier.price)}
+              {tier.comingSoon ? "Menyusul" : rupiah(tier.price)}
             </span>
-            {adminFee > 0 && (
+            {adminFee > 0 && !tier.comingSoon && (
               <p className="mt-1.5 text-xs text-muted-foreground">
                 + Biaya Layanan {rupiah(adminFee)} per tiket
               </p>

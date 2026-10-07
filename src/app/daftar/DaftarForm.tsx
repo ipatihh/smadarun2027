@@ -226,6 +226,8 @@ export default function DaftarForm({
   const KATEGORI_KEYS = Object.keys(KATEGORI_TIKET);
   const PENDAFTARAN_DIBUKA = isOpen && KATEGORI_KEYS.length > 0;
   const isFormClosed = !PENDAFTARAN_DIBUKA;
+  // Coming Soon: harga disembunyikan sampai pendaftaran dibuka.
+  const harga = (nilai: number) => (comingSoon ? "Menyusul" : rupiah(nilai));
   const batasTiket = Math.max(1, maxTicketsPerOrder);
 
   const [buyer, setBuyer] = useState<BuyerState>({ nama: "", email: "", whatsapp: "" });
@@ -651,7 +653,7 @@ export default function DaftarForm({
               </span>
             </dt>
             <dd className="shrink-0 text-right">
-              <span className="block tabular-nums">{rupiah(hargaPeserta(raw))}</span>
+              <span className="block tabular-nums">{harga(hargaPeserta(raw))}</span>
               <button
                 type="button"
                 onClick={() => ubahPeserta(raw.key, index)}
@@ -667,14 +669,14 @@ export default function DaftarForm({
         <dt>
           Biaya Layanan Platform
           <span className="block text-xs text-muted-foreground">
-            {rupiah(adminFee)} × {pesertaList.length} tiket
+            {harga(adminFee)} × {pesertaList.length} tiket
           </span>
         </dt>
-        <dd className="tabular-nums">{rupiah(totalAdminFee)}</dd>
+        <dd className="tabular-nums">{harga(totalAdminFee)}</dd>
       </div>
       <div className="flex justify-between gap-4 border-t border-border pt-4 text-base font-semibold text-foreground">
         <dt>Total Pembayaran</dt>
-        <dd className="tabular-nums">{rupiah(totalAmount)}</dd>
+        <dd className="tabular-nums">{harga(totalAmount)}</dd>
       </div>
     </dl>
   );
@@ -1125,7 +1127,7 @@ export default function DaftarForm({
                             >
                               {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
                                 <option key={key} value={key}>
-                                  {cat.label} — {rupiah(cat.price)}
+                                  {cat.label} — {harga(cat.price)}
                                 </option>
                               ))}
                             </select>
@@ -1329,7 +1331,7 @@ export default function DaftarForm({
                 Total · {pesertaList.length} tiket
               </div>
               <div className="text-lg font-semibold leading-none tracking-tight text-foreground tabular-nums">
-                {rupiah(totalAmount)}
+                {harga(totalAmount)}
               </div>
               {ringkasanError && (
                 <div className="mt-1 text-[11px] font-bold text-danger">
