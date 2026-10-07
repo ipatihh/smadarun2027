@@ -37,9 +37,6 @@ interface Fakta {
 async function EventInfo() {
   const live = await getLiveEventData();
 
-  // Coming Soon: hitung mundur dan fakta hari lomba belum ditampilkan.
-  if (live.comingSoon) return null;
-
   const fakta: Fakta[] = [];
 
   const tanggal = live.eventDate ? formatTanggal(live.eventDate) : null;
@@ -81,10 +78,16 @@ async function EventInfo() {
         <div className={`relative grid gap-8 ${adaFakta ? "md:grid-cols-2 md:gap-10" : "text-center"}`}>
           <div>
             <h2 id="jadwal-judul" className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              Menuju hari lomba
+              {live.comingSoon ? "Pendaftaran" : "Menuju hari lomba"}
             </h2>
             <div className="mt-4">
-              <Countdown eventDate={live.eventDate} centered={!adaFakta} />
+              {live.comingSoon ? (
+                <p className={`font-display text-4xl font-medium leading-none text-primary sm:text-5xl ${adaFakta ? "" : "text-center"}`}>
+                  Coming Soon
+                </p>
+              ) : (
+                <Countdown eventDate={live.eventDate} centered={!adaFakta} />
+              )}
             </div>
           </div>
 
