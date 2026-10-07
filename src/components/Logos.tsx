@@ -75,8 +75,8 @@ const Logos: React.FC = () => {
     <section id="logos" className="scroll-mt-24 bg-background px-5 py-12 lg:py-16">
       <div className="mx-auto max-w-5xl">
         <div className="reveal-left text-center">
-          <Eyebrow center>Sponsor</Eyebrow>
-          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">Didukung oleh</h2>
+          <Eyebrow center>Dukungan</Eyebrow>
+          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">Ruang Sponsor</h2>
         </div>
 
         <div className="mt-8 space-y-10">
