@@ -1,7 +1,7 @@
 // Catatan: script-src memakai 'unsafe-inline' (bukan nonce/'strict-dynamic') supaya halaman tetap
 // bisa di-static-generate (Next.js App Router butuh headers() dinamis per-request untuk nonce,
 // yang memaksa seluruh halaman jadi server-rendered). Aman untuk app ini karena tidak ada
-// dangerouslySetInnerHTML/eval, dan React sudah meng-escape semua output secara default.
+// dangerouslySetInnerHTML kecuali JSON-LD SEO di app/page.tsx (dibuat server, "<" di-escape, tanpa eval).
 const ContentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
