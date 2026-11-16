@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteDetails.siteUrl),
   title: siteDetails.metadata.title,
   description: siteDetails.metadata.description,
-  keywords: ["smada run", "smadarun", "lomba lari", "lomba lari nganjuk", "smada run nganjuk", "sma negeri 2 nganjuk", "event lari nganjuk", "smadarun.id"],
+  keywords: ["smada run", "smadarun", "smadarun 2027", "lomba lari nganjuk", "run event nganjuk", "event lari nganjuk", "sma negeri 2 nganjuk", "smadarun.id"],
   alternates: {
     canonical: siteDetails.siteUrl,
   },

@@ -4,9 +4,9 @@ export const siteDetails = {
     // host yang beralih membuat Google ragu mana URL yang harus diindeks.
     siteUrl: 'https://www.smadarun.id/',
     metadata: {
-        title: 'SMADARUN 2027 - Lomba Lari SMA Negeri 2 Nganjuk',
+        title: 'SMADARUN 2027 — Sambut Energi Baru | Run Event SMAN 2 Nganjuk',
         // ≤155 karakter: lebih panjang dari itu dipotong di hasil Google dan kartu pratinjau WhatsApp.
-        description: 'SMADARUN 2027: lomba lari tahunan SMA Negeri 2 Nganjuk, terbuka untuk umum. Pilih kategori, daftar online, dan rasakan serunya berlari bersama.',
+        description: 'Satu garis start, banyak cerita baru. SMADARUN 2027, run event tahunan SMA Negeri 2 Nganjuk untuk semua pelari. Siapkan sepatumu, kita start bareng!',
     },
     language: 'id-id',
     locale: 'id-ID',

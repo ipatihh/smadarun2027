@@ -16,16 +16,16 @@ function formatJadwalBuka(iso: string | null): string | null {
 }
 
 export const metadata: Metadata = {
-  title: "Daftar SMADARUN 2027 — Pendaftaran Lomba Lari SMA Negeri 2 Nganjuk",
+  title: "Daftar SMADARUN 2027 — Siap Start Bareng? | SMAN 2 Nganjuk",
   description:
-    "Daftar SMADARUN 2027, lomba lari SMA Negeri 2 Nganjuk. Pilih kategori tiket, isi data peserta, dan bayar online.",
+    "Pilih kategori, isi data peserta, bayar online: tiga langkah dan kamu resmi jadi bagian dari cerita baru di garis start SMADARUN 2027.",
   // Tanpa ini halaman mewarisi canonical beranda dari layout.tsx dan dianggap duplikatnya.
   alternates: { canonical: "/daftar" },
   // openGraph/twitter di sini MENGGANTI milik layout (tidak digabung), jadi ditulis lengkap.
   openGraph: {
-    title: "Daftar SMADARUN 2027 — Pendaftaran Lomba Lari SMA Negeri 2 Nganjuk",
+    title: "Daftar SMADARUN 2027 — Siap Start Bareng? | SMAN 2 Nganjuk",
     description:
-      "Daftar SMADARUN 2027, lomba lari SMA Negeri 2 Nganjuk. Pilih kategori tiket, isi data peserta, dan bayar online.",
+      "Pilih kategori, isi data peserta, bayar online: tiga langkah dan kamu resmi jadi bagian dari cerita baru di garis start SMADARUN 2027.",
     url: "/daftar",
     type: "website",
     siteName: "SMADARUN 2027",
@@ -33,9 +33,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Daftar SMADARUN 2027 — Pendaftaran Lomba Lari SMA Negeri 2 Nganjuk",
+    title: "Daftar SMADARUN 2027 — Siap Start Bareng? | SMAN 2 Nganjuk",
     description:
-      "Daftar SMADARUN 2027, lomba lari SMA Negeri 2 Nganjuk. Pilih kategori tiket, isi data peserta, dan bayar online.",
+      "Pilih kategori, isi data peserta, bayar online: tiga langkah dan kamu resmi jadi bagian dari cerita baru di garis start SMADARUN 2027.",
   },
 };
 

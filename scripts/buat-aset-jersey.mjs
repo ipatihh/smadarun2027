@@ -95,8 +95,8 @@ ${swirl(1050, 120, 1.1, 0.35)}
 <text x="80" y="170" font-family="Helvetica Neue, Arial, sans-serif" font-weight="600" font-size="26" letter-spacing="5" fill="#D6C8FA">SMA NEGERI 2 NGANJUK</text>
 <text x="74" y="330" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="150" letter-spacing="-5" fill="#fff">SMADARUN</text>
 <text x="80" y="420" font-family="Helvetica Neue, Arial, sans-serif" font-weight="500" font-size="64" fill="#D6C8FA">2027</text>
-<rect x="80" y="470" width="260" height="64" rx="32" fill="${DOT}"/>
-<text x="210" y="512" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="28" fill="#fff">Lomba Lari</text>
+<rect x="80" y="470" width="400" height="64" rx="32" fill="${DOT}"/>
+<text x="280" y="512" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="28" fill="#fff">Sambut Energi Baru</text>
 </svg>`;
 const burungOg = await sharp("public/images/logo/burung-hantu.png").resize(360).toBuffer();
 const og = await sharp(foto).composite([{ input: Buffer.from(ogSvg) }, { input: burungOg, left: 810, top: 345 }]).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
