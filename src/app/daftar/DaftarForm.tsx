@@ -227,7 +227,8 @@ export default function DaftarForm({
   const PENDAFTARAN_DIBUKA = isOpen && KATEGORI_KEYS.length > 0;
   const isFormClosed = !PENDAFTARAN_DIBUKA;
   // Coming Soon: harga disembunyikan sampai pendaftaran dibuka.
-  const harga = (nilai: number) => (comingSoon ? "Menyusul" : rupiah(nilai));
+  // Nilai 0 ditulis "Gratis" (mis. biaya layanan yang dinolkan panitia di core), bukan "Rp 0".
+  const harga = (nilai: number) => (comingSoon ? "Menyusul" : nilai === 0 ? "Gratis" : rupiah(nilai));
   const batasTiket = Math.max(1, maxTicketsPerOrder);
 
   const [buyer, setBuyer] = useState<BuyerState>({ nama: "", email: "", whatsapp: "" });
@@ -668,9 +669,11 @@ export default function DaftarForm({
       <div className="flex justify-between gap-4 border-t border-border pt-2.5 text-foreground-accent font-medium">
         <dt>
           Biaya Layanan Platform
-          <span className="block text-xs text-muted-foreground">
-            {harga(adminFee)} × {pesertaList.length} tiket
-          </span>
+          {adminFee > 0 && (
+            <span className="block text-xs text-muted-foreground">
+              {harga(adminFee)} × {pesertaList.length} tiket
+            </span>
+          )}
         </dt>
         <dd className="tabular-nums">{harga(totalAdminFee)}</dd>
       </div>

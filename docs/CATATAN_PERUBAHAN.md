@@ -5,6 +5,22 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 16 November 2026 — Tema "Jersey Violet": warna & pola dari desain jersey
+
+Menggantikan "Warm Editorial" (amber/krem). Acuan: foto jersey SMADARUN 2027 (gradien ungu→biru indigo
+dengan titik halftone magenta).
+
+- Token `globals.css` diganti penuh (terang & gelap): lavender muda, tinta indigo, `--primary` magenta
+  (`198 31 181`, teks putih), `--secondary` indigo, token baru `--hero-from/via/to` untuk gradien jersey.
+- Kelas baru `.panel-jersey`; `.hero-atmosphere` kini gradien; `.hero-grid`/`.registration-grid` jadi pola titik.
+- Komponen baru `PolaTitik.tsx` (SVG halftone berpilin, statis, satu path per lingkar). Dipakai di Hero, CTA, EventInfo.
+- Hero: teks terang di atas gradien, foto inset dengan sudut atas membulat. Header transparan bertekstur terang
+  di puncak beranda (`overHero`).
+- Teks magenta di atas gradien diganti `text-on-secondary` (hitung mundur, label panel hari lomba) demi kontras.
+- Burung hantu medali di hero: versi besar mengintip dari tepi atas panel foto (`public/images/logo/burung-hantu.png`, posisi horizontal sengaja di celah antara kata SMADARUN dan "2027"), versi ikon di baris kicker (`burung-hantu-ikon.png`). Keduanya dibuat skrip dari gambar garis mentah; ganti dengan SVG resmi bila ada. Skeleton `loading.tsx` ikut disesuaikan.
+- Seksi "Rute, Jersey & Medali": gambar jersey dan medali dari panitia dipasang (`public/images/flyer/*.webp`, data di `src/data/flyer.ts`); kotak flyer kini seragam 4:5 dengan gambar `object-contain` di atas permukaan putih. Rute lintasan masih placeholder. Gambar jersey masih mockup bertulisan "APPAREL".
+- Favicon (garis burung hantu putih dari lambang medali, sumber `scripts/aset/burung-hantu-garis.jpg`, di atas gradien) dan OG image (foto hero + gradien + judul) dibuat lewat `scripts/buat-aset-jersey.mjs`; ganti dengan logo resmi bila sudah ada. Seksi Tiket tetap terang dengan pola titik samar. Belum: logo putih dari jersey (`src/data/logo.ts` masih kosong).
+
 ## 6 Oktober 2026 — Kembali dari gateway langsung ke ringkasan, tanpa panduan berkedip
 
 Pemilik melihat pengantar + panduan langkah + "Memeriksa status pesanan…" setiap membuka tautan

@@ -3,6 +3,7 @@ import { tiketMarketing } from "@/data/tiket";
 import SectionTitle from "../SectionTitle";
 import Eyebrow from "../Eyebrow";
 import TiketGrid from "./TiketGrid";
+import PolaTitik from "../PolaTitik";
 
 async function Tiket() {
   const live = await getLiveEventData();
@@ -47,7 +48,8 @@ async function Tiket() {
     : "Temukan kategori yang paling pas untukmu.";
 
   return (
-    <section id="tiket" className="scroll-mt-24 py-16 lg:py-28">
+    <section id="tiket" className="relative isolate scroll-mt-24 overflow-hidden py-16 lg:py-28">
+      <PolaTitik className="absolute -right-56 -top-24 -z-10 h-[34rem] w-[34rem] opacity-25" />
       <div className="reveal-left">
         <Eyebrow center>{labelSeksi}</Eyebrow>
         <SectionTitle>

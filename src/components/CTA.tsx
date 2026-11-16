@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ctaDetails } from "@/data/cta";
+import PolaTitik from "@/components/PolaTitik";
 import { getLiveEventData } from "@/lib/kembarinEvents";
 
 async function CTA() {
@@ -8,9 +9,9 @@ async function CTA() {
         <section id="cta" className="my-12 lg:my-24">
             <div className="relative z-10 mx-auto w-full py-14 sm:py-20">
                 <div className="h-full w-full">
-                    <div className="rounded-panel overflow-hidden absolute inset-0 -z-10 h-full w-full bg-secondary" aria-hidden="true">
-                        <div className="absolute -right-20 -top-32 h-80 w-80 rounded-full border border-primary/30"></div>
-                        <div className="absolute -right-8 -top-20 h-56 w-56 rounded-full border border-primary/20"></div>
+                    <div className="rounded-panel overflow-hidden absolute inset-0 -z-10 h-full w-full panel-jersey" aria-hidden="true">
+                        <PolaTitik className="absolute -right-40 -top-40 h-[26rem] w-[26rem] opacity-70 sm:-right-24 sm:h-[34rem] sm:w-[34rem]" />
+                        <PolaTitik className="absolute -bottom-48 -left-48 hidden h-[26rem] w-[26rem] opacity-40 sm:block" />
                     </div>
 
                     <div className="h-full flex flex-col items-center justify-center text-on-secondary text-center px-5">

@@ -40,6 +40,9 @@ const Header: React.FC<{ comingSoon?: boolean }> = ({ comingSoon = false }) => {
 
     const isDaftarPage = pathname === '/daftar';
     const isSolid = isScrolled || isOpen || isDaftarPage;
+    // Di puncak beranda header transparan di atas gradien violet hero, jadi teksnya terang.
+    const overHero = pathname === '/' && !isSolid;
+    const teksHeader = overHero ? 'text-on-secondary' : 'text-foreground';
 
     return (
         <header
@@ -54,7 +57,7 @@ const Header: React.FC<{ comingSoon?: boolean }> = ({ comingSoon = false }) => {
                     <Link href="/" className="group flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background">
                         <BrandLogo logo={logoEvent} className="h-8 sm:h-9" decorative={!teksHeaderDisembunyikan} priority />
                         {!teksHeaderDisembunyikan && (
-                            <span className="font-display text-base font-semibold tracking-[0.02em] text-foreground sm:text-lg">
+                            <span className={`font-display text-base font-semibold tracking-[0.02em] ${teksHeader} sm:text-lg`}>
                                 {siteDetails.siteName}
                             </span>
                         )}
@@ -67,7 +70,7 @@ const Header: React.FC<{ comingSoon?: boolean }> = ({ comingSoon = false }) => {
                             <li key={item.text}>
                                 <Link
                                     href={formatUrl(item.url)}
-                                    className="group relative rounded py-2 text-foreground transition-colors hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+                                    className={`group relative rounded py-2 ${teksHeader} transition-colors ${overHero ? 'hover:text-on-secondary-muted' : 'hover:text-foreground-accent'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-4 focus-visible:ring-offset-background`}
                                 >
                                     {item.text}
                                     <span className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-primary-accent transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100" aria-hidden="true" />
@@ -109,7 +112,7 @@ const Header: React.FC<{ comingSoon?: boolean }> = ({ comingSoon = false }) => {
                         <button
                             onClick={toggleMenu}
                             type="button"
-                            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface-sunken text-foreground transition-[background-color,border-color] duration-300 hover:border-border-strong hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className={`flex h-10 w-10 items-center justify-center rounded-full border ${overHero ? 'border-on-secondary/30 bg-on-secondary/10 text-on-secondary' : 'border-border bg-surface-sunken text-foreground'} transition-[background-color,border-color] duration-300 hover:border-border-strong hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
                             aria-controls="mobile-menu"
                             aria-expanded={isOpen}
                         >
@@ -150,7 +153,7 @@ const Header: React.FC<{ comingSoon?: boolean }> = ({ comingSoon = false }) => {
                     </ul>
                 </div>
             </Transition>
-            <span className="header-scroll-progress pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left bg-primary-accent" aria-hidden="true" />
+            <span className="header-scroll-progress pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left bg-primary" aria-hidden="true" />
         </header>
     );
 };

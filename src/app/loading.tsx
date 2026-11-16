@@ -2,7 +2,7 @@ import { Baris, Blok } from "@/components/Kerangka";
 
 /**
  * Kerangka beranda selagi Server Component menunggu data live kembarin-v2. Meniru tata letak
- * tema Warm Editorial persis (kicker → judul besar + garis tipis → foto selebar layar →
+ * tema Jersey Violet persis (kicker → judul besar + garis tipis → foto selebar layar →
  * panel hari lomba menumpuk di tepi foto → pembuka seksi Fasilitas), supaya pindah ke konten
  * sungguhan tidak melompat. Ukuran/jarak harus tetap sama dengan Hero.tsx & EventInfo.tsx.
  *
@@ -20,20 +20,20 @@ export default function LoadingBeranda() {
         <div className="mx-auto max-w-7xl px-5">
           {/* Kicker */}
           <div className="flex items-center gap-3">
-            <div className="h-px w-8 bg-border-strong" aria-hidden="true" />
-            <Baris className="h-3 w-56 !bg-border" />
+            <div className="h-10 w-9 rounded-field bg-on-secondary/15 sm:h-12 sm:w-10" aria-hidden="true" />
+            <Baris className="h-3 w-56 !bg-on-secondary/15" />
           </div>
 
           {/* Judul besar + 2027, garis tipis di bawahnya */}
           <div className="relative mt-6 flex items-end justify-between gap-4 pb-5">
-            <Baris className="h-[clamp(2.9rem,10.5vw,9rem)] w-[72%] max-w-4xl !rounded-field !bg-border" />
-            <Baris className="h-6 w-14 !bg-border sm:h-9 sm:w-24" />
-            <div className="absolute inset-x-0 -bottom-5 h-px bg-border" aria-hidden="true" />
+            <Baris className="h-[clamp(2.9rem,10.5vw,9rem)] w-[72%] max-w-4xl !rounded-field !bg-on-secondary/15" />
+            <Baris className="h-6 w-14 !bg-on-secondary/15 sm:h-9 sm:w-24" />
+            <div className="absolute inset-x-0 -bottom-5 h-px bg-on-secondary/30" aria-hidden="true" />
           </div>
         </div>
 
         {/* Foto selebar layar, tinggi sama dengan Hero */}
-        <div className="relative mt-5 min-h-[31rem] animate-pulse bg-secondary/80 sm:min-h-[34rem] lg:min-h-[36rem]">
+        <div className="relative mx-3 mt-5 min-h-[31rem] animate-pulse rounded-t-panel bg-secondary/80 sm:mx-5 sm:min-h-[34rem] lg:min-h-[36rem]">
           <div className="mx-auto max-w-7xl px-6 pt-9 sm:px-10 sm:pt-11 lg:px-14 lg:pt-14">
             <div className="h-9 w-64 animate-pulse rounded-field bg-on-secondary/15 sm:h-12 sm:w-96" />
             <div className="mt-4 h-3 w-48 animate-pulse rounded-full bg-on-secondary/10" />

@@ -42,15 +42,15 @@ export const flyerItems: IFlyer[] = [
     {
         title: "Jersey",
         alt: "Desain jersey SMADARUN 2027",
-        // src: "/images/flyer/jersey.jpg",
-        // width: 1080,
-        // height: 1350,
+        src: "/images/flyer/jersey.webp",
+        width: 1536,
+        height: 1024,
     },
     {
         title: "Medali Finisher",
         alt: "Desain medali finisher SMADARUN 2027",
-        // src: "/images/flyer/medali.jpg",
-        // width: 1080,
-        // height: 1350,
+        src: "/images/flyer/medali.webp",
+        width: 905,
+        height: 1280,
     },
 ];
