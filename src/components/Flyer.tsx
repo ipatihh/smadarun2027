@@ -20,7 +20,7 @@ import { flyerIntro, flyerItems } from "@/data/flyer";
  * mengikuti jumlah item. Klik gambar membuka lightbox (tombol sungguhan, bisa dengan keyboard).
  */
 const tombolFlyer =
-    "group block w-full cursor-zoom-in overflow-hidden rounded-photo bg-surface-sunken text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+    "group flex aspect-[4/5] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-photo bg-logo-surface text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const Flyer: React.FC = () => {
     const [lightboxIndex, setLightboxIndex] = useState(-1);
@@ -79,7 +79,7 @@ const Flyer: React.FC = () => {
                                             height={item.height ?? 1350}
                                             loading="lazy"
                                             sizes="(max-width: 768px) 78vw, 400px"
-                                            className="photo-warm block h-auto w-full transition-opacity duration-300 group-hover:opacity-90"
+                                            className="block h-auto max-h-full w-auto max-w-full transition-opacity duration-300 group-hover:opacity-90"
                                         />
                                     </button>
                                 ) : (

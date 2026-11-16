@@ -151,12 +151,16 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Aturan sistem desain (UI)
 
-- **Tema saat ini: "Warm Editorial"** (hangat, elegan, minimalis; detail di `docs/CATATAN_PERUBAHAN.md`).
-  Aturannya: **hanya Plus Jakarta Sans** (jangan tambah serif/Oswald/font display lain; `.font-display`
-  sama dengan Jakarta), tanpa teks miring, **tanpa motif futuristik**. Hindari kartu bila garis tipis
-  (`border-border-strong/60`) cukup. Setiap seksi dibuka `Eyebrow` + `SectionTitle`. Foto hero/galeri
-  memakai `.photo-warm` dan `rounded-photo`; galeri wajib punya `caption`. Judul hero **SMADARUN**
-  huruf kapital penuh; teks hero rata kiri (sorotan foto di kanan), semua CTA lain rata tengah.
+- **Tema saat ini: "Jersey Violet"** (16 Nov 2026; diambil dari desain jersey SMADARUN 2027; detail di
+  `docs/CATATAN_PERUBAHAN.md`, menggantikan "Warm Editorial"). Warna: gradien ungu→indigo (`--hero-from/via/to`,
+  kelas `.hero-atmosphere` & `.panel-jersey`), magenta `--primary` untuk CTA/badge (teks putih; BUKAN warna teks
+  di atas gradien — kontrasnya ±1,9:1, pakai `text-on-secondary`), lavender muda sebagai latar. Motif: titik halftone
+  berpilin lewat `src/components/PolaTitik.tsx` — hanya hiasan statis di tepi hero/CTA/panel hari lomba, jangan di
+  belakang teks isi atau form. `.hero-grid`/`.registration-grid` kini pola titik CSS. Aturan lama tetap: **hanya
+  Plus Jakarta Sans**, tanpa teks miring, hindari kartu bila garis tipis cukup, setiap seksi dibuka `Eyebrow` +
+  `SectionTitle`, galeri wajib `caption`. Di puncak beranda header transparan di atas gradien (teks `on-secondary`,
+  lihat `overHero` di `Header.tsx`). `.photo-warm` dipertahankan namanya tapi gradingnya kini netral-sejuk.
+  Judul hero **SMADARUN** huruf kapital penuh; teks hero rata kiri, semua CTA lain rata tengah.
 - **Mobile `/daftar`**: isian form harus ≥16px di ponsel (kalau tidak, iOS zoom saat fokus); bar bayar
   ponsel = total kiri + tombol "Bayar" pendek rata kanan (jangan dibuat selebar penuh/tengah); tombol
   bayar harus tetap `type="button"` sebelum hidrasi (`siap`) agar tidak ada submit GET berisi PII.

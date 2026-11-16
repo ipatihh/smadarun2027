@@ -41,9 +41,9 @@ export const logoEvent: ILogo = {
 
 export const logoSekolah: ILogo = {
     alt: "Logo SMA Negeri 2 Nganjuk",
-    // src: "/images/logo/smada.png",
-    // width: 400,
-    // height: 400,
+    src: "/images/logo/smada.png",
+    width: 207,
+    height: 240,
 };
 
 export const sembunyikanTeksHeader = false;

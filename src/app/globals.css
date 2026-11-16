@@ -18,35 +18,40 @@
   Pengecualian: --overlay sudah berupa warna utuh karena alfanya beda per mode.
 */
 :root {
-  /* Permukaan berjenjang */
-  --background: 250 247 241;
-  --card: 255 253 248;
-  --surface-sunken: 244 239 229;
-  --hero-background: 247 240 226;
+  /* Permukaan berjenjang — lavender sangat muda, turunan violet jersey */
+  --background: 246 243 255;
+  --card: 255 254 255;
+  --surface-sunken: 237 231 252;
+  --hero-background: 240 234 255;
 
-  /* Teks */
-  --foreground: 44 39 34;
-  --foreground-accent: 85 76 66;
-  --muted-foreground: 112 101 89;
+  /* Gradien jersey: ungu di atas → biru indigo di bawah (hero, panel gelap) */
+  --hero-from: 138 27 224;
+  --hero-via: 90 18 216;
+  --hero-to: 42 16 200;
+
+  /* Teks — tinta indigo */
+  --foreground: 24 14 58;
+  --foreground-accent: 62 38 128;
+  --muted-foreground: 100 88 140;
 
   /* Garis */
-  --border: 230 220 204;
-  --border-strong: 205 188 165;
+  --border: 221 212 245;
+  --border-strong: 190 175 232;
   /* Batas kontrol form harus lebih jelas daripada garis dekoratif. */
-  --field-border: 128 112 94;
-  /* Cincin fokus keyboard dibuat gelap di permukaan terang. */
-  --focus: 75 55 35;
+  --field-border: 108 90 160;
+  /* Cincin fokus keyboard di permukaan terang. */
+  --focus: 91 20 209;
 
-  /* Amber hanya untuk permukaan/aksen, bukan teks di latar terang. */
-  --primary: 228 195 140;
-  --primary-accent: 188 144 80;
-  --on-primary: 42 33 22;
+  /* Magenta titik jersey: permukaan CTA/badge (teks putih ±4,9:1). Bukan warna teks di latar terang. */
+  --primary: 198 31 181;
+  --primary-accent: 160 20 148;
+  --on-primary: 255 255 255;
 
-  /* Panel gelap hangat (countdown, CTA, portal pendaftaran) */
-  --secondary: 48 43 38;
-  --secondary-accent: 73 62 49;
-  --on-secondary: 255 250 240;
-  --on-secondary-muted: 219 208 191;
+  /* Panel gelap indigo (hero, CTA, portal pendaftaran, footer) */
+  --secondary: 28 10 110;
+  --secondary-accent: 52 22 160;
+  --on-secondary: 250 247 255;
+  --on-secondary-muted: 214 200 250;
 
   /* Semantik */
   --success: 22 121 76; /* #16794C */
@@ -61,7 +66,7 @@
   --logo-surface: 255 255 255; /* #FFFFFF */
 
   /* Lapisan overlay modal */
-  --overlay: rgb(0 0 0 / 0.6);
+  --overlay: rgb(18 6 46 / 0.62);
 }
 
 /*
@@ -69,22 +74,26 @@
 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 31 25 21;
-    --card: 42 35 29;
-    --surface-sunken: 52 43 35;
-    --hero-background: 38 31 25;
+    --background: 18 6 46;
+    --card: 30 14 70;
+    --surface-sunken: 40 20 90;
+    --hero-background: 24 10 60;
 
-    --foreground: 248 241 229;
-    --foreground-accent: 214 201 182;
-    --muted-foreground: 178 163 142;
+    --hero-from: 92 18 160;
+    --hero-via: 56 14 150;
+    --hero-to: 28 10 110;
 
-    --border: 70 58 45;
-    --border-strong: 108 88 66;
-    --field-border: 139 119 94;
-    --focus: 235 190 104;
+    --foreground: 244 240 255;
+    --foreground-accent: 208 192 250;
+    --muted-foreground: 170 155 215;
 
-    --secondary: 58 46 35;
-    --secondary-accent: 80 63 46;
+    --border: 58 38 112;
+    --border-strong: 94 70 170;
+    --field-border: 140 118 210;
+    --focus: 240 160 235;
+
+    --secondary: 34 12 100;
+    --secondary-accent: 58 26 150;
 
     --success: 111 211 164; /* #6FD3A4 */
     --success-surface: 20 58 42; /* #143A2A */
@@ -95,7 +104,7 @@
 
     --logo-surface: 236 236 233; /* #ECECE9 — sedikit diredupkan supaya tidak menyilaukan */
 
-    --overlay: rgb(0 0 0 / 0.72);
+    --overlay: rgb(8 2 24 / 0.75);
   }
 }
 
@@ -231,24 +240,29 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /*
-  Penanda angka tahun ("2027") di logotype memakai permukaan amber dan teks gelap.
+  Penanda angka tahun ("2027") di logotype memakai permukaan magenta dan teks putih.
 */
 .accent-mark {
   @apply inline-block rounded-[0.12em] bg-primary px-[0.12em] text-on-primary;
 }
 
+/* Gradien jersey: ungu di atas → indigo di bawah. Teks di atasnya memakai text-on-secondary. */
 .hero-atmosphere {
   background:
-    radial-gradient(circle at 78% 36%, rgb(var(--primary) / 0.24), transparent 36%),
-    radial-gradient(circle at 15% 85%, rgb(var(--card) / 0.9), transparent 45%),
-    rgb(var(--hero-background));
+    radial-gradient(circle at 88% 18%, rgb(var(--primary) / 0.32), transparent 38%),
+    linear-gradient(180deg, rgb(var(--hero-from)), rgb(var(--hero-via)) 55%, rgb(var(--hero-to)));
 }
 
+/* Panel bergradien jersey untuk blok sorotan (CTA, dll). */
+.panel-jersey {
+  background: linear-gradient(160deg, rgb(var(--hero-from)), rgb(var(--hero-via)) 50%, rgb(var(--hero-to)));
+}
+
+/* Titik halftone halus (pengganti garis kotak-kotak lama), memudar ke tepi. */
 .hero-grid {
-  background-image: linear-gradient(rgb(var(--foreground) / 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--foreground) / 0.045) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: linear-gradient(to bottom, transparent, black 24%, black 72%, transparent);
+  background-image: radial-gradient(rgb(var(--on-secondary) / 0.16) 1.5px, transparent 1.6px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at 85% 20%, black, transparent 62%);
 }
 
 .hero-track-base,
@@ -258,12 +272,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .hero-track-base {
-  stroke: rgb(var(--border-strong) / 0.64);
+  stroke: rgb(var(--on-secondary) / 0.3);
   stroke-width: 1;
 }
 
 .hero-track-progress {
-  stroke: rgb(var(--primary-accent) / 0.85);
+  stroke: rgb(var(--primary));
   stroke-width: 1.5;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
@@ -282,8 +296,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .photo-warm {
-  /* Grading seragam: foto hero dan galeri sama-sama condong hangat. */
-  filter: sepia(0.14) saturate(1.04) contrast(1.02);
+  /* Grading seragam foto hero dan galeri: netral cenderung sejuk, serasi dengan violet.
+     (Nama kelas dipertahankan agar komponen tidak perlu diubah.) */
+  filter: saturate(1.06) contrast(1.04) hue-rotate(-6deg);
 }
 
 .hero-photo-shade {
@@ -294,16 +309,15 @@ h1, h2, h3, h4, h5, h6 {
 
 .registration-atmosphere {
   background:
-    radial-gradient(circle at 84% 8%, rgb(var(--primary) / 0.17), transparent 27rem),
+    radial-gradient(circle at 84% 8%, rgb(var(--primary) / 0.10), transparent 27rem),
     radial-gradient(circle at 9% 25%, rgb(var(--card) / 0.95), transparent 31rem),
     rgb(var(--background));
 }
 
 .registration-grid {
-  background-image: linear-gradient(rgb(var(--foreground) / 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--foreground) / 0.035) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: linear-gradient(to bottom, black, transparent 36rem);
+  background-image: radial-gradient(rgb(var(--primary) / 0.22) 1.5px, transparent 1.6px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at 100% 0%, black, transparent 40rem);
 }
 
 /* Hormati preferensi sistem: animasi reveal tidak boleh jadi syarat konten terlihat. */
