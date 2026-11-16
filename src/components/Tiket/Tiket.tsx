@@ -1,5 +1,5 @@
 import { getLiveEventData, ResolvedTicketTier } from "@/lib/kembarinEvents";
-import { tiketMarketing } from "@/data/tiket";
+import { fasilitasSemuaKategori, tiketMarketing } from "@/data/tiket";
 import SectionTitle from "../SectionTitle";
 import Eyebrow from "../Eyebrow";
 import TiketGrid from "./TiketGrid";
@@ -23,21 +23,6 @@ async function Tiket() {
       highlight: marketing?.highlight,
     };
   });
-
-  // Fasilitas yang dimiliki SEMUA kategori dipindah ke satu baris di bawah grid.
-  // Sebelumnya tiap kartu mengulang daftar yang nyaris identik, sehingga kedua kategori
-  // terbaca sebagai duplikat dan pembeda aslinya (harga & peruntukan) jadi tenggelam.
-  const sharedFeatures =
-    tiers.length > 1
-      ? tiers[0].features.filter((feature) =>
-          tiers.every((tier) => tier.features.includes(feature))
-        )
-      : [];
-
-  const tiersWithUniqueFeatures = tiers.map((tier) => ({
-    ...tier,
-    features: tier.features.filter((feature) => !sharedFeatures.includes(feature)),
-  }));
 
   // Jumlah kategori live dari core: dengan satu kategori, ajakan "pilih"/"paling pas" tidak masuk akal.
   const tunggal = tiers.length === 1;
@@ -67,8 +52,8 @@ async function Tiket() {
       ) : (
         <>
           <TiketGrid
-            tiers={tiersWithUniqueFeatures}
-            sharedFeatures={sharedFeatures}
+            tiers={tiers}
+            sharedFeatures={fasilitasSemuaKategori}
             adminFee={live.adminFee}
           />
           {live.multiTicketEnabled && live.maxTicketsPerOrder > 1 && (

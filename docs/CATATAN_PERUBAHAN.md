@@ -21,6 +21,17 @@ dengan titik halftone magenta).
 - Seksi "Rute, Jersey & Medali": gambar jersey dan medali dari panitia dipasang (`public/images/flyer/*.webp`, data di `src/data/flyer.ts`); kotak flyer kini seragam 4:5 dengan gambar `object-contain` di atas permukaan putih. Rute lintasan masih placeholder. Gambar jersey masih mockup bertulisan "APPAREL".
 - Favicon (garis burung hantu putih dari lambang medali, sumber `scripts/aset/burung-hantu-garis.jpg`, di atas gradien) dan OG image (foto hero + gradien + judul) dibuat lewat `scripts/buat-aset-jersey.mjs`; ganti dengan logo resmi bila sudah ada. Seksi Tiket tetap terang dengan pola titik samar. Belum: logo putih dari jersey (`src/data/logo.ts` masih kosong).
 
+## 12 Oktober 2026 — Fasilitas tiket tetap tampil saat kategori bertambah
+
+- Daftar fasilitas yang berlaku untuk semua kategori dipisah di `src/data/tiket.ts` dan
+  ditampilkan sekali di bawah kartu setiap kali ada kategori live, baik satu maupun lebih.
+  Sebelumnya penambahan kategori di core tanpa metadata marketing lokal membuat irisan
+  fasilitas kosong sehingga daftar bersama hilang.
+- Fasilitas khusus kategori tetap bisa ditulis di `tiketMarketing[].features`. Harga,
+  kategori, dan status ketersediaan tetap berasal dari core.
+
+---
+
 ## 6 Oktober 2026 — Kembali dari gateway langsung ke ringkasan, tanpa panduan berkedip
 
 Pemilik melihat pengantar + panduan langkah + "Memeriksa status pesanan…" setiap membuka tautan

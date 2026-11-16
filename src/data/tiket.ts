@@ -1,17 +1,23 @@
-// Metadata MARKETING SAJA per kategori tiket (nama tampilan & daftar fasilitas).
+// Metadata MARKETING SAJA untuk tampilan tiket (nama & fasilitas).
 // Harga, ketersediaan, dan status buka/tutup pendaftaran TIDAK lagi di sini —
 // semua itu diambil live dari kembarin-v2 lewat src/lib/kembarinEvents.ts, supaya
 // Super Admin di dasbor kembarin-v2 bisa atur semuanya dari satu tempat.
 //
-// categoryKey HARUS persis sama (case-insensitive) dengan category_name yang
-// dikonfigurasi admin kembarin-v2 supaya kategori ini dapat teks fasilitas yang
-// pas. Kategori yang tidak terdaftar di sini tetap otomatis muncul (pakai
-// categoryKey apa adanya sebagai nama, tanpa daftar fasilitas) — jadi kategori
-// baru yang admin tambahkan di kembarin-v2 tidak akan pernah hilang dari
-// tampilan, walau belum sempat ditulis teks marketing-nya di sini.
-// Tulis di `features` hanya yang benar-benar isi paket. Jangan ulangi nama kategori
-// ("Slot Lari Kategori 5K Pelajar") — kartu sudah menampilkannya sebagai judul, dan butir
-// seperti itu membuat fasilitas yang sama di semua kategori tidak bisa digabung jadi satu.
+// Fasilitas yang berlaku untuk semua kategori ditampilkan SEKALI di bawah kartu,
+// termasuk saat core baru mengirim satu kategori atau menambah kategori baru.
+// Perbarui daftar ini bila paket umum yang dijanjikan panitia berubah.
+export const fasilitasSemuaKategori = [
+  'Jersey Eksklusif SMADARUN 2027',
+  'Medali Finisher',
+  'Nomor BIB',
+  'Goodie Bag',
+  'Photo Tagging',
+];
+
+// categoryKey HARUS persis sama (case-insensitive) dengan category_name dari
+// kembarin-v2 untuk nama tampilan dan fasilitas KHUSUS kategori. Kategori baru
+// tanpa metadata tetap muncul dengan nama dari core dan fasilitas umum di atas.
+// Jangan ulangi fasilitas umum atau nama kategori di `features`.
 export interface ITiketMarketing {
   categoryKey: string;
   name: string;
@@ -27,13 +33,7 @@ export const tiketMarketing: ITiketMarketing[] = [
   {
     categoryKey: '5 KM  Reguler',
     name: '5 KM Reguler',
-    features: [
-      'Jersey Eksklusif SMADARUN 2027',
-      'Medali Finisher',
-      'Nomor BIB',
-      'Goodie Bag',
-      'Photo Tagging',
-    ],
+    features: [],
     url: '/daftar',
   },
 ];
