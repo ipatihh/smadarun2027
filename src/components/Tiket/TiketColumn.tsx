@@ -8,6 +8,8 @@ interface PricingColumnProps {
   tier: ResolvedTicketTier;
   /** Biaya layanan platform per tiket (live dari kembarin-v2). */
   adminFee: number;
+  /** Nama biaya dari core (event_config.admin_fee_label). */
+  adminFeeLabel: string;
 }
 
 const rupiah = (n: number) =>
@@ -17,7 +19,7 @@ const rupiah = (n: number) =>
     minimumFractionDigits: 0,
   }).format(n);
 
-const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
+const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeLabel }) => {
   const hasFeatures = tier.features.length > 0;
 
   return (
@@ -45,7 +47,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee }) => {
             </span>
             {adminFee > 0 && !tier.comingSoon && (
               <p className="mt-1.5 text-xs text-muted-foreground">
-                + Biaya Layanan {rupiah(adminFee)} per tiket
+                + {adminFeeLabel} {rupiah(adminFee)} per tiket
               </p>
             )}
           </div>

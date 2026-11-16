@@ -33,6 +33,7 @@ export default async function DaftarPage() {
       isOpen={live.isOpen}
       comingSoon={live.comingSoon}
       adminFee={live.adminFee}
+      adminFeeLabel={live.adminFeeLabel}
       opensAtLabel={formatJadwalBuka(live.opensAt)}
       multiTicketEnabled={live.multiTicketEnabled}
       maxTicketsPerOrder={live.maxTicketsPerOrder}

@@ -8,16 +8,18 @@ interface Props {
   sharedFeatures: string[];
   /** Biaya layanan platform, live dari kembarin-v2. */
   adminFee: number;
+  /** Nama biaya dari core. */
+  adminFeeLabel: string;
 }
 
-const TiketGrid: React.FC<Props> = ({ tiers, sharedFeatures, adminFee }) => {
+const TiketGrid: React.FC<Props> = ({ tiers, sharedFeatures, adminFee, adminFeeLabel }) => {
   return (
     <div
       className="mx-auto w-full max-w-md md:max-w-4xl"
     >
       <div className="flex flex-col items-stretch justify-center gap-6 md:flex-row md:gap-8">
         {tiers.map((tier) => (
-          <PricingColumn key={tier.categoryKey} tier={tier} adminFee={adminFee} />
+          <PricingColumn key={tier.categoryKey} tier={tier} adminFee={adminFee} adminFeeLabel={adminFeeLabel} />
         ))}
       </div>
 

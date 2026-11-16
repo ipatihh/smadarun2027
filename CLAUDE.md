@@ -33,6 +33,8 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   pendaftaran atau menonaktifkan kategori di dasbor, tapi partner site ini tetap menjual
   tiket dan tetap membuat transaksi payment gateway. Kalau menambah gerbang baru, tambahkan di sini,
   jangan di UI.
+- **Nama biaya layanan juga dari core** (`event_config.admin_fee_label` → `LiveEventData.adminFeeLabel`, default
+  "Biaya Layanan"); jangan menulis "Biaya Layanan Platform" lagi di UI. Label dibatasi 60 karakter tanpa `<>{}`.
 - **Biaya layanan dihitung PER TIKET, bukan per pesanan.** Core memakai
   `calculateAdminFee(... , ticketCount)` = `feePerTicket * ticketCount`, jadi pesanan 5
   tiket ditagih 5 × `admin_fee_amount`. Semua tempat yang menampilkan/menghitung nominal

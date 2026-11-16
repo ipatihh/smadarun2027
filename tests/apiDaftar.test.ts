@@ -15,6 +15,7 @@ const LIVE: LiveEventData = {
   location: null,
   timeline: null,
   adminFee: 5000,
+  adminFeeLabel: "Biaya Layanan Gateway",
   multiTicketEnabled: true,
   maxTicketsPerOrder: 5,
   wilayahDropdown: true,

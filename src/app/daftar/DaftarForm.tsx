@@ -132,6 +132,8 @@ interface DaftarFormProps {
   // Biaya layanan/admin PER TIKET, live dari event_config.admin_fee_amount kembarin-v2
   // (lihat src/lib/kembarinEvents.ts) — bukan hardcode di sisi ini.
   adminFee: number;
+  /** Nama biaya dari core (event_config.admin_fee_label). */
+  adminFeeLabel: string;
   /** Jadwal pembukaan pendaftaran yang sudah diformat WIB, kalau panitia mengisinya. */
   opensAtLabel: string | null;
   /** Pembelian kolektif aktif atau tidak (event_config.multi_ticket_enabled). */
@@ -200,6 +202,7 @@ export default function DaftarForm({
   isOpen,
   comingSoon = false,
   adminFee,
+  adminFeeLabel,
   opensAtLabel,
   multiTicketEnabled,
   maxTicketsPerOrder,
@@ -666,7 +669,7 @@ export default function DaftarForm({
       })}
       <div className="flex justify-between gap-4 border-t border-border pt-2.5 text-foreground-accent font-medium">
         <dt>
-          Biaya Layanan Platform
+          {adminFeeLabel}
           {adminFee > 0 && (
             <span className="block text-xs text-muted-foreground">
               {harga(adminFee)} × {pesertaList.length} tiket

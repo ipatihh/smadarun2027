@@ -55,6 +55,7 @@ async function Tiket() {
             tiers={tiers}
             sharedFeatures={fasilitasSemuaKategori}
             adminFee={live.adminFee}
+            adminFeeLabel={live.adminFeeLabel}
           />
           {live.multiTicketEnabled && live.maxTicketsPerOrder > 1 && (
             <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-foreground-accent">

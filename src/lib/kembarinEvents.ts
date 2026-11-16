@@ -67,6 +67,9 @@ export interface LiveEventData {
   // JANGAN pernah di-hardcode di sisi ini — nilai ini murni mengikuti pengaturan admin
   // di dasbor Super Admin kembarin-v2 (field "Biaya Layanan / Fee Admin").
   adminFee: number;
+  // Nama biaya itu sendiri, dari event_config.admin_fee_label (mis. "Biaya Layanan Gateway").
+  // Panitia bisa mengganti namanya di dasbor core; kosong/tidak valid → NAMA_BIAYA_DEFAULT.
+  adminFeeLabel: string;
   // Pembelian kolektif: satu pemesan mendaftarkan beberapa peserta dalam satu
   // pembayaran. Mengikuti event_config.multi_ticket_enabled di kembarin-v2.
   multiTicketEnabled: boolean;
@@ -103,6 +106,8 @@ const FETCH_TIMEOUT_MS = 8000;
 const DEFAULT_MAX_TICKETS = 5;
 const ABSOLUTE_MAX_TICKETS = 10;
 
+export const NAMA_BIAYA_DEFAULT = "Biaya Layanan";
+
 const CLOSED: LiveEventData = {
   isOpen: false,
   comingSoon: false,
@@ -111,6 +116,7 @@ const CLOSED: LiveEventData = {
   location: null,
   timeline: null,
   adminFee: 0,
+  adminFeeLabel: NAMA_BIAYA_DEFAULT,
   multiTicketEnabled: false,
   maxTicketsPerOrder: 1,
   wilayahDropdown: false,
@@ -118,6 +124,14 @@ const CLOSED: LiveEventData = {
   namaBib: null,
   kolomTambahan: [],
 };
+
+/** Label dari core ditampilkan apa adanya ke pembeli, jadi dibatasi panjang & karakternya. */
+function bacaLabelBiaya(value: unknown): string {
+  if (typeof value !== "string") return NAMA_BIAYA_DEFAULT;
+  const label = value.trim();
+  if (label.length === 0 || label.length > 60 || /[\n\r<>{}]/.test(label)) return NAMA_BIAYA_DEFAULT;
+  return label;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -172,6 +186,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
 
     let timeline: EventTimelineConfig | null = null;
     let adminFee = 0;
+    let adminFeeLabel = NAMA_BIAYA_DEFAULT;
     let multiTicketEnabled = false;
     let maxTicketsPerOrder = 1;
     let wilayahDropdown = false;
@@ -198,6 +213,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       };
       if (cfg.enable_admin_fee === true) {
         adminFee = Number(cfg.admin_fee_amount) || 0;
+        adminFeeLabel = bacaLabelBiaya(cfg.admin_fee_label);
       }
 
       // Rumus identik dengan core: multi_ticket_enabled dianggap menyala kecuali
@@ -248,6 +264,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       eventDate,
       location,
       adminFee,
+      adminFeeLabel,
       multiTicketEnabled,
       maxTicketsPerOrder,
       wilayahDropdown,
