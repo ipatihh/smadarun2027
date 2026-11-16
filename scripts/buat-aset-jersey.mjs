@@ -91,14 +91,15 @@ const foto = await sharp("public/images/hero-start.jpg").resize(1200, 630, { fit
 const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
 <defs>${gradien("g")}<linearGradient id="m" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2A10C8" stop-opacity="0.97"/><stop offset="0.5" stop-color="#5A12D8" stop-opacity="0.9"/><stop offset="1" stop-color="#8A1BE0" stop-opacity="0.55"/></linearGradient></defs>
 <rect width="1200" height="630" fill="url(#m)"/>
-${swirl(1010, 150, 1.2, 0.5)}
+${swirl(1050, 120, 1.1, 0.35)}
 <text x="80" y="170" font-family="Helvetica Neue, Arial, sans-serif" font-weight="600" font-size="26" letter-spacing="5" fill="#D6C8FA">SMA NEGERI 2 NGANJUK</text>
 <text x="74" y="330" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="150" letter-spacing="-5" fill="#fff">SMADARUN</text>
 <text x="80" y="420" font-family="Helvetica Neue, Arial, sans-serif" font-weight="500" font-size="64" fill="#D6C8FA">2027</text>
 <rect x="80" y="470" width="260" height="64" rx="32" fill="${DOT}"/>
 <text x="210" y="512" text-anchor="middle" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="28" fill="#fff">Lomba Lari</text>
 </svg>`;
-const og = await sharp(foto).composite([{ input: Buffer.from(ogSvg) }]).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+const burungOg = await sharp("public/images/logo/burung-hantu.png").resize(360).toBuffer();
+const og = await sharp(foto).composite([{ input: Buffer.from(ogSvg) }, { input: burungOg, left: 810, top: 345 }]).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
 writeFileSync("src/app/opengraph-image.jpg", og);
 writeFileSync("src/app/twitter-image.jpg", og);
 console.log("OG", og.length, "bytes");

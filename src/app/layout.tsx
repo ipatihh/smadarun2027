@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { Analytics } from '@vercel/analytics/next';
 import { Plus_Jakarta_Sans } from "next/font/google";
@@ -12,7 +12,26 @@ import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-plus-jakarta' });
 
+// Warna bilah alamat browser ponsel (Chrome Android, Safari iOS) mengikuti gradien jersey.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#5A12D8" },
+    { media: "(prefers-color-scheme: dark)", color: "#12062E" },
+  ],
+};
+
 export const metadata: Metadata = {
+  applicationName: siteDetails.siteName,
+  authors: [{ name: "SMA Negeri 2 Nganjuk" }],
+  creator: "SMA Negeri 2 Nganjuk",
+  category: "sports",
+  formatDetection: { telephone: false, email: false, address: false },
+  // Izinkan Google memakai gambar besar & cuplikan penuh di hasil pencarian.
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
+  },
   metadataBase: new URL(siteDetails.siteUrl),
   title: siteDetails.metadata.title,
   description: siteDetails.metadata.description,
@@ -25,6 +44,8 @@ export const metadata: Metadata = {
     description: siteDetails.metadata.description,
     url: siteDetails.siteUrl,
     type: 'website',
+    siteName: siteDetails.siteName,
+    locale: 'id_ID',
     // Gambar pratinjau (og:image) SENGAJA tidak ditulis di sini: Next.js memasangnya otomatis
     // dari src/app/opengraph-image.jpg dan twitter-image.jpg bila filenya ada. Dulu di sini
     // menunjuk /images/og-image.jpg yang tidak pernah ada (404). Lihat docs/PANDUAN_ASET.md.

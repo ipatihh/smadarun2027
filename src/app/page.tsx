@@ -34,11 +34,24 @@ const HomePage = async () => {
     name: siteDetails.siteName,
     description: siteDetails.metadata.description,
     url: siteDetails.siteUrl,
+    image: [`${siteDetails.siteUrl}opengraph-image.jpg`],
     sport: "Running",
+    isAccessibleForFree: false,
     inLanguage: "id-ID",
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    organizer: { "@type": "Organization", name: "SMA Negeri 2 Nganjuk" },
+    organizer: { "@type": "Organization", name: "SMA Negeri 2 Nganjuk", url: siteDetails.siteUrl },
+    // Harga hanya dari core dan hanya saat pendaftaran benar-benar buka (bukan Coming Soon/tutup).
+    ...(live.isOpen && live.ticketTypes.length > 0 && {
+      offers: live.ticketTypes.map((t) => ({
+        "@type": "Offer",
+        name: t.categoryKey,
+        price: t.price,
+        priceCurrency: "IDR",
+        availability: "https://schema.org/InStock",
+        url: `${siteDetails.siteUrl}daftar`,
+      })),
+    }),
     ...(mulai && { startDate: mulai }),
     ...(live.location && {
       location: { "@type": "Place", name: live.location, address: live.location },

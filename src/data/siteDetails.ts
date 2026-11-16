@@ -5,7 +5,8 @@ export const siteDetails = {
     siteUrl: 'https://www.smadarun.id/',
     metadata: {
         title: 'SMADARUN 2027 - Lomba Lari SMA Negeri 2 Nganjuk',
-        description: 'SMADARUN 2027 adalah ajang lari tahunan yang dipersembahkan oleh SMA Negeri 2 Nganjuk. Terbuka untuk umum dan pelari dari mana saja. Rayakan semangat olahraga, kebersamaan, dan kompetisi sehat.',
+        // ≤155 karakter: lebih panjang dari itu dipotong di hasil Google dan kartu pratinjau WhatsApp.
+        description: 'SMADARUN 2027: lomba lari tahunan SMA Negeri 2 Nganjuk, terbuka untuk umum. Pilih kategori, daftar online, dan rasakan serunya berlari bersama.',
     },
     language: 'id-id',
     locale: 'id-ID',
