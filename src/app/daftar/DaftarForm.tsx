@@ -641,16 +641,14 @@ export default function DaftarForm({
         return (
           <div key={raw.key} className="flex justify-between gap-4 text-foreground-accent font-medium">
             <dt className="min-w-0">
-              <span className="block truncate">
-                {nama || (
-                  <>
-                    Peserta {index + 1} <span className="text-warning">· nama belum diisi</span>
-                  </>
-                )}
-              </span>
+              <span className="block truncate">{nama || `Peserta ${index + 1}`}</span>
+              {/* Kekurangan isian ditulis kecil di baris kedua (bukan di baris nama, yang terpotong). */}
               <span className="block text-xs text-muted-foreground">
-                {kategori?.label ?? "-"} ·{" "}
-                {raw.size ? `Jersey ${raw.size}` : <span className="text-warning">jersey belum dipilih</span>}
+                {kategori?.label ?? "-"}
+                {raw.size && ` · Jersey ${raw.size}`}
+                {(!nama || !raw.size) && (
+                  <span className="text-warning"> · belum: {[!nama && "nama", !raw.size && "jersey"].filter(Boolean).join(", ")}</span>
+                )}
               </span>
             </dt>
             <dd className="shrink-0 text-right">
