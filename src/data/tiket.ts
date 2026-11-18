@@ -10,7 +10,7 @@ export const fasilitasSemuaKategori = [
   'Jersey Eksklusif SMADARUN 2027',
   'Medali Finisher',
   'Nomor BIB',
-  'Goodie Bag',
+  'String Bag',
   'Photo Tagging',
 ];
 
