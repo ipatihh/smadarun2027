@@ -74,7 +74,9 @@ const Flyer: React.FC = () => {
                                             height={item.height ?? 1350}
                                             loading="lazy"
                                             sizes="(max-width: 768px) 78vw, 400px"
-                                            className="block h-auto max-h-full w-auto max-w-full transition-opacity duration-300 group-hover:opacity-90"
+                                            // multiply: putih pada file mockup (tidak transparan) ikut warna bingkai
+                                            // `bg-logo-surface`, yang di mode gelap sengaja sedikit diredupkan.
+                                            className="block h-auto max-h-full w-auto max-w-full mix-blend-multiply transition-opacity duration-300 group-hover:opacity-90"
                                         />
                                     </button>
                                 ) : (
