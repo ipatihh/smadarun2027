@@ -14,6 +14,15 @@ export const fasilitasSemuaKategori = [
   'Photo Tagging',
 ];
 
+// Kelompok peserta yang tampil di kartu tiket SELAMA pendaftaran masih "Coming Soon" (menggantikan
+// teks "Menyusul" di tempat harga; revisi panitia Nov 2026). Hanya teks tampilan: harga dan
+// status buka/tutup tetap live dari kembarin-v2. Begitu pendaftaran dibuka, kartu kembali
+// menampilkan harga dari core.
+export const kelompokPeserta = [
+  'Kelompok U-18 Putra/Putri Pelajar Kab. Nganjuk (Podium)',
+  'Kelompok Umum (Non-Podium)',
+];
+
 // categoryKey HARUS persis sama (case-insensitive) dengan category_name dari
 // kembarin-v2 untuk nama tampilan dan fasilitas KHUSUS kategori. Kategori baru
 // tanpa metadata tetap muncul dengan nama dari core dan fasilitas umum di atas.

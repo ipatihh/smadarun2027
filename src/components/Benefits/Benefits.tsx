@@ -1,5 +1,4 @@
 import SectionTitle from "../SectionTitle";
-import Eyebrow from "../Eyebrow";
 import { benefits, benefitsIntro } from "@/data/benefits";
 
 /**
@@ -12,7 +11,6 @@ const Benefits: React.FC = () => {
         <section id="fasilitas" aria-labelledby="fasilitas-judul" className="py-20 lg:py-32">
             <div className="grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16">
                 <div className="reveal-left">
-                    <Eyebrow>Fasilitas</Eyebrow>
                     <SectionTitle>
                         <h2 id="fasilitas-judul" className="max-w-md">{benefitsIntro.title}</h2>
                     </SectionTitle>

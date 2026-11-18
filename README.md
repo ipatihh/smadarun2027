@@ -90,9 +90,7 @@ berlaku di sini dalam ≤30 detik, tanpa perlu redeploy project ini.
 ## Halaman & Bagian Situs
 
 **Beranda (`/`)** — urutan section mengikuti alur pertanyaan pengunjung: `Hero` → `EventInfo`
-(hitung mundur + tanggal, lokasi, gun start, RPC — live) → `Benefits` (grid fasilitas di
-rute) → `Gallery` (foto tahun lalu) → `Tiket` (kartu kategori, live) → `Testimonials`
-(termasuk angka statistik) → `FAQ` → `Logos` (sponsor) → `CTA`.
+(hitung mundur + tanggal, lokasi, gun start, RPC — live) → `Benefits` (grid fasilitas) → `Flyer` (mockup jersey, medali, string bag) → `Gallery` (foto tahun lalu) → `Tiket` (kartu kategori, live) → `FAQ` → `Logos` (sponsor) → `CTA`.
 
 **Form pendaftaran (`/daftar`)** — form kolektif: satu pemesan bisa mendaftarkan beberapa
 peserta sekaligus (kalau `multi_ticket_enabled` aktif di kembarin-v2), tiap peserta boleh beda

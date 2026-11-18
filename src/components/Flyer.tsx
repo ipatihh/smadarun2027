@@ -12,7 +12,7 @@ import SectionTitle from "./SectionTitle";
 import { flyerIntro, flyerItems } from "@/data/flyer";
 
 /**
- * Flyer rute, jersey, dan medali. Seluruh isinya dari src/data/flyer.ts (di sana ada
+ * Mockup jersey, medali, dan string bag. Seluruh isinya dari src/data/flyer.ts (di sana ada
  * petunjuk memasang gambar). Item tanpa `src` tampil sebagai kotak "segera hadir" berukuran
  * 4:5 supaya tata letak sudah final sebelum flyernya ada.
  *
@@ -45,16 +45,11 @@ const Flyer: React.FC = () => {
 
     return (
         <section id="flyer" aria-labelledby="flyer-judul" className="py-16 lg:py-24">
-            <div className="grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16">
-                <div className="reveal-left">
-                    <Eyebrow>Info lomba</Eyebrow>
-                    <SectionTitle>
-                        <h2 id="flyer-judul" className="max-w-md">{flyerIntro.title}</h2>
-                    </SectionTitle>
-                </div>
-                <p className="reveal-right max-w-md text-sm leading-relaxed text-foreground-accent sm:text-base lg:justify-self-end">
-                    {flyerIntro.description}
-                </p>
+            <div className="reveal-left">
+                <Eyebrow>Info lomba</Eyebrow>
+                <SectionTitle>
+                    <h2 id="flyer-judul" className="max-w-xl">{flyerIntro.title}</h2>
+                </SectionTitle>
             </div>
 
             <ul
@@ -85,11 +80,11 @@ const Flyer: React.FC = () => {
                                 ) : (
                                     <div
                                         role="img"
-                                        aria-label={`${item.title}: flyer segera hadir`}
+                                        aria-label={`${item.title}: mockup segera hadir`}
                                         className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-3 rounded-photo border border-dashed border-border-strong bg-surface-sunken px-6 text-center"
                                     >
                                         <FiImage className="h-6 w-6 text-foreground-accent" aria-hidden="true" />
-                                        <p className="text-sm font-semibold text-foreground">Flyer segera hadir</p>
+                                        <p className="text-sm font-semibold text-foreground">Mockup segera hadir</p>
                                         <p className="text-xs text-muted-foreground">Rasio 4:5 · 1080 × 1350 px</p>
                                     </div>
                                 )}

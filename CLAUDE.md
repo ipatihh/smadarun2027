@@ -174,8 +174,8 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   yang tidak ada membuat pratinjau tautan rusak tanpa error.
 - **Logo sekolah & event**: isi hanya lewat `src/data/logo.ts` (komponen `BrandLogo`), jangan taruh
   `<img>` logo langsung di Header/Hero/Footer. Tidak ada placeholder bila kosong; wajib diisi sebelum go-live.
-- **Flyer rute/jersey/medali**: isi hanya lewat `src/data/flyer.ts` (petunjuk di komentar kepalanya);
-  jangan hardcode gambar di `Flyer.tsx`. Kotak "Flyer segera hadir" termasuk konten SAMPLE yang wajib
+- **Mockup jersey/medali/string bag** (seksi `Flyer`): isi hanya lewat `src/data/flyer.ts` (petunjuk di komentar kepalanya);
+  jangan hardcode gambar di `Flyer.tsx`. Kotak "Mockup segera hadir" (bila ada slot kosong) termasuk konten SAMPLE yang wajib
   diisi atau dihapus sebelum go-live. Teks seksi Tiket menyesuaikan jumlah kategori live (1 vs banyak).
 - **Countdown & jadwal hari-H live dari core**: `EventInfo.tsx` membaca `event_date`, lokasi, gun
   start, RPC lewat `getLiveEventData()`. Jangan hardcode tanggal; atur dari super admin kembar.in.
@@ -241,8 +241,8 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   sosial media di `src/data/footer.ts` (nomor WhatsApp footer sudah asli, ditautkan ke wa.me),
   ilustrasi cadangan (`public/images/hero-illustration.svg`),
   dan gambar panduan ukuran jersey. Daftar sponsor/mitra (`src/data/sponsors.ts`) sengaja kosong: seksi sponsor tetap tampil dengan
-  kotak "Logo di sini" per tier (agar calon sponsor tahu tempat logonya), diganti otomatis begitu ada sponsor nyata. Testimoni kini hanya satu ulasan asli (Fatih, peserta 2025,
-  isi dari pemilik); ulasan lain sengaja dikosongkan sampai ada yang nyata — jangan diisi contoh. Jangan menganggap konten contoh sebagai data nyata;
+  kotak "Logo di sini" per tier (agar calon sponsor tahu tempat logonya), diganti otomatis begitu ada sponsor nyata. Seksi Testimoni sudah DICABUT (revisi panitia, 18 Nov 2026) — jangan dipasang lagi tanpa
+  permintaan pemilik. Jangan menganggap konten contoh sebagai data nyata;
   sebelum go-live, konten itu perlu diganti aset/teks asli panitia.
 - Foto hero `public/images/hero-start.jpg` adalah dokumentasi start asli dari panitia. Aset
   mengandung teks "2026" dan tanggal pada tepinya; potongan foto (`scripts/optimasi-foto.mjs`) sengaja

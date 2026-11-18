@@ -4,7 +4,6 @@ import Benefits from "@/components/Benefits/Benefits";
 import Flyer from "@/components/Flyer";
 import Gallery from "@/components/Gallery";
 import Tiket from "@/components/Tiket/Tiket";
-import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import Logos from "@/components/Logos";
 import Container from "@/components/Container";
@@ -14,9 +13,9 @@ import { siteDetails } from "@/data/siteDetails";
 
 /**
  * Urutan seksi mengikuti pertanyaan pengunjung: ini lomba apa & kapan (Hero, panel hari
- * lomba) → apa yang disiapkan (Benefits) → rute, jersey, medali (Flyer) → suasananya (Gallery, foto tahun lalu) →
+ * lomba) → apa yang disiapkan (Benefits) → jersey, medali, string bag (Flyer) → suasananya (Gallery, foto tahun lalu) →
  * berapa & daftar di mana (Tiket) → keyakinan
- * (Testimoni + angka statistik, FAQ) → apresiasi sponsor → ajakan terakhir.
+ * (FAQ) → apresiasi sponsor → ajakan terakhir. Seksi Testimoni dicabut atas revisi panitia (Nov 2026).
  * Sponsor sengaja tidak di posisi atas: sebelumnya blok itu memakan layar persis saat
  * pengunjung sedang mencari harga dan jadwal.
  *
@@ -74,8 +73,6 @@ const HomePage = async () => {
         <Gallery />
 
         <Tiket />
-
-        <Testimonials />
 
         <FAQ />
       </Container>

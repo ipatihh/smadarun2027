@@ -144,7 +144,7 @@ body {
   .reveal-3 { animation-delay: 270ms; }
   .reveal-4 { animation-delay: 360ms; }
 
-  /* Dipakai carousel testimoni di mobile — sebelumnya kelas ini tidak pernah didefinisikan. */
+  /* Dipakai carousel flyer di mobile (Flyer.tsx). */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

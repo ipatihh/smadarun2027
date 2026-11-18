@@ -11,7 +11,7 @@ import { IGalleryPhoto } from "@/types";
 // ============================================================================
 
 export const galleryIntro = {
-    title: "Momen SMADARUN Sebelumnya",
+    title: "Recap SMADA RUN 2026",
     description: "Sekilas suasana dari lintasan tahun lalu.",
 };
 

@@ -53,18 +53,6 @@ export interface IFAQ {
     answer: string;
 }
 
-export interface ITestimonial {
-    name: string;
-    role: string;
-    message: string;
-    avatar: string;
-}
-
-export interface IStats {
-    title: string;
-    description: string;
-}
-
 export interface ISocials {
     facebook?: string;
     github?: string;

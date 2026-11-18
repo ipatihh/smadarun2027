@@ -15,7 +15,7 @@ Cek ukuran file di Mac: `sips -g pixelWidth -g pixelHeight <file>`.
 
 ## Flyer dan logo
 Petunjuk lengkap ada di komentar kepala `src/data/flyer.ts` dan `src/data/logo.ts`. Selama `src`
-kosong: flyer tampil kotak "Flyer segera hadir"; logo tidak tampil (situs memakai teks).
+kosong: mockup tampil kotak "Mockup segera hadir"; logo tidak tampil (situs memakai teks).
 Penempatan logo: event di header + footer, sekolah di kicker hero + footer. Tanpa lightbox.
 
 ## Favicon

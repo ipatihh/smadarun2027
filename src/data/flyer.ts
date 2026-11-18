@@ -1,7 +1,7 @@
 import { IFlyer } from "@/types";
 
 // ============================================================================
-// FLYER RUTE, JERSEY, DAN MEDALI — tempat memasang gambar dari panitia.
+// MOCKUP JERSEY, MEDALI, DAN STRING BAG — tempat memasang gambar dari panitia.
 // ============================================================================
 //
 // CARA MEMASANG (manual, tanpa mengubah komponen):
@@ -17,7 +17,7 @@ import { IFlyer } from "@/types";
 // UKURAN YANG DISARANKAN: PORTRAIT 4:5 (1080 x 1350 px), JPG/WebP di bawah ~500 KB.
 //   Boleh rasio lain (mis. peta rute landscape); tata letak mengikuti rasio asli, tanpa crop.
 //
-// SELAMA `src` KOSONG, item tampil sebagai kotak "Flyer segera hadir" (ukuran 4:5).
+// SELAMA `src` KOSONG, item tampil sebagai kotak "Mockup segera hadir" (ukuran 4:5).
 //   - Ingin menyembunyikan satu flyer? Hapus item-nya dari daftar.
 //   - Ingin menyembunyikan seluruh seksi? Kosongkan array `flyerItems` menjadi [].
 //   - Jumlah item bebas (1, 2, 3, atau lebih); kolom menyesuaikan.
@@ -26,19 +26,13 @@ import { IFlyer } from "@/types";
 //
 // ============================================================================
 
+// Revisi panitia (Nov 2026): judul seksi diganti, kalimat pengantar dihapus, slot "Rute Lintasan"
+// dicabut, dan ditambah slot String Bag. Rute tidak dipasang di sini lagi.
 export const flyerIntro = {
-    title: "Rute, Jersey & Medali",
-    description: "Lihat lintasan yang akan kamu lalui dan perlengkapan yang kamu dapat.",
+    title: "Jersey, Medali & String Bag",
 };
 
 export const flyerItems: IFlyer[] = [
-    {
-        title: "Rute Lintasan",
-        alt: "Peta rute lari SMADARUN 2027",
-        // src: "/images/flyer/rute.jpg",
-        // width: 1080,
-        // height: 1350,
-    },
     {
         title: "Jersey",
         alt: "Desain jersey SMADARUN 2027",
@@ -52,5 +46,12 @@ export const flyerItems: IFlyer[] = [
         src: "/images/flyer/medali.webp",
         width: 905,
         height: 1280,
+    },
+    {
+        title: "String Bag",
+        alt: "Mockup string bag SMADARUN 2027",
+        src: "/images/flyer/string-bag.webp",
+        width: 1414,
+        height: 2000,
     },
 ];

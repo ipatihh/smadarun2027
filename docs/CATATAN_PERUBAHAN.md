@@ -5,6 +5,22 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 18 November 2026 — Revisi tampilan dari panitia (`REVISI WEB SMADA RUN 2027.pdf`)
+
+- **Fasilitas:** label kecil "Fasilitas" dihapus; judul → "Fasilitas"; pengantar → "Nikmati pengalaman
+  berlari bersama kami."; butir "Water Station Terjadwal" → "Tersedia Waterstation", "Pencatatan Waktu
+  Akurat" dihapus, "Fotografer di Berbagai Titik" → "Fotografer di Spot Terbaik", "Lokasi Mudah
+  Dijangkau" → "Racepack Menarik" (deskripsi & ikon ikut diganti karena yang lama membahas area parkir).
+- **Mockup:** seksi "Rute, Jersey & Medali" → "Jersey, Medali & String Bag"; kalimat pengantar dihapus;
+  slot Rute dicabut, slot String Bag ditambah. Mockup String Bag dipasang 18 Nov 2026 (`public/images/flyer/string-bag.webp`).
+- **Galeri:** judul → "Recap SMADA RUN 2026" (ejaan "SMADA RUN" mengikuti dokumen revisi).
+- **Tiket:** saat Coming Soon, teks "Menyusul" di kartu diganti dua kelompok peserta
+  (`kelompokPeserta` di `src/data/tiket.ts`). Setelah pendaftaran dibuka, harga live dari core kembali tampil.
+- **Testimoni dihapus** (komponen, data, tautan menu "Testimoni"). Angka "1.000+" ikut dihapus atas
+  keputusan pemilik (`src/data/stats.ts` & tipe `IStats` dibuang).
+
+---
+
 ## 16 November 2026 — Tema "Jersey Violet": warna & pola dari desain jersey
 
 Menggantikan "Warm Editorial" (amber/krem). Acuan: foto jersey SMADARUN 2027 (gradien ungu→biru indigo

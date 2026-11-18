@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { FiCheck } from "react-icons/fi";
 import { ResolvedTicketTier } from "@/lib/kembarinEvents";
+import { kelompokPeserta } from "@/data/tiket";
 
 interface PricingColumnProps {
   tier: ResolvedTicketTier;
@@ -42,9 +43,20 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeL
           <h3 className="font-display text-xl font-medium text-foreground sm:text-2xl">{tier.name}</h3>
 
           <div className="mt-4">
-            <span className="font-display text-4xl font-medium tracking-[-0.02em] text-foreground sm:text-5xl">
-              {tier.comingSoon ? "Menyusul" : rupiah(tier.price)}
-            </span>
+            {tier.comingSoon ? (
+              <ul className="mx-auto max-w-xs space-y-1.5 text-left text-sm leading-snug text-foreground-accent">
+                {kelompokPeserta.map((kelompok) => (
+                  <li key={kelompok} className="flex items-start gap-2.5">
+                    <span className="mt-[0.45em] h-1 w-1 shrink-0 rounded-full bg-foreground-accent" aria-hidden="true" />
+                    <span>{kelompok}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="font-display text-4xl font-medium tracking-[-0.02em] text-foreground sm:text-5xl">
+                {rupiah(tier.price)}
+              </span>
+            )}
             {adminFee > 0 && !tier.comingSoon && (
               <p className="mt-1.5 text-xs text-muted-foreground">
                 + {adminFeeLabel} {rupiah(adminFee)} per tiket
