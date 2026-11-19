@@ -1,4 +1,5 @@
 import { rapikanNama } from "@/lib/nama";
+import { emailTypoProblem } from "@/lib/emailTypo";
 import { createHash, randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getLiveEventData } from "@/lib/kembarinEvents";
@@ -218,6 +219,9 @@ export async function POST(req: NextRequest) {
 
     const buyerEmail = typeof buyer.email === "string" ? buyer.email.trim() : "";
     if (!emailValid(buyerEmail)) return gagal("Format email pemesan tidak valid.");
+    // Domain salah ketik (gemail.com, gmail.co) memantul; core juga menolaknya.
+    const buyerEmailTypo = emailTypoProblem(buyerEmail, "Email pemesan");
+    if (buyerEmailTypo) return gagal(buyerEmailTypo);
 
     const buyerWhatsapp = typeof buyer.whatsapp === "string" ? buyer.whatsapp.trim() : "";
     if (!WHATSAPP_PATTERN.test(buyerWhatsapp)) {
@@ -368,6 +372,8 @@ export async function POST(req: NextRequest) {
       if (emailPeserta && !emailValid(emailPeserta)) {
         return gagal(`Format email peserta ${nomor} tidak valid.`);
       }
+      const emailPesertaTypo = emailPeserta ? emailTypoProblem(emailPeserta, `Email peserta ${nomor}`) : null;
+      if (emailPesertaTypo) return gagal(emailPesertaTypo);
       const waPeserta = typeof p.whatsapp === "string" && p.whatsapp.trim() ? p.whatsapp.trim() : null;
       if (waPeserta && !WHATSAPP_PATTERN.test(waPeserta)) {
         return gagal(`Format nomor WhatsApp peserta ${nomor} tidak valid. Masukkan 8-15 digit angka.`);

@@ -3,6 +3,7 @@
 import React, { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
 import { kapitalNama, rapikanNama } from "@/lib/nama";
+import { suggestEmailCorrection } from "@/lib/emailTypo";
 import Link from "next/link";
 import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/WilayahSelect";
 import IsiKebijakanPrivasi from "@/components/legal/IsiKebijakanPrivasi";
@@ -75,6 +76,8 @@ const validasiEmail = (v: string, wajib: boolean) => {
   const t = v.trim();
   if (!t) return wajib ? "Email wajib diisi." : null;
   if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(t)) return "Format email belum benar, contoh: nama@email.com";
+  // Domain salah ketik (gemail.com, gmail.co) memantul; core juga menolaknya.
+  if (suggestEmailCorrection(t)) return "Domain email sepertinya salah ketik.";
   return null;
 };
 
@@ -1059,6 +1062,22 @@ export default function DaftarForm({
                     className={fieldClass(!!buyerErrors.email)}
                   />
                   <FieldError id="buyer-email-error" message={buyerErrors.email} />
+                  {buyerErrors.email && suggestEmailCorrection(buyer.email) && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Maksud Anda <span className="font-semibold text-foreground">{suggestEmailCorrection(buyer.email)}</span>?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const email = suggestEmailCorrection(buyer.email) ?? buyer.email;
+                          setBuyer((prev) => ({ ...prev, email }));
+                          setBuyerErrors((prev) => ({ ...prev, email: undefined }));
+                        }}
+                        className="rounded font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                      >
+                        Pakai ini
+                      </button>
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="buyer-whatsapp" className={labelClass}>WhatsApp pemesan</label>
