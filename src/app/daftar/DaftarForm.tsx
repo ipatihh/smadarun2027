@@ -250,7 +250,7 @@ export default function DaftarForm({
   lokasi,
 }: DaftarFormProps) {
   const WEBHOOK_URL = "/api/daftar";
-  const imageSrc = "/images/pocari-1.jpg";
+  const imageSrc = "/images/size-chart-jersey.webp";
 
   // Kategori & harga live dari kembarin-v2 (props dari Server Component page.tsx).
   const KATEGORI_TIKET: Record<string, { label: string; price: number }> = useMemo(
@@ -1624,9 +1624,9 @@ export default function DaftarForm({
             </button>
             <Image
               src={imageSrc}
-              alt="Tabel Panduan Ukuran Jersey diperbesar"
-              width={1200}
-              height={1600}
+              alt="Tabel panduan ukuran jersey: panjang dan lebar dalam cm per ukuran. XXL dan XXXL dikenakan tambahan Rp10.000 per jersey."
+              width={2000}
+              height={1560}
               className="max-h-[80vh] w-full rounded-card object-contain shadow-hover"
             />
           </DialogPanel>
