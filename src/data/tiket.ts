@@ -14,14 +14,20 @@ export const fasilitasSemuaKategori = [
   'Photo Tagging',
 ];
 
-// Kelompok peserta yang tampil di kartu tiket SELAMA pendaftaran masih "Coming Soon" (menggantikan
-// teks "Menyusul" di tempat harga; revisi panitia Nov 2026). Hanya teks tampilan: harga dan
-// status buka/tutup tetap live dari kembarin-v2. Begitu pendaftaran dibuka, kartu kembali
-// menampilkan harga dari core.
-export const kelompokPeserta = [
-  'Kelompok U-18 Putra/Putri Pelajar Kab. Nganjuk (Podium)',
-  'Kelompok Umum (Non-Podium)',
+// Kelompok peserta di kartu tiket beranda (revisi panitia Nov 2026). Saat Coming Soon menggantikan teks
+// "Menyusul" di tempat harga; saat pendaftaran buka (event_config.coming_soon di core mati) tetap tampil di
+// atas harga. Hanya teks tampilan: harga dan status buka/tutup tetap live dari kembarin-v2.
+// `podium` menentukan warna lencana: true = lencana magenta tema, false = netral. Teks mengikuti dokumen
+// revisi panitia; "(Podium)" / "(Non-Podium)" ditampilkan sebagai lencana, bukan tanda kurung.
+export const kelompokPeserta: { nama: string; lencana: string; podium: boolean }[] = [
+  { nama: 'Kelompok U-18 Putra/Putri Pelajar Kab. Nganjuk', lencana: 'Podium', podium: true },
+  { nama: 'Kelompok Umum', lencana: 'Non-Podium', podium: false },
 ];
+
+// Catatan kecil di bawah kelompok (kartu tiket beranda) dan di ringkasan event /daftar, supaya pendaftar
+// tahu aturan podium sebelum membayar (permintaan pemilik, 19 Nov 2026).
+export const catatanPodium =
+  'Podium hanya untuk pelajar berdomisili Kab. Nganjuk. Event ini terbuka untuk umum, siapa pun boleh mendaftar.';
 
 // categoryKey HARUS persis sama (case-insensitive) dengan category_name dari
 // kembarin-v2 untuk nama tampilan dan fasilitas KHUSUS kategori. Kategori baru

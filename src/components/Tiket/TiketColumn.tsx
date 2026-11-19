@@ -3,7 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { FiCheck } from "react-icons/fi";
 import { ResolvedTicketTier } from "@/lib/kembarinEvents";
-import { kelompokPeserta } from "@/data/tiket";
+import { catatanPodium, kelompokPeserta } from "@/data/tiket";
 
 interface PricingColumnProps {
   tier: ResolvedTicketTier;
@@ -43,17 +43,25 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeL
           <h3 className="font-display text-xl font-medium text-foreground sm:text-2xl">{tier.name}</h3>
 
           <div className="mt-4">
-            {tier.comingSoon ? (
-              <ul className="mx-auto max-w-xs space-y-1.5 text-left text-sm leading-snug text-foreground-accent">
-                {kelompokPeserta.map((kelompok) => (
-                  <li key={kelompok} className="flex items-start gap-2.5">
-                    <span className="mt-[0.45em] h-1 w-1 shrink-0 rounded-full bg-foreground-accent" aria-hidden="true" />
-                    <span>{kelompok}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <span className="font-display text-4xl font-medium tracking-[-0.02em] text-foreground sm:text-5xl">
+            {/* Kelompok peserta tampil di kedua keadaan: saat Coming Soon menggantikan teks "Menyusul" di
+                tempat harga, dan saat pendaftaran buka tampil di atas harga. */}
+            <ul className="mx-auto max-w-sm divide-y divide-border-strong/50 border-y border-border-strong/50 text-left">
+              {kelompokPeserta.map((kelompok) => (
+                <li key={kelompok.nama} className="flex items-center justify-between gap-3 py-3">
+                  <span className="text-sm leading-snug text-foreground">{kelompok.nama}</span>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                      kelompok.podium ? "bg-primary text-on-primary" : "bg-surface-sunken text-foreground-accent"
+                    }`}
+                  >
+                    {kelompok.lencana}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mx-auto mt-3 max-w-sm text-center text-xs leading-relaxed text-muted-foreground">{catatanPodium}</p>
+            {!tier.comingSoon && (
+              <span className="mt-6 block font-display text-4xl font-medium tracking-[-0.02em] text-foreground sm:text-5xl">
                 {rupiah(tier.price)}
               </span>
             )}
@@ -78,7 +86,8 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeL
                   href={tier.url || "/daftar"}
                   className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-6 text-center text-sm font-semibold text-on-primary transition-all duration-200 hover:bg-primary-accent active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                 >
-                  Daftar {tier.name}
+                  Daftar sekarang
+                  <span className="sr-only"> {tier.name}</span>
                 </Link>
                 <p className="mt-3 text-xs leading-relaxed tracking-[0.02em] text-foreground-accent">
                   <span className="font-semibold">NB:</span> Pembayaran online · Konfirmasi otomatis
