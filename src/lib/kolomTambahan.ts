@@ -10,6 +10,8 @@
 // Validasi di sini cermin aturan core untuk UX; core tetap penentu akhir dan menolak
 // isian yang melanggar dengan REGISTRATION_VALIDATION_FAILED.
 
+import { rapikanNama } from "./nama";
+
 export type TipeKolom = "text" | "number" | "select" | "birthdate" | "tel" | "email";
 
 export interface KolomTambahan {
@@ -91,7 +93,14 @@ function tanggalSah(value: string): boolean {
 }
 
 /** Isian yang dikirim: dirapikan sesuai tipe. */
+export function adalahNamaKontakDarurat(kolom: KolomTambahan): boolean {
+  // Hanya normalisasi nilai; seluruh field semantic null tetap dirender generik.
+  const identitas = `${kolom.name} ${kolom.label}`.toLowerCase().replace(/[_-]/g, " ");
+  return kolom.type === "text" && /\b(nama|name)\b/.test(identitas) && /\b(darurat|emergency)\b/.test(identitas);
+}
+
 export function rapikanIsian(kolom: KolomTambahan, value: string): string {
+  if (adalahNamaKontakDarurat(kolom)) return rapikanNama(value);
   const t = value.trim();
   return kolom.type === "tel" ? t.replace(/[\s-]/g, "") : t;
 }

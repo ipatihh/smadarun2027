@@ -56,14 +56,14 @@ describe("kaitan pemesan memakai key peserta, bukan indeks", () => {
     const payload = bangunPesertaPayload(state, PEMESAN, true);
     expect(payload).toHaveLength(1);
     expect(payload[0]).toMatchObject({
-      nama: "Audit Peserta Kedua",
+      nama: "AUDIT PESERTA KEDUA",
       email: "kedua@contoh.test",
       whatsapp: "081200000002",
       nik: "AUDIT002",
       size: "S",
     });
     // Tidak ada sisa identitas pemesan di payload.
-    expect(JSON.stringify(payload)).not.toContain(PEMESAN.nama);
+    expect(JSON.stringify(payload)).not.toContain(PEMESAN.nama.toUpperCase());
     expect(state.pemesanKey).toBeNull();
     expect(pemesanIkutLari(state)).toBe(false);
   });
@@ -86,8 +86,8 @@ describe("kaitan pemesan memakai key peserta, bukan indeks", () => {
 
     const payload = bangunPesertaPayload(state, PEMESAN, true);
     expect(payload.map((p) => [p.nama, p.nik])).toEqual([
-      ["Audit Pemesan", "AUDIT001"],
-      ["Ketiga", "AUDIT003"],
+      ["AUDIT PEMESAN", "AUDIT001"],
+      ["KETIGA", "AUDIT003"],
     ]);
     expect(state.pemesanKey).toBe("peserta-0");
   });
@@ -97,18 +97,18 @@ describe("kaitan pemesan memakai key peserta, bukan indeks", () => {
       pesertaList: [peserta("peserta-0", { nama: "Isian Sendiri", email: "sendiri@contoh.test", nik: "AUDIT001" })],
       pemesanKey: "peserta-0",
     };
-    expect(bangunPesertaPayload(state, PEMESAN, true)[0].nama).toBe("Audit Pemesan");
+    expect(bangunPesertaPayload(state, PEMESAN, true)[0].nama).toBe("AUDIT PEMESAN");
 
     state = aturPemesanIkut(state, false);
     expect(bangunPesertaPayload(state, PEMESAN, true)[0]).toMatchObject({
-      nama: "Isian Sendiri",
+      nama: "ISIAN SENDIRI",
       email: "sendiri@contoh.test",
       nik: "AUDIT001",
     });
 
     state = aturPemesanIkut(state, true);
     expect(state.pemesanKey).toBe("peserta-0");
-    expect(bangunPesertaPayload(state, PEMESAN, true)[0].nama).toBe("Audit Pemesan");
+    expect(bangunPesertaPayload(state, PEMESAN, true)[0].nama).toBe("AUDIT PEMESAN");
   });
 
   it("peserta terakhir tidak bisa dihapus dan batas tiket dihormati", () => {
@@ -183,9 +183,9 @@ describe("properti: urutan tambah/hapus/centang acak tidak pernah mencampur iden
           expect(baris.size).toBe(sumber.size);
           expect(baris.kota).toBe(sumber.wilayah.display);
           if (p.key === state.pemesanKey) {
-            expect([baris.nama, baris.email, baris.whatsapp]).toEqual([PEMESAN.nama, PEMESAN.email, PEMESAN.whatsapp]);
+            expect([baris.nama, baris.email, baris.whatsapp]).toEqual([PEMESAN.nama.toUpperCase(), PEMESAN.email, PEMESAN.whatsapp]);
           } else {
-            expect([baris.nama, baris.email, baris.whatsapp]).toEqual([sumber.nama, sumber.email, sumber.whatsapp]);
+            expect([baris.nama, baris.email, baris.whatsapp]).toEqual([sumber.nama.toUpperCase(), sumber.email, sumber.whatsapp]);
           }
         });
       }

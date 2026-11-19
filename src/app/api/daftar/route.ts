@@ -1,3 +1,4 @@
+import { rapikanNama } from "@/lib/nama";
 import { createHash, randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getLiveEventData } from "@/lib/kembarinEvents";
@@ -209,7 +210,7 @@ export async function POST(req: NextRequest) {
     // ── Data pemesan ──────────────────────────────────────────────────────────
     if (!isRecord(buyer)) return gagal("Data pemesan wajib diisi.");
 
-    const buyerNama = typeof buyer.nama === "string" ? buyer.nama.trim() : "";
+    const buyerNama = typeof buyer.nama === "string" ? rapikanNama(buyer.nama) : "";
     if (buyerNama.length < 3 || buyerNama.length > 100 || !NAMA_PATTERN.test(buyerNama)) {
       return gagal("Format nama pemesan tidak valid. Hanya diperbolehkan huruf, spasi, titik (.), atau kutip (').");
     }
@@ -275,7 +276,7 @@ export async function POST(req: NextRequest) {
       const p = participants[i];
       if (!isRecord(p)) return gagal(`Data peserta ${nomor} tidak valid.`);
 
-      const nama = typeof p.nama === "string" ? p.nama.trim() : "";
+      const nama = typeof p.nama === "string" ? rapikanNama(p.nama) : "";
       if (nama.length < 3 || nama.length > 100 || !NAMA_PATTERN.test(nama)) {
         return gagal(`Format nama peserta ${nomor} tidak valid. Hanya huruf, spasi, titik (.), atau kutip (').`);
       }

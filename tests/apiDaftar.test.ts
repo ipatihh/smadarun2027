@@ -120,6 +120,18 @@ afterEach(() => {
 });
 
 describe("bentuk permintaan", () => {
+  it("merapikan nama pemesan dan peserta di server, tanpa mengkapitalisasi email", async () => {
+    const body = payloadValid();
+    body.buyer.nama = "  aUdit   peMeSan  ";
+    body.buyer.email = "Audit.User@contoh.test";
+    body.participants[0].nama = "  sIti  a. o'neil  ";
+    expect((await POST(permintaan(body))).status).toBe(200);
+    const dikirim = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(dikirim.buyer.nama).toBe("AUDIT PEMESAN");
+    expect(dikirim.buyer.email).toBe("Audit.User@contoh.test");
+    expect(dikirim.participants[0].nama).toBe("SITI A. O'NEIL");
+  });
+
   it("body JSON null / array / angka = 400, bukan 500", async () => {
     for (const raw of ["null", "[]", "42", '"teks"']) {
       const res = await POST(permintaan(null, { raw }));
@@ -427,11 +439,11 @@ describe("kolom tambahan dari form_schema core", () => {
   it("isian dikirim dengan kunci field core, telepon dirapikan", async () => {
     vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, kolomTambahan: KONTAK });
     const res = await POST(
-      permintaan(denganTambahan({ kontak_darurat_nama: " Ibu Uji ", kontak_darurat_nomor: "0812-0000-0009", golongan_darah: "O" }))
+      permintaan(denganTambahan({ kontak_darurat_nama: "  Ibu   Uji  ", kontak_darurat_nomor: "0812-0000-0009", golongan_darah: "O" }))
     );
     expect(res.status).toBe(200);
     const cf = JSON.parse(fetchMock.mock.calls[0][1].body).participants[0].customFields;
-    expect(cf).toMatchObject({ kontak_darurat_nama: "Ibu Uji", kontak_darurat_nomor: "081200000009", golongan_darah: "O" });
+    expect(cf).toMatchObject({ kontak_darurat_nama: "IBU UJI", kontak_darurat_nomor: "081200000009", golongan_darah: "O" });
     // Data inti tetap milik api/daftar.
     expect(cf.nik).toBe(PII.nik);
   });

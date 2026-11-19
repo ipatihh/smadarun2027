@@ -1,3 +1,4 @@
+import { rapikanNama } from "./nama";
 // Logika murni data pesanan di formulir /daftar: siapa peserta yang mewakili pemesan,
 // tambah/hapus peserta, dan bentuk payload `participants[]` yang dikirim ke api/daftar.
 // Dipisah dari DaftarForm supaya konsistensi payload bisa diuji tanpa browser
@@ -119,7 +120,7 @@ export function bangunPesertaPayload(
   return state.pesertaList.map((raw) => {
     const p = dataPesertaEfektif(raw, buyer, state.pemesanKey);
     return {
-      nama: p.nama.trim(),
+      nama: rapikanNama(p.nama),
       email: p.email.trim(),
       whatsapp: p.whatsapp.trim(),
       nik: rapikanNomorIdentitas(p.nik),

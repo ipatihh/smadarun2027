@@ -5,6 +5,17 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 19 November 2026 — Nama pendaftar otomatis kapital dan rapi
+
+- Nama pemesan, peserta, dan kontak darurat menjadi kapital saat diketik; spasi awal/akhir dan spasi
+  berlebih dirapikan saat keluar dari isian. Spasi akhir tetap bisa diketik untuk memulai kata berikutnya.
+- Payload nama dan validasi server memakai aturan yang sama, termasuk permintaan dari tab lama.
+  Email, nomor, opsi pilihan, dan teks tambahan lain tidak ikut dikapitalisasi.
+- Kolom kontak darurat tetap dirender generik dari core; normalisasi nama hanya berlaku untuk kolom teks
+  dengan penanda nama/name dan darurat/emergency pada key atau label.
+
+---
+
 ## 19 November 2026 — Ukuran jersey dan biaya tambahan dari core
 
 - Atas permintaan pemilik, kotak ringkasan kesalahan "Ada … isian yang perlu dilengkapi" beserta

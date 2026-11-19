@@ -260,6 +260,11 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 
 ## Gotcha operasional
 
+- **Nama pemesan, peserta, dan kontak darurat otomatis kapital** (19 Nov 2026, permintaan pemilik).
+  `src/lib/nama.ts` mempertahankan spasi saat mengetik dan merapikannya saat blur/pengiriman; server memakai
+  normalisasi yang sama. Kolom nama kontak darurat dikenali dari tipe teks + token nama/name dan darurat/emergency
+  pada key/label, tanpa mengubah rendering generik field core. Jangan mengkapitalisasi email atau opsi pilihan.
+
 - **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): tautan
   sosial media di `src/data/footer.ts` (kontak panitia kini sudah asli — lihat poin Kontak di bawah),
   ilustrasi cadangan (`public/images/hero-illustration.svg`),

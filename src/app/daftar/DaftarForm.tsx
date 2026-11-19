@@ -2,6 +2,7 @@
 
 import React, { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
+import { kapitalNama, rapikanNama } from "@/lib/nama";
 import Link from "next/link";
 import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/WilayahSelect";
 import IsiKebijakanPrivasi from "@/components/legal/IsiKebijakanPrivasi";
@@ -13,7 +14,7 @@ import { flyerPendaftaran } from "@/data/flyer";
 import { LiveTicketType } from "@/lib/kembarinEvents";
 import { KolomNamaBib, lipatKetikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
 import { biayaUkuran, UKURAN_JERSEY_CADANGAN, type KolomUkuran } from "@/lib/ukuranJersey";
-import { batasTanggalLahir, KolomTambahan, validasiKolomTambahan } from "@/lib/kolomTambahan";
+import { adalahNamaKontakDarurat, batasTanggalLahir, KolomTambahan, rapikanIsian, validasiKolomTambahan } from "@/lib/kolomTambahan";
 import {
   JenisIdentitas,
   kunciIdentitas,
@@ -56,7 +57,7 @@ type PesertaField = Exclude<keyof PesertaState, "key" | "jenisIdentitas" | "tamb
 // kesalahan format SEBELUM menekan bayar, bukan lewat modal setelah request bolak-balik.
 // Server tetap jadi penentu akhir — validasi di sini tidak menggantikannya.
 const validasiNama = (v: string, label: string) => {
-  const t = v.trim();
+  const t = rapikanNama(v);
   if (!t) return `${label} wajib diisi.`;
   if (t.length < 3) return `${label} minimal 3 karakter.`;
   if (t.length > 100) return `${label} maksimal 100 karakter.`;
@@ -360,7 +361,7 @@ export default function DaftarForm({
 
   const handleBuyerChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setBuyer((prev) => ({ ...prev, [name]: value }));
+    setBuyer((prev) => ({ ...prev, [name]: name === "nama" ? kapitalNama(value) : value }));
     if (buyerErrors[name as BuyerField]) {
       setBuyerErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -368,11 +369,12 @@ export default function DaftarForm({
 
   const handleBuyerBlur = (e: FocusEvent<HTMLInputElement>) => {
     const name = e.target.name as BuyerField;
+    if (name === "nama") setBuyer((prev) => ({ ...prev, nama: rapikanNama(prev.nama) }));
     setBuyerErrors((prev) => ({ ...prev, [name]: VALIDATOR_BUYER[name](e.target.value) ?? undefined }));
   };
 
   const handlePesertaChange = (key: string, field: PesertaField, value: any) => {
-    setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, [field]: value } : p)));
+    setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, [field]: field === "nama" ? kapitalNama(value) : value } : p)));
     if (pesertaErrors[key]?.[field]) {
       setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: undefined } }));
     }
@@ -390,6 +392,7 @@ export default function DaftarForm({
   const handlePesertaBlur = (key: string, field: PesertaField, value: any) => {
     const peserta = pesertaList.find((p) => p.key === key);
     if (!peserta) return;
+    if (field === "nama") setPesertaList((prev) => prev.map((p) => p.key === key ? { ...p, nama: rapikanNama(p.nama) } : p));
     const message = validasiPeserta(field, value, peserta);
     setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: message ?? undefined } }));
   };
@@ -423,7 +426,7 @@ export default function DaftarForm({
     if (!key) return;
     setPesertaList((prev) =>
       prev.map((p) =>
-        p.key === key ? { ...p, nama: buyer.nama.trim(), email: buyer.email.trim(), whatsapp: buyer.whatsapp.trim() } : p,
+        p.key === key ? { ...p, nama: rapikanNama(buyer.nama), email: buyer.email.trim(), whatsapp: buyer.whatsapp.trim() } : p,
       ),
     );
     setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], nama: undefined } }));
@@ -450,7 +453,7 @@ export default function DaftarForm({
 
   const ubahTambahan = (key: string, kolom: KolomTambahan, value: string) => {
     setPesertaList((prev) =>
-      prev.map((p) => (p.key === key ? { ...p, tambahan: { ...p.tambahan, [kolom.name]: value } } : p))
+      prev.map((p) => (p.key === key ? { ...p, tambahan: { ...p.tambahan, [kolom.name]: adalahNamaKontakDarurat(kolom) ? kapitalNama(value) : value } } : p))
     );
     if (tambahanErrors[key]?.[kolom.name]) {
       setTambahanErrors((prev) => ({ ...prev, [key]: { ...prev[key], [kolom.name]: undefined } }));
@@ -458,6 +461,7 @@ export default function DaftarForm({
   };
 
   const blurTambahan = (key: string, kolom: KolomTambahan, value: string) => {
+    if (adalahNamaKontakDarurat(kolom)) ubahTambahan(key, kolom, rapikanIsian(kolom, value));
     const message = validasiKolomTambahan(kolom, value);
     setTambahanErrors((prev) => ({ ...prev, [key]: { ...prev[key], [kolom.name]: message ?? undefined } }));
   };
@@ -637,7 +641,7 @@ export default function DaftarForm({
     const payloadInti = {
       eventCode: "smadarun",
       buyer: {
-        nama: buyer.nama.trim(),
+        nama: rapikanNama(buyer.nama),
         email: buyer.email.trim(),
         whatsapp: buyer.whatsapp.trim(),
       },
