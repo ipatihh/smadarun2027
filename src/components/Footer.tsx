@@ -6,7 +6,7 @@ import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { FaShieldAlt, FaFileContract } from 'react-icons/fa'; 
 
 import { siteDetails } from '@/data/siteDetails';
-import { footerDetails } from '@/data/footer';
+import { footerDetails, tautanWhatsApp } from '@/data/footer';
 import { logoEvent, logoSekolah, teksHeaderDisembunyikan } from '@/data/logo';
 import BrandLogo from '@/components/BrandLogo';
 import { getPlatformIconByName } from '@/utils';
@@ -51,19 +51,15 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                 </div>
 
                 {/* Tautan navigasi sengaja tidak diulang di sini — semuanya sudah ada di header. */}
-                <div>
+                <div id="kontak" className="scroll-mt-24">
                     <h2 className="text-base sm:text-lg font-semibold mb-3">Kontak Panitia</h2>
                     <ul className="space-y-1 text-base text-foreground-accent">
-                        {footerDetails.email && (
-                            <li>
-                                <a href={`mailto:${footerDetails.email}`} className="hover:text-foreground">{footerDetails.email}</a>
+                        {footerDetails.kontak.map((k) => (
+                            <li key={k.nomor}>
+                                <a href={tautanWhatsApp(k.nomor)} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">{k.nomor}</a>{' '}
+                                <span className="text-muted-foreground">({k.nama})</span>
                             </li>
-                        )}
-                        {footerDetails.telephone && (
-                            <li>
-                                <a href={`https://wa.me/${footerDetails.telephone.replace(/\D/g, '').replace(/^0/, '62')}`} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">{footerDetails.telephone}</a>
-                            </li>
-                        )}
+                        ))}
                     </ul>
 
                     {footerDetails.socials && (
@@ -76,10 +72,13 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                                             key={platformName}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            aria-label={platformName}
-                                            className="rounded transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                            aria-label={footerDetails.socialLabels[platformName] ?? platformName}
+                                            className="inline-flex items-center gap-2 rounded transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                                         >
                                             {getPlatformIconByName(platformName)}
+                                            {footerDetails.socialLabels[platformName] && (
+                                                <span className="text-base">{footerDetails.socialLabels[platformName]}</span>
+                                            )}
                                         </a>
                                     )
                                 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FiMail, FiClock, FiHelpCircle, FiCreditCard } from "react-icons/fi";
-import { footerDetails } from "@/data/footer";
+import { footerDetails, tautanWhatsApp } from "@/data/footer";
 import { kodeDariNilai } from "@/lib/statusPesanan";
 import PemeriksaStatus from "./PemeriksaStatus";
 
@@ -108,12 +108,21 @@ export default async function StatusPendaftaranPage({
                         pesanan bila ada. Jangan mengulang pendaftaran sebelum dicek — pesanan dan
                         pembayaran bisa terhitung dua kali.
                       </p>
-                      <a
-                        href={`mailto:${footerDetails.email}?subject=Konfirmasi%20Pendaftaran%20SMADARUN%202027`}
-                        className="mt-2 inline-block text-sm font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent"
-                      >
-                        {footerDetails.email}
-                      </a>
+                      <ul className="mt-2 space-y-1 text-sm">
+                        {footerDetails.kontak.map((k) => (
+                          <li key={k.nomor}>
+                            <a
+                              href={tautanWhatsApp(k.nomor, "Halo panitia SMADARUN 2027, saya ingin konfirmasi pendaftaran.")}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent"
+                            >
+                              {k.nomor}
+                            </a>{" "}
+                            <span className="text-muted-foreground">({k.nama})</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { sponsors, sponsorTiers, sponsorLogoPath, ISponsor, ISponsorTierConfig } from "@/data/sponsors";
-import { footerDetails } from "@/data/footer";
 import Eyebrow from "./Eyebrow";
 
 /**
@@ -111,7 +110,7 @@ const Logos: React.FC = () => {
         <p className="mt-10 text-center text-sm text-muted-foreground">
           Tertarik menjadi sponsor SMADARUN 2027?{" "}
           <a
-            href={`mailto:${footerDetails.email}?subject=Kerja%20Sama%20Sponsor%20SMADARUN%202027`}
+            href="#kontak"
             className="font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent"
           >
             Hubungi panitia

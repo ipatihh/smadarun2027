@@ -5,6 +5,7 @@ import { BiMinus, BiPlus } from "react-icons/bi";
 import SectionTitle from "./SectionTitle";
 import Eyebrow from "./Eyebrow";
 import { faqs } from "@/data/faq";
+import { footerDetails, tautanWhatsApp } from "@/data/footer";
 
 const FAQ: React.FC = () => {
     return (
@@ -18,14 +19,23 @@ const FAQ: React.FC = () => {
                         </h2>
                     </SectionTitle>
                     <p className="text-center text-sm leading-relaxed text-foreground-accent lg:mt-6 lg:text-left">
-                        Punya pertanyaan lain? Hubungi kami melalui:
+                        Punya pertanyaan lain? Hubungi kami lewat WhatsApp:
                     </p>
-                    <a
-                        href="mailto:info@kembar.in"
-                        className="mt-2 block break-all rounded text-center text-sm font-semibold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:text-left"
-                    >
-                        info@kembar.in
-                    </a>
+                    <ul className="mt-2 space-y-1 text-center text-sm lg:text-left">
+                        {footerDetails.kontak.map((k) => (
+                            <li key={k.nomor}>
+                                <a
+                                    href={tautanWhatsApp(k.nomor)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded font-semibold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                >
+                                    {k.nomor}
+                                </a>{" "}
+                                <span className="text-muted-foreground">({k.nama})</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
 
                 <div className="reveal-right w-full lg:max-w-2xl mx-auto border-b border-border-strong/60">
