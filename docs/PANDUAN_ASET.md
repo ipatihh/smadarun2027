@@ -6,12 +6,20 @@ Semua ini termasuk konten SAMPLE yang wajib terisi sebelum go-live.
 
 | Aset | Taruh file di | Yang diisi | Ukuran ideal |
 |---|---|---|---|
-| Flyer rute / jersey / medali | `public/images/flyer/` | `src`, `width`, `height` di `src/data/flyer.ts` | Portrait 4:5, 1080×1350 px, di bawah ±500 KB |
+| Flyer utama (halaman /daftar) | `public/images/flyer/` | `src`, `width`, `height` pada `flyerPendaftaran` di `src/data/flyer.ts` | Portrait 4:5, 1080×1350 px, di bawah ±500 KB |
+| Mockup jersey / medali / string bag (beranda) | `public/images/flyer/` | `src`, `width`, `height` di `src/data/flyer.ts` | Portrait 4:5, 1080×1350 px, di bawah ±500 KB |
 | Logo SMADARUN (event) & SMADA (sekolah) | `public/images/logo/` | `src`, `width`, `height` di `src/data/logo.ts` | SVG atau PNG transparan, tinggi ≥ 120 px |
 | Favicon | `src/app/` (lewat skrip) | tidak ada | Satu gambar persegi, ideal 512×512 PNG |
 | OG image (pratinjau saat tautan dibagikan) | `src/app/` | tidak ada | 1200×630 px, JPG, di bawah ±300 KB |
 
 Cek ukuran file di Mac: `sips -g pixelWidth -g pixelHeight <file>`.
+
+## Flyer utama di halaman /daftar
+Halaman pendaftaran hanya menampilkan SATU flyer event, bukan tiga mockup beranda; benefit cukup teks
+"Termasuk …" (diatur di `fasilitasSemuaKategori`, `src/data/tiket.ts`). Pasang flyer: taruh file di
+`public/images/flyer/`, lalu buka tiga baris `src`/`width`/`height` pada `flyerPendaftaran`
+(`src/data/flyer.ts`). Selama kosong tidak ada kotak apa pun. Setelah terpasang, tambahkan juga blok gambar
+ke skeleton `src/app/daftar/loading.tsx` agar layar tidak melompat.
 
 ## Flyer dan logo
 Petunjuk lengkap ada di komentar kepala `src/data/flyer.ts` dan `src/data/logo.ts`. Selama `src`

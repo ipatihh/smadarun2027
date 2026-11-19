@@ -163,9 +163,23 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   `SectionTitle`, galeri wajib `caption`. Di puncak beranda header transparan di atas gradien (teks `on-secondary`,
   lihat `overHero` di `Header.tsx`). `.photo-warm` dipertahankan namanya tapi gradingnya kini netral-sejuk.
   Judul hero **SMADARUN** huruf kapital penuh; teks hero rata kiri, semua CTA lain rata tengah.
+- **`/daftar` mengikuti alur formulir kembar.in (core), bukan desain sendiri** (19 Nov 2026, keputusan pemilik:
+  "samakan dengan core, terlalu banyak informasi bikin bingung"). Tiga langkah dengan label yang sama dengan
+  core: Tiket & Pemesan (penghitung tiket + nama/email/WhatsApp pemesan) → Data Peserta (SATU tiket per layar,
+  tombol "Gunakan data pemesan" menyalin datanya, "Lanjut" membuka tiket berikutnya) → Tinjau & Bayar (daftar
+  ringkas + "Ubah", dua persetujuan). Kartu formulir satu kolom; di kirinya (desktop, menempel) / di atasnya (ponsel) ada ringkasan event ala
+  kembar.in: SATU flyer utama (`flyerPendaftaran` di `src/data/flyer.ts`; kosong = tidak ada kotak; JANGAN
+  menampilkan tiga mockup di sini), tanggal & lokasi live dari core (belum tampil saat Coming Soon), harga, dan
+  benefit sebagai TEKS saja "Termasuk …" dari `fasilitasSemuaKategori` (keputusan pemilik 19 Nov 2026).
+  Begitu flyer dipasang, tambahkan blok gambarnya ke `loading.tsx` (skeleton). Tombol maju: bar bawah di ponsel, kaki kartu di desktop. JANGAN menambah keterangan, subjudul kelompok, atau kotak info
+  — pemilik menilai itu membingungkan. Pemesan TIDAK lagi ditautkan otomatis ke Peserta 1 (`pemesanKey`
+  null; datanya disalin lewat tombol). Email/WhatsApp peserta tidak ditanyakan (core memakai kontak pemesan).
+  Kategori hanya muncul bila ada lebih dari satu. Saat pendaftaran ditutup tidak ada formulir mati.
+  "Lanjut" hanya memvalidasi langkah/tiketnya; "Bayar" memvalidasi semuanya lalu melompat ke isian bermasalah
+  (`langkahDariId` memetakan id ke langkah). Referensi: kembarin-v2 `app/events/[slug]/EventRegisterClient.tsx`.
 - **Mobile `/daftar`**: isian form harus ≥16px di ponsel (kalau tidak, iOS zoom saat fokus); bar bayar
   ponsel = total kiri + tombol "Bayar" pendek rata kanan (jangan dibuat selebar penuh/tengah); tombol
-  bayar harus tetap `type="button"` sebelum hidrasi (`siap`) agar tidak ada submit GET berisi PII.
+  bayar (langkah 3) harus tetap `type="button"` sebelum hidrasi (`siap`) agar tidak ada submit GET berisi PII.
 - **Skeleton (`loading.tsx`) harus meniru tata letak halamannya**: beranda, `/daftar`, dan `/daftar/status`
   masing-masing punya sendiri (potongan bersama di `components/Kerangka.tsx`). Mengubah hero/form/halaman
   status tanpa memperbarui skeletonnya membuat layar melompat saat konten asli muncul.
@@ -238,7 +252,7 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
 ## Gotcha operasional
 
 - **Sebagian konten masih SAMPLE dan memang disengaja** (per Oktober 2026): tautan
-  sosial media di `src/data/footer.ts` (nomor WhatsApp footer sudah asli, ditautkan ke wa.me),
+  sosial media di `src/data/footer.ts` (kontak panitia kini sudah asli — lihat poin Kontak di bawah),
   ilustrasi cadangan (`public/images/hero-illustration.svg`),
   dan gambar panduan ukuran jersey. Daftar sponsor/mitra (`src/data/sponsors.ts`) sengaja kosong: seksi sponsor tetap tampil dengan
   kotak "Logo di sini" per tier (agar calon sponsor tahu tempat logonya), diganti otomatis begitu ada sponsor nyata. Seksi Testimoni sudah DICABUT (revisi panitia, 18 Nov 2026) — jangan dipasang lagi tanpa
@@ -257,6 +271,11 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   kembarin-v2 (dua project, satu secret). Kalau ganti nilainya, harus diganti di kedua tempat
   bersamaan atau fitur trusted-proxy diam-diam nonaktif (fail-safe ke perilaku lama, tidak
   error — jadi kalau lupa sinkron, tidak akan langsung ketahuan dari behavior).
+- **Kontak panitia = HANYA WhatsApp tiga orang, tanpa email; sosial media = HANYA Instagram @smada.run_**
+  (keputusan pemilik, 19 Nov 2026). Satu sumber: `footerDetails.kontak` + `tautanWhatsApp()` di `src/data/footer.ts`,
+  dipakai Footer (`#kontak`), FAQ, halaman status pesanan, dan tautan sponsor ("Hubungi panitia" → `#kontak`).
+  Jangan menambah email/akun sosial lain atau menulis nomor langsung di komponen. Kebijakan Privasi (hak
+  pengguna) kini menyebut WhatsApp, bukan email — label persetujuan sudah dinaikkan ke `smadarun-2026-11`.
 - Next.js 16 + Turbopack + React 19 + ESLint 9 flat config (`next lint` sudah dihapus di v16,
   pakai `eslint .`). Uji regresi: `npm test` (vitest, tanpa jaringan — data live & core di-mock).
 - **Label versi teks persetujuan WAJIB dinaikkan setiap teks itu berubah** — kalimat dua kotak

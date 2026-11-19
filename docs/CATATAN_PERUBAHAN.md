@@ -5,6 +5,38 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 19 November 2026 — Kontak panitia & sosial media
+
+- Kontak panitia diganti tiga WhatsApp: 0821-4372-9459 (Gero), 0821-4027-7608 (Hanif), 0878-5640-3199 (Arsyad).
+  Email `info@kembar.in` dihapus dari footer, FAQ, halaman status pesanan, tautan sponsor, dan Kebijakan Privasi.
+- Sosial media hanya Instagram `@smada.run_` (X dan Facebook dibuang); footer menampilkan ikon + handle.
+- Satu sumber data: `src/data/footer.ts` (`kontak`, `tautanWhatsApp`). Tautan sponsor "Hubungi panitia" menuju `#kontak` di footer.
+- Teks Kebijakan Privasi berubah (kontak hak data pribadi: email → WhatsApp), jadi `VERSI_PERSETUJUAN` dinaikkan ke
+  `smadarun-2026-11`; label lama tetap di `VERSI_PERSETUJUAN_DIKENAL`.
+
+---
+
+## 19 November 2026 — `/daftar` mengikuti alur formulir kembar.in
+
+Keluhan pemilik: halaman terasa baku (hanya memanjang/memendek antara desktop dan ponsel) dan peserta bingung.
+Percobaan pertama (stepper + kelompok isian dua lajur) dinilai terlalu banyak informasi; keputusan pemilik:
+**samakan dengan alur core (kembar.in)**. Hanya tampilan; kontrak ke core, validasi server, dan payload tidak berubah.
+
+- Tiga langkah berlabel sama dengan core: Tiket & Pemesan → Data Peserta → Tinjau & Bayar.
+- Langkah 1: penghitung tiket (menggantikan "Tambah peserta") + nama/email/WhatsApp pemesan.
+- Langkah 2: satu tiket per layar, pemilih tiket bila lebih dari satu, tombol "Gunakan data pemesan" (menyalin,
+  tidak menautkan — `pemesanKey` kini selalu null), "Lanjut" membuka tiket berikutnya. Email/WhatsApp peserta
+  dihapus dari UI; kategori hanya tampil bila ada lebih dari satu; ukuran jersey/jenis kelamin berupa tombol pilih.
+- Langkah 3: daftar ringkas dengan "Ubah" per tiket, dua persetujuan, tombol Bayar.
+- Ringkasan event ala kembar.in: tanggal, lokasi, harga, dan "Termasuk …" di kiri (menempel) pada desktop, di atas
+  formulir pada ponsel. **Keputusan pemilik: gambar cukup SATU flyer utama** (`flyerPendaftaran` di
+  `src/data/flyer.ts`, BELUM ada filenya — selama kosong tidak ada kotak/placeholder; klik gambar = diperbesar)
+  dan **benefit cukup teks "Termasuk …"** (`fasilitasSemuaKategori`), bukan gambar mockup. Rincian biaya ada di langkah 3; total di bar bawah
+  ponsel / kaki kartu desktop.
+- Pendaftaran ditutup: hanya pesan + tautan, tanpa formulir mati. Skeleton `loading.tsx` disesuaikan.
+
+---
+
 ## 18 November 2026 — Revisi tampilan dari panitia (`REVISI WEB SMADA RUN 2027.pdf`)
 
 - **Fasilitas:** label kecil "Fasilitas" dihapus; judul → "Fasilitas"; pengantar → "Nikmati pengalaman
@@ -14,8 +46,12 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 - **Mockup:** seksi "Rute, Jersey & Medali" → "Jersey, Medali & String Bag"; kalimat pengantar dihapus;
   slot Rute dicabut, slot String Bag ditambah. Mockup String Bag dipasang 18 Nov 2026 (`public/images/flyer/string-bag.webp`).
 - **Galeri:** judul → "Recap SMADA RUN 2026" (ejaan "SMADA RUN" mengikuti dokumen revisi).
-- **Tiket:** saat Coming Soon, teks "Menyusul" di kartu diganti dua kelompok peserta
-  (`kelompokPeserta` di `src/data/tiket.ts`). Setelah pendaftaran dibuka, harga live dari core kembali tampil.
+- **Tiket:** dua kelompok peserta (`kelompokPeserta` di `src/data/tiket.ts`) menggantikan teks "Menyusul" saat
+  Coming Soon. Awalnya hanya tampil saat Coming Soon, sehingga HILANG begitu `coming_soon` dimatikan di core
+  (19 Nov 2026) — sekarang tampil di kedua keadaan (saat buka, di atas harga). Ditambah catatan kecil
+  `catatanPodium` ("Podium hanya untuk pelajar berdomisili Kab. Nganjuk; event terbuka untuk umum") di bawah
+  kelompok pada kartu tiket dan di ringkasan event `/daftar`. Gaya mengikuti tema (garis tipis + lencana
+  magenta "Podium" / netral "Non-Podium", huruf biasa), BUKAN meniru mockup poster panitia (kapital tebal).
 - **Testimoni dihapus** (komponen, data, tautan menu "Testimoni"). Angka "1.000+" ikut dihapus atas
   keputusan pemilik (`src/data/stats.ts` & tipe `IStats` dibuang).
 
