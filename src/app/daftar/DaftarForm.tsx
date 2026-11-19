@@ -22,6 +22,12 @@ import {
   NOMOR_IDENTITAS_MAX,
   validasiIdentitas,
 } from "@/lib/identitas";
+import {
+  kategoriMengikutiIdentitas,
+  kategoriOtomatis,
+  kategoriUntukIdentitas,
+  validasiKategoriIdentitas,
+} from "@/lib/kategoriIdentitas";
 import { PESAN_BELUM_PASTI, tafsirkanResponsDaftar } from "@/lib/kontrakPendaftaran";
 import { VERSI_PERSETUJUAN } from "@/lib/persetujuan";
 import { simpanPesananTerakhir } from "@/lib/statusPesanan";
@@ -274,7 +280,10 @@ export default function DaftarForm({
   const KATEGORI_KEYS = Object.keys(KATEGORI_TIKET);
   // Seperti kembar.in: bila ada lebih dari satu kategori, peserta HARUS memilihnya sendiri di langkah 2
   // (tidak ada yang terpilih diam-diam); dengan satu kategori, itu yang terpilih sejak awal.
-  const kategoriAwal = KATEGORI_KEYS.length > 1 ? "" : KATEGORI_KEYS[0] || "";
+  // Pengecualian: kategori pelajar/umum mengikuti jenis nomor identitas (`@/lib/kategoriIdentitas`);
+  // peserta baru mulai dari NIK, jadi kategori umumnya langsung terpilih.
+  const kategoriAwal = KATEGORI_KEYS.length > 1 ? kategoriOtomatis(KATEGORI_KEYS, "nik", "") : KATEGORI_KEYS[0] || "";
+  const kategoriIkutIdentitas = kategoriMengikutiIdentitas(KATEGORI_KEYS);
   const PENDAFTARAN_DIBUKA = isOpen && KATEGORI_KEYS.length > 0;
   const isFormClosed = !PENDAFTARAN_DIBUKA;
   // Coming Soon: harga disembunyikan sampai pendaftaran dibuka.
@@ -387,7 +396,9 @@ export default function DaftarForm({
         ? namaBib
           ? validasiNamaBib(String(value ?? ""), namaBib)
           : null
-        : VALIDATOR_PESERTA[field](value, p);
+        : field === "kategori"
+          ? VALIDATOR_PESERTA.kategori(value, p) ?? validasiKategoriIdentitas(KATEGORI_KEYS, p.jenisIdentitas, String(value ?? ""))
+          : VALIDATOR_PESERTA[field](value, p);
 
   const handlePesertaBlur = (key: string, field: PesertaField, value: any) => {
     const peserta = pesertaList.find((p) => p.key === key);
@@ -402,9 +413,11 @@ export default function DaftarForm({
   const gantiJenisIdentitas = (key: string, jenis: JenisIdentitas) => {
     const peserta = pesertaList.find((p) => p.key === key);
     if (!peserta || peserta.jenisIdentitas === jenis) return;
-    setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, jenisIdentitas: jenis } : p)));
+    // Kategori pelajar/umum ikut berganti (`@/lib/kategoriIdentitas`).
+    const kategori = kategoriOtomatis(KATEGORI_KEYS, jenis, peserta.kategori);
+    setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, jenisIdentitas: jenis, kategori } : p)));
     const message = peserta.nik.trim() ? validasiIdentitas(jenis, peserta.nik) : null;
-    setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], nik: message ?? undefined } }));
+    setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], nik: message ?? undefined, kategori: undefined } }));
   };
 
   // Penghitung tiket di langkah 1 (seperti di kembar.in): menambah/mengurangi peserta dari ujung.
@@ -1281,17 +1294,29 @@ export default function DaftarForm({
                           onChange={(e) => handlePesertaChange(raw.key, "kategori", e.target.value)}
                           onBlur={(e) => handlePesertaBlur(raw.key, "kategori", e.target.value)}
                           aria-invalid={!!errs.kategori}
-                          aria-describedby={errs.kategori ? `peserta-${index}-kategori-error` : undefined}
+                          aria-describedby={
+                            errs.kategori
+                              ? `peserta-${index}-kategori-error`
+                              : kategoriIkutIdentitas
+                                ? `peserta-${index}-kategori-hint`
+                                : undefined
+                          }
                           className={fieldClass(!!errs.kategori)}
                         >
-                          <option value="">Pilih kategori</option>
-                          {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
+                          {!p.kategori && <option value="">Pilih kategori</option>}
+                          {kategoriUntukIdentitas(KATEGORI_KEYS, p.jenisIdentitas).map((key) => (
                             <option key={key} value={key}>
-                              {cat.label} — {harga(cat.price)}
+                              {KATEGORI_TIKET[key].label} — {harga(KATEGORI_TIKET[key].price)}
                             </option>
                           ))}
                         </select>
-                        <FieldError id={`peserta-${index}-kategori-error`} message={errs.kategori} />
+                        {errs.kategori ? (
+                          <FieldError id={`peserta-${index}-kategori-error`} message={errs.kategori} />
+                        ) : kategoriIkutIdentitas ? (
+                          <p id={`peserta-${index}-kategori-hint`} className="mt-1.5 text-xs text-muted-foreground">
+                            Mengikuti nomor identitas: Kartu Pelajar untuk kategori pelajar, NIK untuk umum.
+                          </p>
+                        ) : null}
                       </div>
                     )}
 

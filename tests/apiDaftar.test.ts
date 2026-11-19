@@ -511,3 +511,30 @@ describe("biaya tambahan ukuran jersey dari core", () => {
     expect((await POST(permintaan(denganUkuran("XXL", 180000, 185000)))).status).toBe(200);
   });
 });
+
+describe("kategori mengikuti jenis nomor identitas", () => {
+  const DUA_KATEGORI = {
+    ...LIVE,
+    ticketTypes: [
+      { categoryKey: "5KM Pelajar", price: 180000, id: 23 },
+      { categoryKey: "5KM Umum", price: 180000, id: 37 },
+    ],
+  } as LiveEventData;
+  const peserta = (jenisIdentitas: string, kategori: string, nik: string) =>
+    payloadValid({ participants: [{ ...payloadValid().participants[0], jenisIdentitas, kategori, nik }] });
+
+  it("Kartu Pelajar ke kategori pelajar dan NIK ke umum diterima dengan id tiketnya", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue(DUA_KATEGORI);
+    expect((await POST(permintaan(peserta("kartu_pelajar", "5KM Pelajar", "123456789"))))).toHaveProperty("status", 200);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).participants[0].ticketTypeId).toBe(23);
+    expect((await POST(permintaan(peserta("nik", "5KM Umum", PII.nik))))).toHaveProperty("status", 200);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).participants[0].ticketTypeId).toBe(37);
+  });
+
+  it("pasangan silang ditolak sebelum core dihubungi", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue(DUA_KATEGORI);
+    expect((await POST(permintaan(peserta("kartu_pelajar", "5KM Umum", "123456789")))).status).toBe(400);
+    expect((await POST(permintaan(peserta("nik", "5KM Pelajar", PII.nik)))).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

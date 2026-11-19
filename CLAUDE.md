@@ -139,6 +139,11 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   dipastikan — 16 pasti muat karena NIK sendiri 16. Core menyimpan keduanya di kolom
   `nik` yang sama, jadi `api/daftar` ikut mengirim `customFields.jenis_identitas`
   ("NIK"/"Kartu Pelajar") supaya panitia tahu mana yang dipakai.
+- **Kategori pelajar/umum mengikuti jenis identitas** (19 Nov 2026, permintaan pemilik): Kartu
+  Pelajar hanya boleh ke kategori yang namanya memuat "pelajar" (podium U-18), NIK hanya ke kategori
+  lain. Form mengganti kategori otomatis saat jenis identitas diganti; `api/daftar` menolak pasangan
+  silang. Aturan hanya aktif bila core punya kategori pelajar DAN kategori lain. Sumber tunggal
+  `src/lib/kategoriIdentitas.ts`; nama tiket tetap diatur panitia di core.
 - **Dropdown wilayah mengikuti toggle core**, bukan keputusan project ini. `kembarinEvents.ts`
   membaca `event_config.enable_wilayah_dropdown` (hanya nilai tepat `true` = menyala, sama
   seperti formulir kembar.in); menyala = `WilayahSelect`, mati = isian teks bebas tanpa kode.

@@ -31,7 +31,7 @@ sesi ini; perubahan core dikerjakan di sesi kembarin-v2 — lihat bagian akhir `
 | `src/app/api/status-pesanan/route.ts` + `src/lib/statusPesanan.ts` | Proxy status pesanan ke core + allowlist + penyimpanan `localStorage`. |
 | `src/lib/persetujuan.ts` | Label versi teks persetujuan (`consent_policy_version`). Naikkan saat teks persetujuan berubah. |
 | `src/lib/kembarinEvents.ts` | Satu-satunya pembaca data live event (harga, kategori, status buka/tutup). |
-| `src/lib/identitas.ts`, `src/lib/wilayah.ts`, `src/lib/paymentUrl.ts` | Aturan nomor identitas, dataset wilayah, whitelist domain gateway. |
+| `src/lib/identitas.ts`, `src/lib/kategoriIdentitas.ts`, `src/lib/wilayah.ts`, `src/lib/paymentUrl.ts` | Aturan nomor identitas, kategori pelajar/umum per identitas, dataset wilayah, whitelist domain gateway. |
 | `tests/*.test.ts` | Uji regresi vitest (tanpa jaringan). |
 
 ## Sebelum menyatakan selesai

@@ -5,6 +5,15 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 19 November 2026 — Kartu Pelajar otomatis ke 5KM Pelajar
+
+- Panitia memecah kategori di core menjadi "5KM Pelajar" (podium U-18) dan "5KM Umum". Kategori
+  peserta kini mengikuti pilihan nomor identitas: Kartu Pelajar ke kategori pelajar, NIK ke umum.
+  Dropdown hanya menampilkan kategori yang cocok, dan `api/daftar` menolak pasangan silang.
+- Kategori pelajar dikenali dari kata "pelajar" pada nama tiket di core. Tanpa kategori pelajar
+  (atau tanpa kategori lain) semua kategori terbuka seperti sebelumnya.
+- Pilihan identitas tetap pengakuan peserta; kartu pelajar asli dicek panitia saat RPC dan podium.
+
 ## 19 November 2026 — Flyer utama dipasang di /daftar
 
 - Flyer dari panitia (`public/images/flyer/flyer-utama.webp`, 1414×2000) dipasang lewat `flyerPendaftaran`
