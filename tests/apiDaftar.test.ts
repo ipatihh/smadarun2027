@@ -22,6 +22,7 @@ const LIVE: LiveEventData = {
   opensAt: null,
   namaBib: null,
   kolomTambahan: [],
+  ukuranJersey: null,
 } as LiveEventData;
 
 // Data sintetis.
@@ -451,5 +452,50 @@ describe("kolom tambahan dari form_schema core", () => {
     const cf = JSON.parse(fetchMock.mock.calls[0][1].body).participants[0].customFields;
     expect(cf).not.toHaveProperty("liar");
     expect(cf.nik).toBe(PII.nik);
+  });
+});
+
+describe("biaya tambahan ukuran jersey dari core", () => {
+  const UKURAN = {
+    options: ["S", "M", "L", "XL", "XXL", "XXXL"],
+    surcharges: { XXL: 10000, XXXL: 10000 },
+  };
+  const denganUkuran = (size: string, subtotal: number, total: number) =>
+    payloadValid({
+      participants: [{ ...payloadValid().participants[0], size }],
+      subtotal,
+      total_amount: total,
+    });
+
+  it("XXL: subtotal = tiket + 10.000; biaya layanan tetap 5.000 per tiket", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, ukuranJersey: UKURAN });
+    const res = await POST(permintaan(denganUkuran("XXL", 190000, 195000)));
+    expect(res.status).toBe(200);
+    // Ukuran yang dikirim ke core hanya labelnya; nominal tidak ikut.
+    const dikirim = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(dikirim.participants[0].size ?? dikirim.participants[0].customFields?.size).toBe("XXL");
+    expect(JSON.stringify(dikirim)).not.toContain("10000");
+  });
+
+  it("form lama yang belum menambah biaya (total 185.000 untuk XXL) ditolak sebelum core", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, ukuranJersey: UKURAN });
+    const res = await POST(permintaan(denganUkuran("XXL", 180000, 185000)));
+    expect(res.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("ukuran tanpa biaya (M) tetap 180.000 + 5.000", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, ukuranJersey: UKURAN });
+    expect((await POST(permintaan(denganUkuran("M", 180000, 185000)))).status).toBe(200);
+  });
+
+  it("ukuran di luar daftar core (XS dihapus panitia) ditolak", async () => {
+    vi.mocked(getLiveEventData).mockResolvedValue({ ...LIVE, ukuranJersey: UKURAN });
+    expect((await POST(permintaan(denganUkuran("XS", 180000, 185000)))).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("core tanpa kolom ukuran: daftar cadangan, tanpa biaya", async () => {
+    expect((await POST(permintaan(denganUkuran("XXL", 180000, 185000)))).status).toBe(200);
   });
 });

@@ -5,6 +5,21 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 19 November 2026 — Ukuran jersey dan biaya tambahan dari core
+
+- Pilihan ukuran dan `size_surcharges` dibaca dari kolom `semantic: "size"` pada form schema core.
+  Tombol ukuran menampilkan biaya tambahan; ringkasan dan validasi server menambahkannya per peserta
+  ke subtotal. Biaya layanan tetap per tiket. Tanpa kolom ukuran, daftar cadangan tanpa biaya tetap berlaku.
+- Core publik telah diverifikasi mengirim tambahan Rp10.000 untuk XXL dan XXXL. Gambar size chart
+  juga memuat nominal, sehingga asetnya perlu diganti bila tarif di core berubah.
+- Catatan podium di ringkasan `/daftar` dihapus atas permintaan pemilik; tetap ada pada kartu tiket beranda.
+- Ditambah pengujian pembacaan ukuran dan validasi nominal API; mock core lokal menyertakan biaya ukuran.
+- Verifikasi: 115 tes, lint, TypeScript, dan build Webpack lolos; browser production lokal dengan mock
+  menampilkan subtotal XXL dan total Rp196.000 (tiket Rp181.000 + ukuran Rp10.000 + layanan Rp5.000).
+  Probe API tercatat di mock. Build Turbopack lokal terhalang izin port sandbox, bukan kesalahan kompilasi aplikasi.
+
+---
+
 ## 19 November 2026 — Kontak panitia & sosial media
 
 - Kontak panitia diganti tiga WhatsApp: 0821-4372-9459 (Gero), 0821-4027-7608 (Hanif), 0878-5640-3199 (Arsyad).

@@ -24,8 +24,8 @@ export const kelompokPeserta: { nama: string; lencana: string; podium: boolean }
   { nama: 'Kelompok Umum', lencana: 'Non-Podium', podium: false },
 ];
 
-// Catatan kecil di bawah kelompok (kartu tiket beranda) dan di ringkasan event /daftar, supaya pendaftar
-// tahu aturan podium sebelum membayar (permintaan pemilik, 19 Nov 2026).
+// Catatan kecil di bawah kelompok pada kartu tiket beranda. Di ringkasan /daftar dicabut atas permintaan
+// pemilik (19 Nov 2026: "menganggu"); jangan dipasang lagi di sana.
 export const catatanPodium =
   'Podium hanya untuk pelajar berdomisili Kab. Nganjuk. Event ini terbuka untuk umum, siapa pun boleh mendaftar.';
 

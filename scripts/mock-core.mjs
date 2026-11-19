@@ -49,6 +49,7 @@ const KOLOM_NAMA_BIB = { name: "nama_bib", type: "name_on_bib", label: "Name On 
 // Cermin keluaran toPublicFormSchema core (kembarin-v2 domains/shared/publicFormSchema.ts):
 // field inti bertanda `semantic`, kolom tambahan panitia `semantic: null`.
 const KOLOM_INTI = [
+  { name: "size", type: "select", label: "Ukuran Jersey", options: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"], required: true, semantic: "size", size_surcharges: { XXL: 10000, XXXL: 10000 } },
   { name: "nama", type: "text", label: "Nama Lengkap", required: true, semantic: "nama", maxLength: 1000 },
   { name: "nik", type: "text", label: "NIK", required: true, semantic: "nik", maxLength: 1000 },
   { name: "kategori", type: "select", label: "Kategori", options: ["UJI LOKAL 5K"], required: true, semantic: "kategori" },

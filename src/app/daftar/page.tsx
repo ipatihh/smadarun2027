@@ -66,6 +66,7 @@ export default async function DaftarPage() {
       wilayahDropdown={live.wilayahDropdown}
       namaBib={live.namaBib}
       kolomTambahan={live.kolomTambahan}
+      ukuranJersey={live.ukuranJersey}
     />
   );
 }

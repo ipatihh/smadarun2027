@@ -34,6 +34,7 @@ import {
 import { VERSI_PERSETUJUAN_DIKENAL, VERSI_PERSETUJUAN_TANPA_LABEL } from "@/lib/persetujuan";
 import { rapikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
 import { rapikanIsian, validasiKolomTambahan } from "@/lib/kolomTambahan";
+import { biayaUkuran, cocokkanUkuran } from "@/lib/ukuranJersey";
 import { URL_KEMBALI_PEMBAYARAN } from "@/lib/statusPesanan";
 
 // ─── Batas & proteksi per instance ───────────────────────────────────────────
@@ -97,7 +98,6 @@ const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const EMAIL_MAX = 254;
 const WHATSAPP_PATTERN = /^\+?\d{8,15}$/;
 const GENDER_WHITELIST = ["Laki-laki", "Perempuan"];
-const SIZE_WHITELIST = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 const KODE_WILAYAH_MAX = 16;
 const KATEGORI_MAX = 100;
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -129,6 +129,8 @@ interface PesertaTervalidasi {
   kategori: string;
   size: string;
   harga: number;
+  /** Biaya tambahan ukuran jersey (Rupiah) dari core; 0 bila tidak ada. */
+  biayaUkuran: number;
   ticketTypeId: number | null;
   namaBib: string;
   tambahan: Record<string, string>;
@@ -303,8 +305,9 @@ export async function POST(req: NextRequest) {
         return gagal(`Pilihan jenis kelamin peserta ${nomor} tidak valid.`);
       }
 
-      const size = typeof p.size === "string" ? p.size : "";
-      if (!SIZE_WHITELIST.includes(size)) {
+      // Ukuran sah = pilihan live dari core (ejaan panitia); biaya tambahannya dari core juga.
+      const size = cocokkanUkuran(live.ukuranJersey, typeof p.size === "string" ? p.size : "");
+      if (!size) {
         return gagal(`Pilihan ukuran jersey peserta ${nomor} tidak valid.`);
       }
 
@@ -399,6 +402,7 @@ export async function POST(req: NextRequest) {
         kategori,
         size,
         harga: tiket.price,
+        biayaUkuran: biayaUkuran(live.ukuranJersey, size),
         ticketTypeId: tiket.id,
         namaBib,
         tambahan,
@@ -410,7 +414,9 @@ export async function POST(req: NextRequest) {
     // calculateAdminFee() di kembarin-v2 (feePerTicket * ticketCount). Pesanan 5 tiket
     // berarti 5 x biaya layanan. Kalau di sini dihitung per pesanan, total yang tampil
     // di layar akan lebih kecil daripada yang ditagihkan oleh PT KEMBAR INOVASI.
-    const expectedSubtotal = pesertaTervalidasi.reduce((sum, p) => sum + p.harga, 0);
+    // Nominal peserta = harga tiket + biaya ukuran jersey (kontrak core §4a); biaya layanan
+    // tetap per tiket dan tidak dikenakan atas biaya ukuran.
+    const expectedSubtotal = pesertaTervalidasi.reduce((sum, p) => sum + p.harga + p.biayaUkuran, 0);
     const expectedAdminFee = live.adminFee * pesertaTervalidasi.length;
     const expectedTotal = expectedSubtotal + expectedAdminFee;
 

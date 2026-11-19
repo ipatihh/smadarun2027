@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore, ChangeEvent, FocusEvent, FormEvent } from "react";
+import React, { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore, ChangeEvent, FocusEvent, FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/WilayahSelect";
@@ -8,10 +8,11 @@ import IsiKebijakanPrivasi from "@/components/legal/IsiKebijakanPrivasi";
 import { KOTA_MANUAL_MAX_LENGTH, KOTA_MANUAL_PATTERN } from "@/lib/wilayah";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FiArrowLeft, FiMinus, FiPlus } from "react-icons/fi";
-import { catatanPodium, fasilitasSemuaKategori, tiketMarketing } from "@/data/tiket";
+import { fasilitasSemuaKategori, tiketMarketing } from "@/data/tiket";
 import { flyerPendaftaran } from "@/data/flyer";
 import { LiveTicketType } from "@/lib/kembarinEvents";
 import { KolomNamaBib, lipatKetikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
+import { biayaUkuran, UKURAN_JERSEY_CADANGAN, type KolomUkuran } from "@/lib/ukuranJersey";
 import { batasTanggalLahir, KolomTambahan, validasiKolomTambahan } from "@/lib/kolomTambahan";
 import {
   JenisIdentitas,
@@ -145,6 +146,8 @@ interface DaftarFormProps {
   namaBib: KolomNamaBib | null;
   /** Kolom lain dari form builder kembarin-v2, dirender generik (src/lib/kolomTambahan.ts). */
   kolomTambahan: KolomTambahan[];
+  /** Pilihan ukuran jersey + biaya tambahan per ukuran dari core; null = daftar cadangan tanpa biaya. */
+  ukuranJersey: KolomUkuran | null;
   /** Tanggal hari-H yang sudah diformat WIB (live dari core); null = belum diumumkan. */
   tanggalEvent: string | null;
   /** Lokasi hari-H apa adanya dari core; null = belum diumumkan. */
@@ -162,7 +165,8 @@ const fieldClass = (hasError: boolean) =>
 
 const labelClass = "mb-2 block text-sm font-medium text-foreground";
 
-const UKURAN_JERSEY = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+/** "+10rb" untuk kelipatan seribu (muat di tombol ukuran), selain itu "+Rp12.500". */
+const biayaRingkas = (n: number) => (n % 1000 === 0 ? `+${n / 1000}rb` : `+${rupiah(n)}`);
 
 // Tampilan pilihan tombol (ukuran jersey, jenis kelamin, jenis identitas). Dipasang di <span>
 // setelah <input type="radio" class="peer sr-only">, jadi tetap radio sungguhan: bisa dengan keyboard.
@@ -246,6 +250,7 @@ export default function DaftarForm({
   wilayahDropdown,
   namaBib,
   kolomTambahan,
+  ukuranJersey,
   tanggalEvent,
   lokasi,
 }: DaftarFormProps) {
@@ -341,7 +346,12 @@ export default function DaftarForm({
 
   const hargaPeserta = (p: PesertaState) => KATEGORI_TIKET[p.kategori]?.price ?? 0;
 
-  const subtotal = pesertaList.reduce((sum, p) => sum + hargaPeserta(p), 0);
+  // Biaya tambahan ukuran jersey (dari core), per peserta. Bagian dari subtotal seperti di core:
+  // nominal peserta = harga tiket + biaya ukuran; biaya layanan TIDAK dikenakan atasnya.
+  const biayaPeserta = (p: PesertaState) => biayaUkuran(ukuranJersey, p.size);
+  const daftarUkuran = ukuranJersey?.options ?? UKURAN_JERSEY_CADANGAN;
+
+  const subtotal = pesertaList.reduce((sum, p) => sum + hargaPeserta(p) + biayaPeserta(p), 0);
   // BIAYA LAYANAN DIHITUNG PER TIKET, bukan per pesanan — sama seperti calculateAdminFee()
   // di kembarin-v2 (feePerTicket * ticketCount). Pesanan 5 tiket = 5 x biaya layanan.
   const totalAdminFee = adminFee * pesertaList.length;
@@ -766,8 +776,10 @@ export default function DaftarForm({
       {pesertaList.map((raw, index) => {
         const nama = efektif(raw).nama.trim();
         const kategori = KATEGORI_TIKET[raw.kategori];
+        const biaya = biayaPeserta(raw);
         return (
-          <div key={raw.key} className="flex justify-between gap-4 text-foreground-accent font-medium">
+          <Fragment key={raw.key}>
+          <div className="flex justify-between gap-4 text-foreground-accent font-medium">
             <dt className="min-w-0">
               <span className="block truncate">{nama || `Peserta ${index + 1}`}</span>
               {/* Kekurangan isian ditulis kecil di baris kedua (bukan di baris nama, yang terpotong). */}
@@ -790,6 +802,13 @@ export default function DaftarForm({
               </button>
             </dd>
           </div>
+          {biaya > 0 && (
+            <div className="-mt-1.5 flex justify-between gap-4 text-xs text-muted-foreground">
+              <dt>Tambahan ukuran {raw.size}</dt>
+              <dd className="tabular-nums">{harga(biaya)}</dd>
+            </div>
+          )}
+          </Fragment>
         );
       })}
       <div className="flex justify-between gap-4 border-t border-border pt-2.5 text-foreground-accent font-medium">
@@ -967,7 +986,6 @@ export default function DaftarForm({
               {fasilitasSemuaKategori.join(" · ")}
             </p>
           )}
-          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{catatanPodium}</p>
         </aside>
 
         <form
@@ -1324,9 +1342,9 @@ export default function DaftarForm({
                         aria-invalid={!!errs.size}
                         aria-describedby={errs.size ? `peserta-${index}-size-error` : undefined}
                         tabIndex={-1}
-                        className="grid grid-cols-4 gap-2 focus:outline-none sm:grid-cols-7"
+                        className="grid grid-cols-4 gap-2 focus:outline-none sm:grid-cols-[repeat(auto-fit,minmax(4rem,1fr))]"
                       >
-                        {UKURAN_JERSEY.map((s) => (
+                        {daftarUkuran.map((s) => (
                           <label key={s} className="cursor-pointer">
                             <input
                               type="radio"
@@ -1336,7 +1354,17 @@ export default function DaftarForm({
                               onChange={() => handlePesertaChange(raw.key, "size", s)}
                               className="peer sr-only"
                             />
-                            <span className={kelasPilihan(!!errs.size)}>{s}</span>
+                            <span className={`${kelasPilihan(!!errs.size)} flex-col gap-0 leading-tight`}>
+                              {s}
+                              {biayaUkuran(ukuranJersey, s) > 0 && (
+                                <>
+                                  <span aria-hidden="true" className="text-[11px] font-semibold tabular-nums opacity-80">
+                                    {biayaRingkas(biayaUkuran(ukuranJersey, s))}
+                                  </span>
+                                  <span className="sr-only"> tambahan {rupiah(biayaUkuran(ukuranJersey, s))}</span>
+                                </>
+                              )}
+                            </span>
                           </label>
                         ))}
                       </div>

@@ -6,6 +6,7 @@
 
 import { bacaKolomNamaBib, type KolomNamaBib } from "./namaBib";
 import { bacaKolomTambahan, type KolomTambahan } from "./kolomTambahan";
+import { bacaKolomUkuran, type KolomUkuran } from "./ukuranJersey";
 
 const EVENT_CODE = "smadarun";
 
@@ -96,6 +97,10 @@ export interface LiveEventData {
   // per peserta. Kolom baru dari panitia muncul di sini tanpa coding. Lihat
   // src/lib/kolomTambahan.ts.
   kolomTambahan: KolomTambahan[];
+  // Pilihan ukuran jersey + biaya tambahan per ukuran (`size_surcharges`), dari kolom
+  // `semantic: "size"` di form_schema core. null = core tidak mengirim kolom ukuran; form
+  // memakai daftar cadangan tanpa biaya. Lihat src/lib/ukuranJersey.ts.
+  ukuranJersey: KolomUkuran | null;
 }
 
 // Batas tunggu fetch data live. Dipilih 8 detik: cukup longgar untuk jaringan lambat,
@@ -123,6 +128,7 @@ const CLOSED: LiveEventData = {
   opensAt: null,
   namaBib: null,
   kolomTambahan: [],
+  ukuranJersey: null,
 };
 
 /** Label dari core ditampilkan apa adanya ke pembeli, jadi dibatasi panjang & karakternya. */
@@ -272,6 +278,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       opensAt,
       namaBib: bacaKolomNamaBib(event.form_schema),
       kolomTambahan: bacaKolomTambahan(event.form_schema),
+      ukuranJersey: bacaKolomUkuran(event.form_schema),
     };
   } catch (err) {
     const alasan = err instanceof Error && err.name === "TimeoutError"
