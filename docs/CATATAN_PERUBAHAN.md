@@ -5,6 +5,16 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 20 November 2026 — Kartu tiket beranda hanya memuat kelompoknya sendiri
+
+- Saat core punya kategori pelajar (nama memuat "pelajar") DAN kategori lain, kartu "5KM Pelajar" hanya
+  menampilkan Kelompok U-18 (Podium) dan kartu "5KM Umum" hanya Kelompok Umum (Non-Podium). Aturannya sama
+  dengan `src/lib/kategoriIdentitas.ts`; bila hanya satu kategori, kedua kelompok tetap tampil.
+- Catatan podium ("Podium hanya untuk pelajar berdomisili Kab. Nganjuk …") dihapus dari kartu umum atas
+  permintaan pemilik; tetap ada di kartu pelajar, dan di kartu tunggal bila core hanya punya satu kategori.
+
+---
+
 ## 19 November 2026 — Kartu Pelajar otomatis ke 5KM Pelajar
 
 - Panitia memecah kategori di core menjadi "5KM Pelajar" (podium U-18) dan "5KM Umum". Kategori

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FiCheck } from "react-icons/fi";
 import { ResolvedTicketTier } from "@/lib/kembarinEvents";
 import { catatanPodium, kelompokPeserta } from "@/data/tiket";
+import { isKategoriPelajar } from "@/lib/kategoriIdentitas";
 
 interface PricingColumnProps {
   tier: ResolvedTicketTier;
@@ -11,6 +12,8 @@ interface PricingColumnProps {
   adminFee: number;
   /** Nama biaya dari core (event_config.admin_fee_label). */
   adminFeeLabel: string;
+  /** true = core punya kategori pelajar dan umum, jadi kartu ini hanya memuat kelompok miliknya. */
+  pisahKelompok?: boolean;
 }
 
 const rupiah = (n: number) =>
@@ -20,8 +23,12 @@ const rupiah = (n: number) =>
     minimumFractionDigits: 0,
   }).format(n);
 
-const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeLabel }) => {
+const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeLabel, pisahKelompok = false }) => {
   const hasFeatures = tier.features.length > 0;
+  // Kartu pelajar = kelompok podium U-18; kartu lainnya = kelompok umum (permintaan pemilik 20 Nov 2026).
+  const kelompokKartu = pisahKelompok
+    ? kelompokPeserta.filter((k) => k.podium === isKategoriPelajar(tier.categoryKey))
+    : kelompokPeserta;
 
   return (
     <div
@@ -46,7 +53,7 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeL
             {/* Kelompok peserta tampil di kedua keadaan: saat Coming Soon menggantikan teks "Menyusul" di
                 tempat harga, dan saat pendaftaran buka tampil di atas harga. */}
             <ul className="mx-auto max-w-sm divide-y divide-border-strong/50 border-y border-border-strong/50 text-left">
-              {kelompokPeserta.map((kelompok) => (
+              {kelompokKartu.map((kelompok) => (
                 <li key={kelompok.nama} className="flex items-center justify-between gap-3 py-3">
                   <span className="text-sm leading-snug text-foreground">{kelompok.nama}</span>
                   <span
@@ -59,7 +66,10 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeL
                 </li>
               ))}
             </ul>
-            <p className="mx-auto mt-3 max-w-sm text-center text-xs leading-relaxed text-muted-foreground">{catatanPodium}</p>
+            {/* Kartu umum (saat kategori dipisah) tidak memuat catatan ini; kartu pelajar dan kartu tunggal tetap. */}
+            {!(pisahKelompok && !isKategoriPelajar(tier.categoryKey)) && (
+              <p className="mx-auto mt-3 max-w-sm text-center text-xs leading-relaxed text-muted-foreground">{catatanPodium}</p>
+            )}
             {!tier.comingSoon && (
               <span className="mt-6 block font-display text-4xl font-medium tracking-[-0.02em] text-foreground sm:text-5xl">
                 {rupiah(tier.price)}

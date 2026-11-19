@@ -1,5 +1,6 @@
 import { FiCheck } from "react-icons/fi";
 import { ResolvedTicketTier } from "@/lib/kembarinEvents";
+import { kategoriMengikutiIdentitas } from "@/lib/kategoriIdentitas";
 import PricingColumn from "./TiketColumn";
 
 interface Props {
@@ -13,13 +14,21 @@ interface Props {
 }
 
 const TiketGrid: React.FC<Props> = ({ tiers, sharedFeatures, adminFee, adminFeeLabel }) => {
+  // Core punya kategori pelajar DAN umum: tiap kartu hanya menampilkan kelompoknya sendiri.
+  const pisahKelompok = kategoriMengikutiIdentitas(tiers.map((t) => t.categoryKey));
   return (
     <div
       className="mx-auto w-full max-w-md md:max-w-4xl"
     >
       <div className="flex flex-col items-stretch justify-center gap-6 md:flex-row md:gap-8">
         {tiers.map((tier) => (
-          <PricingColumn key={tier.categoryKey} tier={tier} adminFee={adminFee} adminFeeLabel={adminFeeLabel} />
+          <PricingColumn
+            key={tier.categoryKey}
+            tier={tier}
+            adminFee={adminFee}
+            adminFeeLabel={adminFeeLabel}
+            pisahKelompok={pisahKelompok}
+          />
         ))}
       </div>
 
