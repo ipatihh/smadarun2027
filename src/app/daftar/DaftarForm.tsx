@@ -843,11 +843,14 @@ export default function DaftarForm({
           : "Bayar sekarang";
 
   // Tombol maju: "Lanjut" di langkah 1–2, "Bayar" di langkah 3. `pendek` untuk bar bawah ponsel.
+  // `key` berbeda WAJIB: tanpa itu React memakai ulang elemen <button> yang sama, tipenya berubah
+  // dari "button" ke "submit" di tengah klik "Lanjut" dari langkah 2, dan klik yang sama langsung
+  // mengirim formulir di langkah 3 — kotak persetujuan langsung merah sebelum sempat dicentang.
   const tombolUtama = (pendek: boolean, extraClass: string) =>
     langkah === 3 ? (
-      submitButton(labelMaju(pendek), extraClass)
+      <Fragment key="bayar">{submitButton(labelMaju(pendek), extraClass)}</Fragment>
     ) : (
-      <button type="button" onClick={lanjut} disabled={loading} className={`${kelasTombolUtama} ${extraClass}`}>
+      <button key="lanjut" type="button" onClick={lanjut} disabled={loading} className={`${kelasTombolUtama} ${extraClass}`}>
         {labelMaju(pendek)}
       </button>
     );
