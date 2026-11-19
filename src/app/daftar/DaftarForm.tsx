@@ -7,8 +7,9 @@ import WilayahSelect, { WilayahValue, createEmptyWilayah } from "@/components/Wi
 import IsiKebijakanPrivasi from "@/components/legal/IsiKebijakanPrivasi";
 import { KOTA_MANUAL_MAX_LENGTH, KOTA_MANUAL_PATTERN } from "@/lib/wilayah";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
-import { tiketMarketing } from "@/data/tiket";
+import { FiArrowLeft, FiMinus, FiPlus } from "react-icons/fi";
+import { catatanPodium, fasilitasSemuaKategori, tiketMarketing } from "@/data/tiket";
+import { flyerPendaftaran } from "@/data/flyer";
 import { LiveTicketType } from "@/lib/kembarinEvents";
 import { KolomNamaBib, lipatKetikanNamaBib, validasiNamaBib } from "@/lib/namaBib";
 import { batasTanggalLahir, KolomTambahan, validasiKolomTambahan } from "@/lib/kolomTambahan";
@@ -23,14 +24,12 @@ import { PESAN_BELUM_PASTI, tafsirkanResponsDaftar } from "@/lib/kontrakPendafta
 import { VERSI_PERSETUJUAN } from "@/lib/persetujuan";
 import { simpanPesananTerakhir } from "@/lib/statusPesanan";
 import {
-  aturPemesanIkut,
   bangunPesertaPayload,
   buatIdSesi,
   dataPesertaEfektif,
   hapusPeserta as hapusPesertaDariPesanan,
   KeadaanPesanan,
   PemesanForm,
-  pemesanIkutLari,
   PesertaForm,
   pilihSesiPengiriman,
   SesiPengiriman,
@@ -146,6 +145,10 @@ interface DaftarFormProps {
   namaBib: KolomNamaBib | null;
   /** Kolom lain dari form builder kembarin-v2, dirender generik (src/lib/kolomTambahan.ts). */
   kolomTambahan: KolomTambahan[];
+  /** Tanggal hari-H yang sudah diformat WIB (live dari core); null = belum diumumkan. */
+  tanggalEvent: string | null;
+  /** Lokasi hari-H apa adanya dari core; null = belum diumumkan. */
+  lokasi: string | null;
 }
 
 const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
@@ -157,7 +160,16 @@ const fieldClass = (hasError: boolean) =>
       : "border-field-border focus:border-focus focus:ring-focus/15"
   }`;
 
-const labelClass = "mb-2 block text-xs font-semibold text-foreground";
+const labelClass = "mb-2 block text-sm font-medium text-foreground";
+
+const UKURAN_JERSEY = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+// Tampilan pilihan tombol (ukuran jersey, jenis kelamin, jenis identitas). Dipasang di <span>
+// setelah <input type="radio" class="peer sr-only">, jadi tetap radio sungguhan: bisa dengan keyboard.
+const kelasPilihan = (hasError: boolean) =>
+  `flex min-h-11 items-center justify-center rounded-field border bg-card px-2 text-center text-sm font-medium text-foreground transition hover:border-foreground-accent peer-checked:border-primary-accent peer-checked:bg-primary peer-checked:text-on-primary peer-focus-visible:ring-2 peer-focus-visible:ring-focus ${
+    hasError ? "border-danger" : "border-field-border"
+  }`;
 
 const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message }) =>
   message ? (
@@ -166,16 +178,41 @@ const FieldError: React.FC<{ id: string; message?: string }> = ({ id, message })
     </p>
   ) : null;
 
-const StepHeading: React.FC<{ step: number; title: string; hint?: string }> = ({ step, title, hint }) => (
-  <div className="flex items-start gap-4">
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface-sunken text-xs font-semibold text-foreground">
-      {String(step).padStart(2, "0")}
-    </span>
-    <div>
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
-      {hint && <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">{hint}</p>}
-    </div>
-  </div>
+type LangkahForm = 1 | 2 | 3;
+// Sama dengan alur kembar.in (core): Tiket & Pemesan → Data Peserta → Tinjau & Bayar.
+const NAMA_LANGKAH = ["Tiket & Pemesan", "Data Peserta", "Tinjau & Bayar"] as const;
+const SEMUA_LANGKAH: LangkahForm[] = [1, 2, 3];
+
+/** Penanda tahapan tipis: garis kemajuan + label. Langkah yang sudah lewat bisa diklik untuk mundur. */
+const StepNav: React.FC<{ langkah: LangkahForm; onPilih: (n: LangkahForm) => void }> = ({ langkah, onPilih }) => (
+  <nav aria-label="Tahapan pendaftaran">
+    <ol className="grid grid-cols-3 gap-3">
+      {SEMUA_LANGKAH.map((n) => {
+        const lewat = n < langkah;
+        const aktif = n === langkah;
+        return (
+          <li key={n}>
+            <button
+              type="button"
+              disabled={!lewat}
+              onClick={() => onPilih(n)}
+              aria-current={aktif ? "step" : undefined}
+              className="block w-full rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-default"
+            >
+              <span className={`block h-1 rounded-full transition-colors ${aktif || lewat ? "bg-primary" : "bg-border-strong/50"}`} />
+              <span
+                className={`mt-2 block text-xs sm:text-sm ${
+                  aktif ? "font-semibold text-foreground" : lewat ? "font-medium text-foreground-accent" : "text-muted-foreground"
+                }`}
+              >
+                {NAMA_LANGKAH[n - 1]}
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  </nav>
 );
 
 // Key dibuat pemanggil, bukan penghitung tingkat modul: penghitung modul bertahan
@@ -209,6 +246,8 @@ export default function DaftarForm({
   wilayahDropdown,
   namaBib,
   kolomTambahan,
+  tanggalEvent,
+  lokasi,
 }: DaftarFormProps) {
   const WEBHOOK_URL = "/api/daftar";
   const imageSrc = "/images/pocari-1.jpg";
@@ -241,16 +280,13 @@ export default function DaftarForm({
   // berikutnya hanya dibuat di browser, nomornya dari ref milik komponen ini.
   const nomorKeyBerikut = useRef(1);
   const keyPesertaBaru = () => `peserta-${nomorKeyBerikut.current++}`;
-  // Pemesan umumnya ikut lari juga (kasus paling sering), jadi awalnya dikaitkan ke
-  // peserta pertama: nama/email/WhatsApp peserta itu mengikuti pemesan supaya tidak
-  // diketik dua kali. Kaitannya lewat KEY peserta (pemesanKey), bukan indeks — lihat
-  // src/lib/pesananPeserta.ts.
+  // Tanpa kaitan otomatis pemesan→peserta (pemesanKey null): seperti di kembar.in, pemesan menekan
+  // "Gunakan data pemesan" bila ia sendiri ikut lari, dan datanya disalin (bukan ditautkan).
   const [pesanan, setPesanan] = useState<KeadaanPesanan>(() => ({
     pesertaList: [pesertaBaru("peserta-0", KATEGORI_KEYS[0] || "")],
-    pemesanKey: "peserta-0",
+    pemesanKey: null,
   }));
   const pesertaList = pesanan.pesertaList;
-  const pemesanIkut = pemesanIkutLari(pesanan);
   const setPesertaList = (ubah: (prev: PesertaState[]) => PesertaState[]) =>
     setPesanan((prev) => ({ ...prev, pesertaList: ubah(prev.pesertaList) }));
   const [pesertaErrors, setPesertaErrors] = useState<Record<string, Partial<Record<PesertaField, string>>>>({});
@@ -268,11 +304,12 @@ export default function DaftarForm({
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
   const loading = status !== "idle";
   const [ringkasanError, setRingkasanError] = useState<{ jumlah: number; targetId: string } | null>(null);
+  const [langkah, setLangkah] = useState<LangkahForm>(1);
+  // Tiket (peserta) yang sedang diisi di langkah 2 — satu tiket per layar.
+  const [pesertaAktif, setPesertaAktif] = useState(0);
   const [isImgOpen, setIsImgOpen] = useState(false);
+  const [isFlyerOpen, setIsFlyerOpen] = useState(false);
   const [isPrivasiOpen, setIsPrivasiOpen] = useState(false);
-  // Kartu peserta yang baru dituju dari tombol "Ubah" di ringkasan, disorot sebentar
-  // supaya pengguna tahu sedang berada di kartu peserta yang mana.
-  const [kartuDisorot, setKartuDisorot] = useState<string | null>(null);
   const [modal, setModal] = useState<{
     show: boolean;
     jenis: JenisModal;
@@ -297,9 +334,7 @@ export default function DaftarForm({
     return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
-  // Hanya peserta yang dikaitkan ke pemesan (pemesanKey) yang memakai identitas pemesan.
   const efektif = (p: PesertaState): PesertaState => dataPesertaEfektif(p, buyer, pesanan.pemesanKey);
-  const pesertaPemesan = (p: PesertaState) => pesanan.pemesanKey !== null && p.key === pesanan.pemesanKey;
 
   const hargaPeserta = (p: PesertaState) => KATEGORI_TIKET[p.kategori]?.price ?? 0;
 
@@ -360,14 +395,33 @@ export default function DaftarForm({
     setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], nik: message ?? undefined } }));
   };
 
-  const tambahPeserta = () => {
-    if (!bolehTambahPeserta) return;
-    const baru = pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || "");
-    setPesanan((prev) => tambahPesertaKePesanan(prev, baru, batasTiket));
+  // Penghitung tiket di langkah 1 (seperti di kembar.in): menambah/mengurangi peserta dari ujung.
+  const ubahJumlahTiket = (n: number) => {
+    const target = Math.min(Math.max(1, n), batasTiket);
+    const selisih = target - pesertaList.length;
+    if (selisih > 0) {
+      const baru = Array.from({ length: selisih }, () => pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || ""));
+      setPesanan((prev) => baru.reduce((acc, peserta) => tambahPesertaKePesanan(acc, peserta, batasTiket), prev));
+    } else if (selisih < 0) {
+      pesertaList.slice(target).forEach((peserta) => hapusPeserta(peserta.key));
+    }
+    setPesertaAktif((a) => Math.min(a, target - 1));
+    setRingkasanError(null);
   };
 
-  // Menghapus peserta pemesan MELEPAS kaitan pemesan (kotak "ikut lari" jadi tidak
-  // tercentang); data peserta lain tidak ikut berubah.
+  // "Gunakan data pemesan": menyalin nama/email/WhatsApp pemesan ke tiket yang sedang diisi.
+  const salinDataPemesan = () => {
+    const key = pesertaList[pesertaAktif]?.key;
+    if (!key) return;
+    setPesertaList((prev) =>
+      prev.map((p) =>
+        p.key === key ? { ...p, nama: buyer.nama.trim(), email: buyer.email.trim(), whatsapp: buyer.whatsapp.trim() } : p,
+      ),
+    );
+    setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], nama: undefined } }));
+  };
+
+  // Menghapus peserta; data peserta lain tidak ikut berubah.
   const hapusPeserta = (key: string) => {
     setPesanan((prev) => hapusPesertaDariPesanan(prev, key));
     setPesertaErrors((prev) => {
@@ -417,89 +471,161 @@ export default function DaftarForm({
   // Dari ringkasan kembali ke kartu peserta untuk memperbaiki isiannya. Yang difokuskan
   // kartunya, bukan isian pertama: di ponsel fokus ke input teks memunculkan keyboard,
   // padahal yang ingin diubah sering kali pilihan (ukuran jersey, kategori).
-  const ubahPeserta = (key: string, index: number) => {
-    const kartu = document.getElementById(`kartu-peserta-${index}`);
-    if (!kartu) return;
-    kartu.focus({ preventScroll: true });
-    kartu.scrollIntoView({ block: "start", behavior: "smooth" });
-    setKartuDisorot(key);
-    window.setTimeout(() => setKartuDisorot((k) => (k === key ? null : k)), 1600);
+  // "Ubah" di ringkasan: kembali ke langkah 2 pada tiket yang dimaksud.
+  const ubahPeserta = (_key: string, index: number) => {
+    setPesertaAktif(index);
+    setRingkasanError(null);
+    pindahLangkah(2);
+  };
+
+  // ── Validasi per langkah ────────────────────────────────────────────────────
+  // Tiap fungsi mengisi pesan galat di state dan mengembalikan id isian bermasalah (urut
+  // dari atas). "Lanjut" hanya memeriksa langkahnya sendiri; "Bayar" memeriksa ketiganya.
+  const periksaPemesan = (): string[] => {
+    const next: Partial<Record<BuyerField, string>> = {};
+    for (const field of URUTAN_BUYER) {
+      const message = VALIDATOR_BUYER[field](buyer[field]);
+      if (message) next[field] = message;
+    }
+    setBuyerErrors(next);
+    return URUTAN_BUYER.filter((f) => next[f]).map((f) => `buyer-${f}`);
+  };
+
+  // `hanyaIndex`: periksa satu tiket saja (tombol "Lanjut" di langkah 2); tanpa argumen = semua tiket.
+  const periksaPeserta = (hanyaIndex?: number): string[] => {
+    const hasilPeserta: Record<string, Partial<Record<PesertaField, string>>> = {};
+    const hasilTambahan: Record<string, Record<string, string | undefined>> = {};
+    const identitasTerlihat = new Map<string, number>();
+    const masalah: string[] = [];
+
+    pesertaList.forEach((raw, index) => {
+      const dicek = hanyaIndex === undefined || hanyaIndex === index;
+      const p = efektif(raw);
+      const errorsPeserta: Partial<Record<PesertaField, string>> = {};
+      if (dicek) {
+        for (const field of URUTAN_PESERTA) {
+          const message = validasiPeserta(field, p[field], p);
+          if (message) errorsPeserta[field] = message;
+        }
+      }
+      // Dibandingkan dalam bentuk kunci (tanpa titik/strip/spasi), sama seperti server & core.
+      const kunci = kunciIdentitas(p.nik);
+      if (kunci) {
+        const sebelumnya = identitasTerlihat.get(kunci);
+        if (sebelumnya === undefined) {
+          identitasTerlihat.set(kunci, index);
+        } else if (dicek && !errorsPeserta.nik) {
+          errorsPeserta.nik = `Nomor identitas ini sama dengan Peserta ${sebelumnya + 1}.`;
+        }
+      }
+      if (!dicek) return;
+
+      const errorsTambahan: Record<string, string | undefined> = {};
+      for (const kolom of kolomTambahan) {
+        const message = validasiKolomTambahan(kolom, raw.tambahan[kolom.name] ?? "");
+        if (message) errorsTambahan[kolom.name] = message;
+      }
+      hasilPeserta[raw.key] = errorsPeserta;
+      hasilTambahan[raw.key] = errorsTambahan;
+      for (const f of URUTAN_PESERTA) if (errorsPeserta[f]) masalah.push(`peserta-${index}-${f}`);
+      for (const kolom of kolomTambahan) if (errorsTambahan[kolom.name]) masalah.push(`peserta-${index}-x-${kolom.name}`);
+    });
+
+    setPesertaErrors((prev) => ({ ...prev, ...hasilPeserta }));
+    setTambahanErrors((prev) => ({ ...prev, ...hasilTambahan }));
+    return masalah;
+  };
+
+  // Tombol bayar sengaja TIDAK di-disable supaya alasan yang kurang bisa dijelaskan.
+  const periksaPersetujuan = (): string[] => {
+    const next = {
+      health: isHealthyChecked ? undefined : "Pernyataan kondisi sehat wajib dicentang.",
+      privacy: isConsentChecked ? undefined : "Persetujuan kebijakan privasi wajib dicentang.",
+    };
+    setConsentErrors(next);
+    const masalah: string[] = [];
+    if (next.health) masalah.push("healthDeclaration");
+    if (next.privacy) masalah.push("privacyConsent");
+    return masalah;
+  };
+
+  const langkahDariId = (id: string): LangkahForm => (id.startsWith("buyer-") ? 1 : id.startsWith("peserta-") ? 2 : 3);
+
+  const gulirKeAtas = () =>
+    window.setTimeout(() => {
+      document.getElementById("atas-formulir")?.scrollIntoView({ block: "start", behavior: "smooth" });
+    }, 60);
+
+  // Pindah langkah, lalu (setelah langkah barunya tampil) fokus ke isian bermasalah atau
+  // gulir ke atas formulir. Jeda singkat: isian di langkah lain belum bisa difokuskan
+  // sebelum React selesai menampilkannya.
+  const pindahLangkah = (n: LangkahForm, fokusId?: string) => {
+    setLangkah(n);
+    if (fokusId) window.setTimeout(() => focusField(fokusId), 60);
+    else gulirKeAtas();
+  };
+
+  const tampilkanMasalah = (ids: string[]) => {
+    setRingkasanError({ jumlah: ids.length, targetId: ids[0] });
+    // Isian bermasalah bisa ada di tiket lain: tampilkan tiket itu dulu.
+    const cocok = /^peserta-(\d+)-/.exec(ids[0]);
+    if (cocok) setPesertaAktif(Number(cocok[1]));
+    pindahLangkah(langkahDariId(ids[0]), ids[0]);
+  };
+
+  const lanjut = () => {
+    if (loading || isFormClosed) return;
+    let masalah: string[] = [];
+    if (langkah === 1) {
+      masalah = periksaPemesan();
+      if (masalah.length === 0) setPesertaAktif(0);
+    } else if (langkah === 2) {
+      // Satu tiket per layar: "Lanjut" memeriksa tiket ini lalu membuka tiket berikutnya;
+      // setelah tiket terakhir, semua tiket diperiksa sebelum masuk ke ringkasan.
+      if (pesertaAktif < pesertaList.length - 1) {
+        masalah = periksaPeserta(pesertaAktif);
+        if (masalah.length === 0) {
+          setRingkasanError(null);
+          setPesertaAktif(pesertaAktif + 1);
+          gulirKeAtas();
+          return;
+        }
+      } else {
+        masalah = periksaPeserta();
+      }
+    }
+    if (masalah.length > 0) {
+      tampilkanMasalah(masalah);
+      return;
+    }
+    setRingkasanError(null);
+    if (langkah < 3) pindahLangkah((langkah + 1) as LangkahForm);
+  };
+
+  // Di langkah 2 pada tiket kedua dst., "Kembali" membuka tiket sebelumnya; selain itu langkah sebelumnya.
+  const mundur = () => {
+    setRingkasanError(null);
+    if (langkah === 2 && pesertaAktif > 0) {
+      setPesertaAktif(pesertaAktif - 1);
+      gulirKeAtas();
+    } else if (langkah > 1) {
+      pindahLangkah((langkah - 1) as LangkahForm);
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (loading || isFormClosed) return;
-
-    // 1) Validasi data pemesan
-    const nextBuyerErrors: Partial<Record<BuyerField, string>> = {};
-    for (const field of URUTAN_BUYER) {
-      const message = VALIDATOR_BUYER[field](buyer[field]);
-      if (message) nextBuyerErrors[field] = message;
+    // Enter di langkah awal berarti "Lanjut", bukan "Bayar".
+    if (langkah < 3) {
+      lanjut();
+      return;
     }
-    setBuyerErrors(nextBuyerErrors);
 
-    // 2) Validasi tiap peserta
-    const nextPesertaErrors: Record<string, Partial<Record<PesertaField, string>>> = {};
-    const nikTerpakai = new Map<string, number>();
-    pesertaList.forEach((raw, index) => {
-      const p = efektif(raw);
-      const errorsPeserta: Partial<Record<PesertaField, string>> = {};
-      for (const field of URUTAN_PESERTA) {
-        // Nama/email/WA peserta pemesan mengikuti pemesan; kesalahannya sudah
-        // dilaporkan di bagian pemesan, jangan dilaporkan dua kali.
-        if (pesertaPemesan(raw) && (field === "nama" || field === "email" || field === "whatsapp")) continue;
-        const message = validasiPeserta(field, p[field], p);
-        if (message) errorsPeserta[field] = message;
-      }
-      // Dibandingkan dalam bentuk kunci (tanpa titik/strip/spasi), sama seperti server & core.
-      const kunci = kunciIdentitas(p.nik);
-      if (kunci && !errorsPeserta.nik) {
-        const sebelumnya = nikTerpakai.get(kunci);
-        if (sebelumnya !== undefined) {
-          errorsPeserta.nik = `Nomor identitas ini sama dengan Peserta ${sebelumnya + 1}.`;
-        } else {
-          nikTerpakai.set(kunci, index);
-        }
-      }
-      if (Object.keys(errorsPeserta).length > 0) nextPesertaErrors[raw.key] = errorsPeserta;
-    });
-    setPesertaErrors(nextPesertaErrors);
-
-    const nextTambahanErrors: Record<string, Record<string, string>> = {};
-    pesertaList.forEach((raw) => {
-      for (const kolom of kolomTambahan) {
-        const message = validasiKolomTambahan(kolom, raw.tambahan[kolom.name] ?? "");
-        if (message) nextTambahanErrors[raw.key] = { ...nextTambahanErrors[raw.key], [kolom.name]: message };
-      }
-    });
-    setTambahanErrors(nextTambahanErrors);
-
-    // 3) Validasi persetujuan — tombol sengaja TIDAK di-disable supaya alasannya bisa dijelaskan.
-    const nextConsentErrors = {
-      health: isHealthyChecked ? undefined : "Pernyataan kondisi sehat wajib dicentang.",
-      privacy: isConsentChecked ? undefined : "Persetujuan kebijakan privasi wajib dicentang.",
-    };
-    setConsentErrors(nextConsentErrors);
-
-    // Kumpulkan SEMUA isian bermasalah lebih dulu, supaya bisa diberi tahu jumlahnya —
-    // sebelumnya halaman hanya melompat ke field pertama tanpa satu kalimat penjelasan.
-    const daftarMasalah: string[] = [];
-    for (const f of URUTAN_BUYER) if (nextBuyerErrors[f]) daftarMasalah.push(`buyer-${f}`);
-    pesertaList.forEach((p, index) => {
-      const errorsPeserta = nextPesertaErrors[p.key];
-      if (errorsPeserta) {
-        for (const f of URUTAN_PESERTA) if (errorsPeserta[f]) daftarMasalah.push(`peserta-${index}-${f}`);
-      }
-      for (const kolom of kolomTambahan) {
-        if (nextTambahanErrors[p.key]?.[kolom.name]) daftarMasalah.push(`peserta-${index}-x-${kolom.name}`);
-      }
-    });
-    if (nextConsentErrors.health) daftarMasalah.push("healthDeclaration");
-    if (nextConsentErrors.privacy) daftarMasalah.push("privacyConsent");
-
+    // Periksa SEMUA langkah lagi (isian langkah awal bisa diubah lewat "Ubah" di ringkasan).
+    const daftarMasalah = [...periksaPemesan(), ...periksaPeserta(), ...periksaPersetujuan()];
     if (daftarMasalah.length > 0) {
-      setRingkasanError({ jumlah: daftarMasalah.length, targetId: daftarMasalah[0] });
-      focusField(daftarMasalah[0]);
+      tampilkanMasalah(daftarMasalah);
       return;
     }
     setRingkasanError(null);
@@ -568,10 +694,9 @@ export default function DaftarForm({
             kode: hasil.kode,
           });
           setBuyer({ nama: "", email: "", whatsapp: "" });
-          {
-            const keyAwal = keyPesertaBaru();
-            setPesanan({ pesertaList: [pesertaBaru(keyAwal, KATEGORI_KEYS[0] || "")], pemesanKey: keyAwal });
-          }
+          setPesanan({ pesertaList: [pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || "")], pemesanKey: null });
+          setLangkah(1);
+          setPesertaAktif(0);
           sesiPengiriman.current = null;
           setPesertaErrors({});
           setBuyerErrors({});
@@ -609,31 +734,28 @@ export default function DaftarForm({
     }
   };
 
-  // Ringkasan kesalahan: menjelaskan APA yang terjadi saat tombol bayar ditekan tapi
-  // formulir belum lengkap. Tanpa ini, halaman hanya melompat ke isian pertama dan
-  // pengguna di bar bawah tidak tahu kenapa layarnya tiba-tiba berpindah.
+  // Ringkasan kesalahan: menjelaskan APA yang terjadi saat "Lanjut"/"Bayar" ditekan tapi
+  // isian belum lengkap. Tanpa ini, halaman hanya melompat ke isian pertama dan
+  // pengguna tidak tahu kenapa layarnya tiba-tiba berpindah.
   const KotakRingkasanError = ringkasanError ? (
-    <div
-      role="alert"
-      className="rounded-field border border-danger bg-danger-surface p-4 text-left"
-    >
-      <p className="text-sm font-bold text-danger">
-        {ringkasanError.jumlah} isian belum benar
+    <div role="alert" className="rounded-card border border-danger/40 bg-danger-surface p-4 text-left">
+      <p className="text-sm font-semibold text-danger">
+        Ada {ringkasanError.jumlah} isian yang perlu dilengkapi
       </p>
-      <p className="mt-1 text-xs text-danger">
-        Periksa bagian yang ditandai merah, lalu tekan Konfirmasi &amp; Bayar lagi.
+      <p className="mt-1 text-xs leading-relaxed text-danger">
+        Bagian yang bertanda merah belum sesuai. Perbaiki dulu, lalu lanjutkan lagi.
       </p>
       <button
         type="button"
         onClick={() => focusField(ringkasanError.targetId)}
-        className="mt-2 text-xs font-bold text-danger underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
+        className="mt-2 text-xs font-semibold text-danger underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
       >
-        Lompat ke isian pertama
+        Tunjukkan isian pertama
       </button>
     </div>
   ) : null;
 
-  // Ringkasan pesanan — dipakai dua kali: inline (mobile) & di kartu sticky (desktop).
+  // Ringkasan pesanan — dipakai dua kali: inline di langkah 3 (ponsel) & di kartu samping (desktop).
   // Tiap peserta menampilkan nama, kategori, dan ukuran jersey supaya bisa dicek ulang
   // sebelum membayar; isian yang belum diisi ditulis terang-terangan, bukan dikosongkan.
   const RincianBiaya = (
@@ -659,7 +781,7 @@ export default function DaftarForm({
               <button
                 type="button"
                 onClick={() => ubahPeserta(raw.key, index)}
-                className="rounded text-xs font-bold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                className="rounded text-xs font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 Ubah<span className="sr-only"> data peserta {index + 1}</span>
               </button>
@@ -696,13 +818,16 @@ export default function DaftarForm({
     () => false,
   );
 
-  const submitButton = (label = "Lanjut ke pembayaran", extraClass = "min-h-11 px-5") => (
+  const kelasTombolUtama =
+    "inline-flex items-center justify-center gap-3 whitespace-nowrap rounded-full bg-primary text-sm font-semibold text-on-primary transition-all hover:bg-primary-accent disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card";
+
+  const submitButton = (label: string, extraClass: string) => (
     <button
       type={siap ? "submit" : "button"}
       form="formDaftar"
       disabled={loading || isFormClosed}
       aria-busy={loading}
-      className={`inline-flex items-center justify-center gap-3 whitespace-nowrap rounded-full bg-primary text-sm font-semibold text-on-primary transition-all hover:bg-primary-accent disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-card ${extraClass}`}
+      className={`${kelasTombolUtama} ${extraClass}`}
     >
       <span>{loading ? labelStatus : label}</span>
       {loading && (
@@ -711,9 +836,71 @@ export default function DaftarForm({
     </button>
   );
 
-  // CATATAN: pembungkus di bawah sengaja TIDAK memakai overflow-hidden. Elemen leluhur
-  // dengan overflow selain "visible" membuat kartu ringkasan sticky berhenti menempel
-  // saat halaman digulir. Latar dekoratifnya sudah absolute inset-0, jadi tidak perlu diklip.
+  const tiketTerakhir = pesertaAktif >= pesertaList.length - 1;
+  const labelMaju = (pendek: boolean) =>
+    langkah === 1
+      ? "Lanjut"
+      : langkah === 2
+        ? tiketTerakhir
+          ? pendek
+            ? "Tinjau"
+            : "Tinjau pesanan"
+          : "Lanjut"
+        : pendek
+          ? "Bayar"
+          : "Bayar sekarang";
+
+  // Tombol maju: "Lanjut" di langkah 1–2, "Bayar" di langkah 3. `pendek` untuk bar bawah ponsel.
+  const tombolUtama = (pendek: boolean, extraClass: string) =>
+    langkah === 3 ? (
+      submitButton(labelMaju(pendek), extraClass)
+    ) : (
+      <button type="button" onClick={lanjut} disabled={loading} className={`${kelasTombolUtama} ${extraClass}`}>
+        {labelMaju(pendek)}
+      </button>
+    );
+
+  const hargaMin = Math.min(...KATEGORI_KEYS.map((k) => KATEGORI_TIKET[k].price));
+
+  // ── Pendaftaran belum dibuka: tidak ada formulir mati berisi kolom abu-abu. ─────────────
+  if (isFormClosed) {
+    return (
+      <div className="registration-atmosphere relative min-h-screen px-5 pb-24 pt-28">
+        <div aria-hidden="true" className="registration-grid pointer-events-none absolute inset-0 -z-10" />
+        <div className="mx-auto w-full max-w-2xl">
+          <h1 className="text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-5xl">
+            {comingSoon ? "Pendaftaran segera dibuka" : "Pendaftaran belum dibuka"}
+          </h1>
+          <p className="mt-4 text-sm leading-relaxed text-foreground-accent sm:text-base">
+            {comingSoon
+              ? "Pantau terus info resmi panitia."
+              : opensAtLabel
+                ? `Pendaftaran dijadwalkan dibuka pada ${opensAtLabel}.`
+                : "Semua kategori tiket sedang tidak tersedia. Silakan cek kembali nanti."}
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link href="/" className={`${kelasTombolUtama} min-h-11 px-6`}>
+              Kembali ke beranda
+            </Link>
+            <Link
+              href="/daftar/status"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-border-strong px-6 text-sm font-semibold text-foreground transition hover:border-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              Sudah daftar? Cek pesanan
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const bagian = (n: LangkahForm) => (langkah === n ? "space-y-6" : "hidden");
+  const kelasJudul = "text-lg font-semibold leading-tight tracking-tight text-foreground sm:text-xl";
+  const kelasTombolBulat =
+    "flex h-9 w-9 items-center justify-center rounded-full border border-border-strong bg-card text-foreground transition hover:border-foreground-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+
+  // CATATAN: pembungkus di bawah sengaja TIDAK memakai overflow-hidden (lihat riwayat: membuat
+  // elemen sticky berhenti menempel). Latar dekoratifnya absolute inset-0, jadi tidak perlu diklip.
   return (
     <div className="registration-atmosphere group/daftar relative min-h-screen px-5 pb-40 pt-28 lg:pb-24">
       <div
@@ -721,516 +908,497 @@ export default function DaftarForm({
         className="registration-grid pointer-events-none absolute inset-0 -z-10"
       />
 
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-10 max-w-2xl">
-          <p className="mb-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground-accent sm:text-[13px]">
-            <span className="h-px w-8 bg-primary-accent" aria-hidden="true" />
-            SMADARUN 2027 / PENDAFTARAN
-          </p>
-          <h1 className="text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-5xl">
-            Langkahmu dimulai di sini.
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-foreground-accent">
-            Isi data pemesan dan peserta, lalu periksa ringkasan sebelum membayar.
-          </p>
-          <p className="mt-3 text-xs tracking-[0.02em] text-foreground-accent">
-            Pembayaran online · Konfirmasi otomatis
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-2xl lg:max-w-5xl">
+        <h1 className="mb-7 text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-4xl">
+          Daftar SMADARUN 2027
+        </h1>
 
-        {isFormClosed && (
-          <div className="mx-auto mb-6 max-w-2xl rounded-card border border-border bg-warning-surface p-4 text-center">
-            <p className="text-sm font-bold text-warning">{comingSoon ? "Coming Soon" : "Pendaftaran belum dibuka"}</p>
-            <p className="mt-1 text-xs text-warning">
-              {comingSoon
-                ? "Pendaftaran akan segera dibuka. Pantau terus info resmi panitia."
-                : opensAtLabel
-                ? `Pendaftaran dijadwalkan dibuka pada ${opensAtLabel}. Sampai saat itu, formulir ini dinonaktifkan.`
-                : "Semua kategori tiket sedang tidak tersedia. Silakan cek kembali nanti atau pantau info resmi panitia."}
+        {/* Seperti kembar.in: ringkasan event (flyer, keterangan, benefit) di kiri dan menempel saat
+            digulir; di ponsel & tablet tampil di atas formulir. */}
+        <div className="lg:grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
+        <aside className="mb-6 rounded-panel border border-border bg-card p-5 lg:sticky lg:top-28 lg:mb-0">
+          {/* Satu flyer saja; belum ada file = tidak ada kotak kosong. Klik untuk memperbesar. */}
+          {flyerPendaftaran.src && (
+            <button
+              type="button"
+              onClick={() => setIsFlyerOpen(true)}
+              aria-label={`Perbesar: ${flyerPendaftaran.alt ?? flyerPendaftaran.title}`}
+              className="mb-5 block w-full cursor-zoom-in overflow-hidden rounded-field bg-logo-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <Image
+                src={flyerPendaftaran.src}
+                alt=""
+                width={flyerPendaftaran.width ?? 1080}
+                height={flyerPendaftaran.height ?? 1350}
+                sizes="(max-width: 1024px) 90vw, 352px"
+                priority
+                className="mx-auto block h-auto max-h-[28rem] w-auto max-w-full mix-blend-multiply lg:max-h-[min(24rem,calc(100dvh-24rem))]"
+              />
+            </button>
+          )}
+          <dl className="space-y-1.5 text-sm">
+            <div className="flex gap-3">
+              <dt className="w-16 shrink-0 text-muted-foreground">Tanggal</dt>
+              <dd className="font-medium text-foreground">{tanggalEvent ?? "Segera diumumkan"}</dd>
+            </div>
+            <div className="flex gap-3">
+              <dt className="w-16 shrink-0 text-muted-foreground">Lokasi</dt>
+              <dd className="min-w-0 font-medium text-foreground">{lokasi ?? "Segera diumumkan"}</dd>
+            </div>
+            {KATEGORI_KEYS.length > 0 && (
+              <div className="flex gap-3">
+                <dt className="w-16 shrink-0 text-muted-foreground">Harga</dt>
+                <dd className="font-medium tabular-nums text-foreground">{harga(hargaMin)} / tiket</dd>
+              </div>
+            )}
+          </dl>
+          {fasilitasSemuaKategori.length > 0 && (
+            <p className="mt-4 text-xs leading-relaxed text-foreground-accent">
+              <span className="text-muted-foreground">Termasuk </span>
+              {fasilitasSemuaKategori.join(" · ")}
             </p>
+          )}
+          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{catatanPodium}</p>
+        </aside>
+
+        <form
+          id="formDaftar"
+          onSubmit={handleSubmit}
+          noValidate
+          className="min-w-0 rounded-panel border border-border bg-card p-5 sm:p-8"
+        >
+          <div id="atas-formulir" className="scroll-mt-24">
+            <StepNav langkah={langkah} onPilih={(n) => pindahLangkah(n)} />
           </div>
-        )}
 
-        {/* grid-cols-1 (= minmax(0,1fr)) wajib di ponsel: tanpa itu kolomnya "auto" dan ikut
-            melebar mengikuti isi yang tidak bisa patah (teks truncate, opsi <select>), sehingga
-            kartu form meluber 7px ke kanan dan semua lapisan di dalamnya tidak center. */}
-        <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          {/* KOLOM FORM */}
-          <form
-            id="formDaftar"
-            onSubmit={handleSubmit}
-            noValidate
-            className="rounded-panel border border-border bg-card p-5 sm:p-8 lg:p-10"
-          >
-            {/* min-w-0: bawaan browser fieldset adalah min-inline-size: min-content — sama seperti
-                kolom grid di atas, tanpa ini fieldset ikut melebar dan meluber dari kartu form. */}
-            <fieldset disabled={isFormClosed} className="min-w-0 space-y-10">
-              {/* LANGKAH 1 — PEMESAN */}
-              <section className="space-y-5">
-                <StepHeading
-                  step={1}
-                  title="Data Pemesan"
-                  hint="Penanggung jawab pesanan. Tautan pembayaran & bukti pendaftaran dikirim ke sini."
-                />
-                <div>
-                  <label htmlFor="buyer-nama" className={labelClass}>Nama Pemesan</label>
-                  <input
-                    id="buyer-nama"
-                    name="nama"
-                    type="text"
-                    autoComplete="name"
-                    value={buyer.nama}
-                    onChange={handleBuyerChange}
-                    onBlur={handleBuyerBlur}
-                    placeholder="Nama Lengkap"
-                    aria-invalid={!!buyerErrors.nama}
-                    aria-describedby={buyerErrors.nama ? "buyer-nama-error" : undefined}
-                    className={fieldClass(!!buyerErrors.nama)}
-                  />
-                  <FieldError id="buyer-nama-error" message={buyerErrors.nama} />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-8">
+            {/* LANGKAH 1 — TIKET & PEMESAN */}
+            <section className={bagian(1)} aria-label="Tiket dan pemesan">
+              {multiTicketEnabled && batasTiket > 1 && (
+                <div className="flex items-center justify-between gap-5 rounded-card border border-border p-4 sm:px-5">
                   <div>
-                    <label htmlFor="buyer-email" className={labelClass}>Alamat Email</label>
-                    <input
-                      id="buyer-email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      value={buyer.email}
-                      onChange={handleBuyerChange}
-                      onBlur={handleBuyerBlur}
-                      placeholder="contoh@email.com"
-                      aria-invalid={!!buyerErrors.email}
-                      aria-describedby={buyerErrors.email ? "buyer-email-error" : undefined}
-                      className={fieldClass(!!buyerErrors.email)}
-                    />
-                    <FieldError id="buyer-email-error" message={buyerErrors.email} />
-                  </div>
-                  <div>
-                    <label htmlFor="buyer-whatsapp" className={labelClass}>Nomor WhatsApp</label>
-                    <input
-                      id="buyer-whatsapp"
-                      name="whatsapp"
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      value={buyer.whatsapp}
-                      onChange={handleBuyerChange}
-                      onBlur={handleBuyerBlur}
-                      placeholder="081234567890"
-                      aria-invalid={!!buyerErrors.whatsapp}
-                      aria-describedby={buyerErrors.whatsapp ? "buyer-whatsapp-error" : undefined}
-                      className={fieldClass(!!buyerErrors.whatsapp)}
-                    />
-                    <FieldError id="buyer-whatsapp-error" message={buyerErrors.whatsapp} />
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-field border border-border bg-surface-sunken p-4">
-                  <input
-                    type="checkbox"
-                    id="pemesanIkut"
-                    checked={pemesanIkut}
-                    onChange={(e) => setPesanan((prev) => aturPemesanIkut(prev, e.target.checked))}
-                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary"
-                  />
-                  <label htmlFor="pemesanIkut" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
-                    Saya (pemesan) juga ikut lari sebagai <span className="font-bold text-foreground">Peserta 1</span>.
-                  </label>
-                </div>
-              </section>
-
-              {/* LANGKAH 2 — PESERTA */}
-              <section className="space-y-5 border-t border-border pt-9">
-                <StepHeading
-                  step={2}
-                  title="Data Peserta"
-                  hint={
-                    multiTicketEnabled
-                      ? `Satu pembayaran bisa untuk maksimal ${batasTiket} peserta. Tiap peserta boleh beda kategori & ukuran jersey.`
-                      : "Isi data peserta sesuai identitas resmi — dipakai untuk verifikasi race pack."
-                  }
-                />
-
-                {pesertaList.map((raw, index) => {
-                  const p = efektif(raw);
-                  const errs = pesertaErrors[raw.key] || {};
-                  const identitasDariPemesan = pesertaPemesan(raw);
-
-                  return (
-                    <div
-                      key={raw.key}
-                      id={`kartu-peserta-${index}`}
-                      tabIndex={-1}
-                      className={`scroll-mt-28 rounded-card border bg-surface-sunken/55 p-5 transition-shadow duration-300 focus:outline-none sm:p-6 ${
-                        kartuDisorot === raw.key ? "border-focus ring-4 ring-focus/15" : "border-border"
-                      }`}
-                    >
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold text-foreground">
-                          Peserta {index + 1}
-                          {identitasDariPemesan && (
-                            <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-on-primary">
-                              Pemesan
-                            </span>
-                          )}
-                        </p>
-                        {pesertaList.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => hapusPeserta(raw.key)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground-accent transition hover:border-danger hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                          >
-                            <FiTrash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                            Hapus
-                            <span className="sr-only">peserta {index + 1}</span>
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="space-y-4">
-                        {identitasDariPemesan ? (
-                          <p className="rounded-field border border-dashed border-border-strong bg-card px-4 py-3 text-xs text-muted-foreground">
-                            Nama, email, dan WhatsApp mengikuti data pemesan di atas.
-                          </p>
-                        ) : (
-                          <>
-                            <div>
-                              <label htmlFor={`peserta-${index}-nama`} className={labelClass}>Nama Lengkap</label>
-                              <input
-                                id={`peserta-${index}-nama`}
-                                type="text"
-                                value={p.nama}
-                                onChange={(e) => handlePesertaChange(raw.key, "nama", e.target.value)}
-                                onBlur={(e) => handlePesertaBlur(raw.key, "nama", e.target.value)}
-                                placeholder="Sesuai KTP / Kartu Pelajar"
-                                aria-invalid={!!errs.nama}
-                                aria-describedby={errs.nama ? `peserta-${index}-nama-error` : undefined}
-                                className={fieldClass(!!errs.nama)}
-                              />
-                              <FieldError id={`peserta-${index}-nama-error`} message={errs.nama} />
-                            </div>
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                              <div>
-                                <label htmlFor={`peserta-${index}-email`} className={labelClass}>
-                                  Email <span className="font-medium normal-case tracking-normal text-muted-foreground">(opsional)</span>
-                                </label>
-                                <input
-                                  id={`peserta-${index}-email`}
-                                  type="email"
-                                  value={p.email}
-                                  onChange={(e) => handlePesertaChange(raw.key, "email", e.target.value)}
-                                  onBlur={(e) => handlePesertaBlur(raw.key, "email", e.target.value)}
-                                  placeholder="Kosongkan = pakai email pemesan"
-                                  aria-invalid={!!errs.email}
-                                  aria-describedby={errs.email ? `peserta-${index}-email-error` : undefined}
-                                  className={fieldClass(!!errs.email)}
-                                />
-                                <FieldError id={`peserta-${index}-email-error`} message={errs.email} />
-                              </div>
-                              <div>
-                                <label htmlFor={`peserta-${index}-whatsapp`} className={labelClass}>
-                                  WhatsApp <span className="font-medium normal-case tracking-normal text-muted-foreground">(opsional)</span>
-                                </label>
-                                <input
-                                  id={`peserta-${index}-whatsapp`}
-                                  type="tel"
-                                  inputMode="tel"
-                                  value={p.whatsapp}
-                                  onChange={(e) => handlePesertaChange(raw.key, "whatsapp", e.target.value)}
-                                  onBlur={(e) => handlePesertaBlur(raw.key, "whatsapp", e.target.value)}
-                                  placeholder="Kosongkan = pakai WA pemesan"
-                                  aria-invalid={!!errs.whatsapp}
-                                  aria-describedby={errs.whatsapp ? `peserta-${index}-whatsapp-error` : undefined}
-                                  className={fieldClass(!!errs.whatsapp)}
-                                />
-                                <FieldError id={`peserta-${index}-whatsapp-error`} message={errs.whatsapp} />
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        {/* Nama BIB milik peserta sendiri, termasuk peserta yang memakai data pemesan. */}
-                        {namaBib && (
-                          <div>
-                            <label htmlFor={`peserta-${index}-namaBib`} className={labelClass}>
-                              {namaBib.label} <span className="font-medium normal-case tracking-normal text-muted-foreground">(opsional)</span>
-                            </label>
-                            <input
-                              id={`peserta-${index}-namaBib`}
-                              type="text"
-                              maxLength={namaBib.maxLength}
-                              autoComplete="off"
-                              value={p.namaBib}
-                              onChange={(e) => handlePesertaChange(raw.key, "namaBib", lipatKetikanNamaBib(e.target.value))}
-                              onBlur={(e) => handlePesertaBlur(raw.key, "namaBib", e.target.value)}
-                              placeholder="Kosongkan = pakai nama lengkap"
-                              aria-invalid={!!errs.namaBib}
-                              aria-describedby={errs.namaBib ? `peserta-${index}-namaBib-error` : `peserta-${index}-namaBib-hint`}
-                              className={fieldClass(!!errs.namaBib)}
-                            />
-                            {errs.namaBib ? (
-                              <FieldError id={`peserta-${index}-namaBib-error`} message={errs.namaBib} />
-                            ) : (
-                              <p id={`peserta-${index}-namaBib-hint`} className="mt-1.5 text-xs text-muted-foreground">
-                                Dicetak di BIB, maksimal {namaBib.maxLength} karakter. Tidak bisa diubah setelah mendaftar.
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        <div>
-                          {/* Tinggi pemilih jenis = tinggi baris label (20px), jadi jarak label–input sama dengan isian lain. */}
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                            <label htmlFor={`peserta-${index}-nik`} className="block text-sm font-semibold text-foreground">
-                              Identitas
-                            </label>
-                            <div
-                              role="radiogroup"
-                              aria-label={`Jenis nomor identitas peserta ${index + 1}`}
-                              className="flex rounded-full border border-border bg-card p-px"
-                            >
-                              {(Object.keys(LABEL_JENIS_IDENTITAS) as JenisIdentitas[]).map((jenis) => (
-                                <label
-                                  key={jenis}
-                                  className="cursor-pointer rounded-full px-2.5 text-[11px] font-semibold leading-4 text-muted-foreground transition has-[:checked]:bg-primary has-[:checked]:text-on-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-foreground"
-                                >
-                                  <input
-                                    type="radio"
-                                    name={`${raw.key}-jenis-identitas`}
-                                    value={jenis}
-                                    checked={p.jenisIdentitas === jenis}
-                                    onChange={() => gantiJenisIdentitas(raw.key, jenis)}
-                                    className="sr-only"
-                                  />
-                                  {LABEL_JENIS_IDENTITAS[jenis]}
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                          <input
-                            id={`peserta-${index}-nik`}
-                            type="text"
-                            inputMode={p.jenisIdentitas === "nik" ? "numeric" : "text"}
-                            maxLength={NOMOR_IDENTITAS_MAX}
-                            autoComplete="off"
-                            value={p.nik}
-                            onChange={(e) => handlePesertaChange(raw.key, "nik", e.target.value)}
-                            onBlur={(e) => handlePesertaBlur(raw.key, "nik", e.target.value)}
-                            placeholder={p.jenisIdentitas === "nik" ? "16 digit angka" : "Nomor di kartu pelajar"}
-                            aria-invalid={!!errs.nik}
-                            aria-describedby={errs.nik ? `peserta-${index}-nik-error` : `peserta-${index}-nik-hint`}
-                            className={fieldClass(!!errs.nik)}
-                          />
-                          {errs.nik ? (
-                            <FieldError id={`peserta-${index}-nik-error`} message={errs.nik} />
-                          ) : (
-                            <p id={`peserta-${index}-nik-hint`} className="mt-1.5 text-xs text-muted-foreground">
-                              {p.jenisIdentitas === "nik"
-                                ? "Ada di KTP atau Kartu Keluarga."
-                                : "NISN atau nomor induk, sesuai kartu pelajar."}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <div>
-                            <label htmlFor={`peserta-${index}-gender`} className={labelClass}>Jenis Kelamin</label>
-                            <select
-                              id={`peserta-${index}-gender`}
-                              value={p.gender}
-                              onChange={(e) => handlePesertaChange(raw.key, "gender", e.target.value)}
-                              onBlur={(e) => handlePesertaBlur(raw.key, "gender", e.target.value)}
-                              aria-invalid={!!errs.gender}
-                              aria-describedby={errs.gender ? `peserta-${index}-gender-error` : undefined}
-                              className={fieldClass(!!errs.gender)}
-                            >
-                              <option value="" disabled>Pilih Jenis Kelamin</option>
-                              <option value="Laki-laki">Laki-laki</option>
-                              <option value="Perempuan">Perempuan</option>
-                            </select>
-                            <FieldError id={`peserta-${index}-gender-error`} message={errs.gender} />
-                          </div>
-                          <div>
-                            <div className="mb-2 flex items-center justify-between">
-                              <label htmlFor={`peserta-${index}-size`} className="block text-sm font-semibold text-foreground">Ukuran Jersey (Unisex)</label>
-                              <button
-                                type="button"
-                                onClick={() => setIsImgOpen(true)}
-                                className="text-xs font-bold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground rounded"
-                              >
-                                Lihat Size Chart
-                              </button>
-                            </div>
-                            <select
-                              id={`peserta-${index}-size`}
-                              value={p.size}
-                              onChange={(e) => handlePesertaChange(raw.key, "size", e.target.value)}
-                              onBlur={(e) => handlePesertaBlur(raw.key, "size", e.target.value)}
-                              aria-invalid={!!errs.size}
-                              aria-describedby={errs.size ? `peserta-${index}-size-error` : undefined}
-                              className={fieldClass(!!errs.size)}
-                            >
-                              <option value="" disabled>Pilih Ukuran</option>
-                              {["XS", "S", "M", "L", "XL", "XXL", "XXXL"].map((s) => (
-                                <option key={s} value={s}>{s}</option>
-                              ))}
-                            </select>
-                            <FieldError id={`peserta-${index}-size-error`} message={errs.size} />
-                          </div>
-                        </div>
-
-                        {/* Domisili sengaja satu baris penuh: Provinsi & Kota masing-masing selebar satu
-                            kolom grid di atasnya. Waktu masih berbagi baris dengan Ukuran Jersey, tiap
-                            pilihan hanya ±119px di desktop — "Jawa Timur" pun terpotong. */}
-                        <div>
-                          <label htmlFor={`peserta-${index}-wilayah`} className={labelClass}>Kota Domisili</label>
-                          {wilayahDropdown ? (
-                            <WilayahSelect
-                              id={`peserta-${index}-wilayah`}
-                              value={p.wilayah}
-                              onChange={(val) => {
-                                handlePesertaChange(raw.key, "wilayah", val);
-                                handlePesertaBlur(raw.key, "wilayah", val);
-                              }}
-                              invalid={!!errs.wilayah}
-                              describedBy={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
-                            />
-                          ) : (
-                            <input
-                              id={`peserta-${index}-wilayah`}
-                              type="text"
-                              autoComplete="address-level2"
-                              value={p.wilayah.display}
-                              onChange={(e) =>
-                                handlePesertaChange(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
-                              }
-                              onBlur={(e) =>
-                                handlePesertaBlur(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
-                              }
-                              placeholder="Contoh: Nganjuk"
-                              aria-invalid={!!errs.wilayah}
-                              aria-describedby={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
-                              className={fieldClass(!!errs.wilayah)}
-                            />
-                          )}
-                          <FieldError id={`peserta-${index}-wilayah-error`} message={errs.wilayah} />
-                        </div>
-
-                        {PENDAFTARAN_DIBUKA && (
-                          <div>
-                            <label htmlFor={`peserta-${index}-kategori`} className={labelClass}>Kategori Lomba</label>
-                            <select
-                              id={`peserta-${index}-kategori`}
-                              value={p.kategori}
-                              onChange={(e) => handlePesertaChange(raw.key, "kategori", e.target.value)}
-                              onBlur={(e) => handlePesertaBlur(raw.key, "kategori", e.target.value)}
-                              aria-invalid={!!errs.kategori}
-                              aria-describedby={errs.kategori ? `peserta-${index}-kategori-error` : undefined}
-                              className={fieldClass(!!errs.kategori)}
-                            >
-                              {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
-                                <option key={key} value={key}>
-                                  {cat.label} — {harga(cat.price)}
-                                </option>
-                              ))}
-                            </select>
-                            <FieldError id={`peserta-${index}-kategori-error`} message={errs.kategori} />
-                          </div>
-                        )}
-
-                        {/* Kolom tambahan dari form builder kembarin-v2 — muncul otomatis tanpa coding di sini. */}
-                        {kolomTambahan.map((kolom) => {
-                          const id = `peserta-${index}-x-${kolom.name}`;
-                          const nilai = raw.tambahan[kolom.name] ?? "";
-                          const pesan = tambahanErrors[raw.key]?.[kolom.name];
-                          const umum = {
-                            id,
-                            "aria-invalid": !!pesan,
-                            "aria-describedby": pesan ? `${id}-error` : undefined,
-                            className: fieldClass(!!pesan),
-                          };
-                          return (
-                            <div key={kolom.name}>
-                              <label htmlFor={id} className={labelClass}>
-                                {kolom.label}
-                                {!kolom.required && (
-                                  <span className="font-medium normal-case tracking-normal text-muted-foreground"> (opsional)</span>
-                                )}
-                              </label>
-                              {kolom.type === "select" ? (
-                                <select
-                                  {...umum}
-                                  value={nilai}
-                                  onChange={(e) => ubahTambahan(raw.key, kolom, e.target.value)}
-                                  onBlur={(e) => blurTambahan(raw.key, kolom, e.target.value)}
-                                >
-                                  <option value="">{kolom.placeholder || `Pilih ${kolom.label}`}</option>
-                                  {kolom.options.map((o) => (
-                                    <option key={o} value={o}>{o}</option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <input
-                                  {...umum}
-                                  type={kolom.type === "birthdate" ? "date" : kolom.type === "tel" ? "tel" : kolom.type === "email" ? "email" : "text"}
-                                  inputMode={kolom.type === "tel" ? "tel" : kolom.type === "number" ? "decimal" : undefined}
-                                  min={kolom.type === "birthdate" ? tanggalLahir.min : undefined}
-                                  max={kolom.type === "birthdate" ? tanggalLahir.max : undefined}
-                                  maxLength={kolom.type === "birthdate" ? undefined : kolom.maxLength}
-                                  autoComplete="off"
-                                  value={nilai}
-                                  onChange={(e) => ubahTambahan(raw.key, kolom, e.target.value)}
-                                  onBlur={(e) => blurTambahan(raw.key, kolom, e.target.value)}
-                                  placeholder={kolom.placeholder || undefined}
-                                />
-                              )}
-                              <FieldError id={`${id}-error`} message={pesan} />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {multiTicketEnabled && (
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={tambahPeserta}
-                      disabled={!bolehTambahPeserta}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border-strong bg-card px-5 text-sm font-semibold text-foreground transition hover:border-foreground-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                    >
-                      <FiPlus className="h-4 w-4" aria-hidden="true" />
-                      Tambah Peserta
-                    </button>
-                    <p className="text-xs text-muted-foreground" aria-live="polite">
-                      {pesertaList.length} dari {batasTiket} tiket dalam pesanan ini
+                    <p className="text-sm font-semibold text-foreground">Jumlah tiket</p>
+                    <p className="mt-0.5 text-sm tabular-nums text-muted-foreground">
+                      {harga(hargaMin)} per tiket · maks. {batasTiket}
                     </p>
                   </div>
-                )}
-
-
-              </section>
-
-              {/* LANGKAH 3 — KONFIRMASI */}
-              <section className="space-y-5 border-t border-border pt-9">
-                <StepHeading step={3} title="Konfirmasi & Bayar" hint="Periksa data peserta dan rincian biaya sebelum melanjutkan ke pembayaran." />
-
-                {KotakRingkasanError}
-
-                {/* Ringkasan inline — di desktop informasi yang sama tampil di kartu sticky. */}
-                {PENDAFTARAN_DIBUKA && (
-                  <div className="rounded-field border border-border bg-surface-sunken p-5 lg:hidden">
-                    <p className="mb-3 text-sm font-semibold text-foreground">Ringkasan pesanan</p>
-                    {RincianBiaya}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label="Kurangi tiket"
+                      disabled={pesertaList.length <= 1}
+                      onClick={() => ubahJumlahTiket(pesertaList.length - 1)}
+                      className={kelasTombolBulat}
+                    >
+                      <FiMinus className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                    <span className="min-w-8 text-center text-xl font-semibold tabular-nums text-foreground" aria-live="polite">
+                      {pesertaList.length}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Tambah tiket"
+                      disabled={!bolehTambahPeserta}
+                      onClick={() => ubahJumlahTiket(pesertaList.length + 1)}
+                      className={kelasTombolBulat}
+                    >
+                      <FiPlus className="h-4 w-4" aria-hidden="true" />
+                    </button>
                   </div>
-                )}
+                </div>
+              )}
 
+              <div>
+                <h2 className={kelasJudul}>Data pemesan</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Bukti pendaftaran dikirim ke email dan WhatsApp ini.</p>
+              </div>
+              <div>
+                <label htmlFor="buyer-nama" className={labelClass}>Nama pemesan</label>
+                <input
+                  id="buyer-nama"
+                  name="nama"
+                  type="text"
+                  autoComplete="name"
+                  value={buyer.nama}
+                  onChange={handleBuyerChange}
+                  onBlur={handleBuyerBlur}
+                  placeholder="Nama penanggung jawab pesanan"
+                  aria-invalid={!!buyerErrors.nama}
+                  aria-describedby={buyerErrors.nama ? "buyer-nama-error" : undefined}
+                  className={fieldClass(!!buyerErrors.nama)}
+                />
+                <FieldError id="buyer-nama-error" message={buyerErrors.nama} />
+              </div>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="buyer-email" className={labelClass}>Email pemesan</label>
+                  <input
+                    id="buyer-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    value={buyer.email}
+                    onChange={handleBuyerChange}
+                    onBlur={handleBuyerBlur}
+                    placeholder="nama@email.com"
+                    aria-invalid={!!buyerErrors.email}
+                    aria-describedby={buyerErrors.email ? "buyer-email-error" : undefined}
+                    className={fieldClass(!!buyerErrors.email)}
+                  />
+                  <FieldError id="buyer-email-error" message={buyerErrors.email} />
+                </div>
+                <div>
+                  <label htmlFor="buyer-whatsapp" className={labelClass}>WhatsApp pemesan</label>
+                  <input
+                    id="buyer-whatsapp"
+                    name="whatsapp"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={buyer.whatsapp}
+                    onChange={handleBuyerChange}
+                    onBlur={handleBuyerBlur}
+                    placeholder="081234567890"
+                    aria-invalid={!!buyerErrors.whatsapp}
+                    aria-describedby={buyerErrors.whatsapp ? "buyer-whatsapp-error" : undefined}
+                    className={fieldClass(!!buyerErrors.whatsapp)}
+                  />
+                  <FieldError id="buyer-whatsapp-error" message={buyerErrors.whatsapp} />
+                </div>
+              </div>
+            </section>
+
+            {/* LANGKAH 2 — DATA PESERTA (satu tiket per layar, seperti di kembar.in) */}
+            <section className={bagian(2)} aria-label="Data peserta">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className={kelasJudul}>Data peserta</h2>
+                  {pesertaList.length > 1 && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Tiket {pesertaAktif + 1} dari {pesertaList.length}
+                    </p>
+                  )}
+                </div>
+                {pesertaAktif === 0 && (
+                  <button
+                    type="button"
+                    onClick={salinDataPemesan}
+                    className="inline-flex min-h-10 items-center rounded-full border border-border-strong bg-card px-4 text-sm font-medium text-foreground transition hover:border-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  >
+                    Gunakan data pemesan
+                  </button>
+                )}
+              </div>
+
+              {/* Pemilih tiket hanya bila tiketnya lebih dari satu. */}
+              {pesertaList.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" role="group" aria-label="Pilih tiket">
+                  {pesertaList.map((raw, index) => {
+                    const nama = efektif(raw).nama.trim();
+                    return (
+                      <button
+                        key={raw.key}
+                        type="button"
+                        aria-current={index === pesertaAktif ? "true" : undefined}
+                        onClick={() => setPesertaAktif(index)}
+                        className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+                          index === pesertaAktif
+                            ? "border-primary-accent bg-primary/10 font-medium text-foreground"
+                            : "border-border-strong text-foreground-accent hover:border-foreground-accent"
+                        }`}
+                      >
+                        <span className="tabular-nums text-muted-foreground">{index + 1}</span>
+                        <span className="max-w-28 truncate">{nama.split(" ")[0] || "Tiket"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {pesertaList.map((raw, index) => {
+                const p = efektif(raw);
+                const errs = pesertaErrors[raw.key] || {};
+
+                return (
+                  <div
+                    key={raw.key}
+                    id={`kartu-peserta-${index}`}
+                    className={index === pesertaAktif ? "space-y-5" : "hidden"}
+                  >
+                    <div>
+                      <label htmlFor={`peserta-${index}-nama`} className={labelClass}>Nama lengkap</label>
+                      <input
+                        id={`peserta-${index}-nama`}
+                        type="text"
+                        value={p.nama}
+                        onChange={(e) => handlePesertaChange(raw.key, "nama", e.target.value)}
+                        onBlur={(e) => handlePesertaBlur(raw.key, "nama", e.target.value)}
+                        placeholder="Sesuai KTP atau Kartu Pelajar"
+                        aria-invalid={!!errs.nama}
+                        aria-describedby={errs.nama ? `peserta-${index}-nama-error` : undefined}
+                        className={fieldClass(!!errs.nama)}
+                      />
+                      <FieldError id={`peserta-${index}-nama-error`} message={errs.nama} />
+                    </div>
+
+                    {/* Nama BIB hanya bila dipasang panitia di kembarin-v2. */}
+                    {namaBib && (
+                      <div>
+                        <label htmlFor={`peserta-${index}-namaBib`} className={labelClass}>
+                          {namaBib.label} <span className="font-normal text-muted-foreground">(opsional)</span>
+                        </label>
+                        <input
+                          id={`peserta-${index}-namaBib`}
+                          type="text"
+                          maxLength={namaBib.maxLength}
+                          autoComplete="off"
+                          value={p.namaBib}
+                          onChange={(e) => handlePesertaChange(raw.key, "namaBib", lipatKetikanNamaBib(e.target.value))}
+                          onBlur={(e) => handlePesertaBlur(raw.key, "namaBib", e.target.value)}
+                          placeholder="Kosong = memakai nama lengkap"
+                          aria-invalid={!!errs.namaBib}
+                          aria-describedby={errs.namaBib ? `peserta-${index}-namaBib-error` : `peserta-${index}-namaBib-hint`}
+                          className={fieldClass(!!errs.namaBib)}
+                        />
+                        {errs.namaBib ? (
+                          <FieldError id={`peserta-${index}-namaBib-error`} message={errs.namaBib} />
+                        ) : (
+                          <p id={`peserta-${index}-namaBib-hint`} className="mt-1.5 text-xs text-muted-foreground">
+                            Dicetak di BIB, maks. {namaBib.maxLength} karakter. Tidak bisa diubah setelah mendaftar.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div>
+                      <p id={`peserta-${index}-jenis-label`} className={labelClass}>Nomor identitas</p>
+                      <div
+                        role="radiogroup"
+                        aria-labelledby={`peserta-${index}-jenis-label`}
+                        className="mb-2.5 grid grid-cols-2 gap-2"
+                      >
+                        {(Object.keys(LABEL_JENIS_IDENTITAS) as JenisIdentitas[]).map((jenis) => (
+                          <label key={jenis} className="cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`${raw.key}-jenis-identitas`}
+                              value={jenis}
+                              checked={p.jenisIdentitas === jenis}
+                              onChange={() => gantiJenisIdentitas(raw.key, jenis)}
+                              className="peer sr-only"
+                            />
+                            <span className={kelasPilihan(false)}>{LABEL_JENIS_IDENTITAS[jenis]}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <input
+                        id={`peserta-${index}-nik`}
+                        type="text"
+                        inputMode={p.jenisIdentitas === "nik" ? "numeric" : "text"}
+                        maxLength={NOMOR_IDENTITAS_MAX}
+                        autoComplete="off"
+                        value={p.nik}
+                        onChange={(e) => handlePesertaChange(raw.key, "nik", e.target.value)}
+                        onBlur={(e) => handlePesertaBlur(raw.key, "nik", e.target.value)}
+                        placeholder={p.jenisIdentitas === "nik" ? "16 digit angka" : "Nomor di kartu pelajar"}
+                        aria-labelledby={`peserta-${index}-jenis-label`}
+                        aria-invalid={!!errs.nik}
+                        aria-describedby={errs.nik ? `peserta-${index}-nik-error` : undefined}
+                        className={fieldClass(!!errs.nik)}
+                      />
+                      <FieldError id={`peserta-${index}-nik-error`} message={errs.nik} />
+                    </div>
+
+                    <div>
+                      <p id={`peserta-${index}-gender-label`} className={labelClass}>Jenis kelamin</p>
+                      <div
+                        id={`peserta-${index}-gender`}
+                        role="radiogroup"
+                        aria-labelledby={`peserta-${index}-gender-label`}
+                        aria-invalid={!!errs.gender}
+                        aria-describedby={errs.gender ? `peserta-${index}-gender-error` : undefined}
+                        tabIndex={-1}
+                        className="grid grid-cols-2 gap-2 focus:outline-none"
+                      >
+                        {["Laki-laki", "Perempuan"].map((g) => (
+                          <label key={g} className="cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`${raw.key}-gender`}
+                              value={g}
+                              checked={p.gender === g}
+                              onChange={() => handlePesertaChange(raw.key, "gender", g)}
+                              className="peer sr-only"
+                            />
+                            <span className={kelasPilihan(!!errs.gender)}>{g}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <FieldError id={`peserta-${index}-gender-error`} message={errs.gender} />
+                    </div>
+
+                    <div>
+                      <label htmlFor={`peserta-${index}-wilayah`} className={labelClass}>Kota domisili</label>
+                      {wilayahDropdown ? (
+                        <WilayahSelect
+                          id={`peserta-${index}-wilayah`}
+                          value={p.wilayah}
+                          onChange={(val) => {
+                            handlePesertaChange(raw.key, "wilayah", val);
+                            handlePesertaBlur(raw.key, "wilayah", val);
+                          }}
+                          invalid={!!errs.wilayah}
+                          describedBy={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
+                        />
+                      ) : (
+                        <input
+                          id={`peserta-${index}-wilayah`}
+                          type="text"
+                          autoComplete="address-level2"
+                          value={p.wilayah.display}
+                          onChange={(e) =>
+                            handlePesertaChange(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
+                          }
+                          onBlur={(e) =>
+                            handlePesertaBlur(raw.key, "wilayah", { ...p.wilayah, display: e.target.value })
+                          }
+                          placeholder="Contoh: Nganjuk"
+                          aria-invalid={!!errs.wilayah}
+                          aria-describedby={errs.wilayah ? `peserta-${index}-wilayah-error` : undefined}
+                          className={fieldClass(!!errs.wilayah)}
+                        />
+                      )}
+                      <FieldError id={`peserta-${index}-wilayah-error`} message={errs.wilayah} />
+                    </div>
+
+                    {/* Satu kategori saja: tidak perlu dipilih. Lebih dari satu: dropdown. */}
+                    {KATEGORI_KEYS.length > 1 && (
+                      <div>
+                        <label htmlFor={`peserta-${index}-kategori`} className={labelClass}>Kategori lomba</label>
+                        <select
+                          id={`peserta-${index}-kategori`}
+                          value={p.kategori}
+                          onChange={(e) => handlePesertaChange(raw.key, "kategori", e.target.value)}
+                          onBlur={(e) => handlePesertaBlur(raw.key, "kategori", e.target.value)}
+                          aria-invalid={!!errs.kategori}
+                          aria-describedby={errs.kategori ? `peserta-${index}-kategori-error` : undefined}
+                          className={fieldClass(!!errs.kategori)}
+                        >
+                          {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
+                            <option key={key} value={key}>
+                              {cat.label} — {harga(cat.price)}
+                            </option>
+                          ))}
+                        </select>
+                        <FieldError id={`peserta-${index}-kategori-error`} message={errs.kategori} />
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                        <p id={`peserta-${index}-size-label`} className="text-sm font-medium text-foreground">
+                          Ukuran jersey
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setIsImgOpen(true)}
+                          className="rounded text-xs font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        >
+                          Lihat size chart
+                        </button>
+                      </div>
+                      <div
+                        id={`peserta-${index}-size`}
+                        role="radiogroup"
+                        aria-labelledby={`peserta-${index}-size-label`}
+                        aria-invalid={!!errs.size}
+                        aria-describedby={errs.size ? `peserta-${index}-size-error` : undefined}
+                        tabIndex={-1}
+                        className="grid grid-cols-4 gap-2 focus:outline-none sm:grid-cols-7"
+                      >
+                        {UKURAN_JERSEY.map((s) => (
+                          <label key={s} className="cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`${raw.key}-size`}
+                              value={s}
+                              checked={p.size === s}
+                              onChange={() => handlePesertaChange(raw.key, "size", s)}
+                              className="peer sr-only"
+                            />
+                            <span className={kelasPilihan(!!errs.size)}>{s}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <FieldError id={`peserta-${index}-size-error`} message={errs.size} />
+                    </div>
+
+                    {/* Kolom tambahan dari form builder kembarin-v2 — muncul otomatis tanpa coding di sini. */}
+                    {kolomTambahan.map((kolom) => {
+                      const id = `peserta-${index}-x-${kolom.name}`;
+                      const nilai = raw.tambahan[kolom.name] ?? "";
+                      const pesan = tambahanErrors[raw.key]?.[kolom.name];
+                      const umum = {
+                        id,
+                        "aria-invalid": !!pesan,
+                        "aria-describedby": pesan ? `${id}-error` : undefined,
+                        className: fieldClass(!!pesan),
+                      };
+                      return (
+                        <div key={kolom.name}>
+                          <label htmlFor={id} className={labelClass}>
+                            {kolom.label}
+                            {!kolom.required && <span className="font-normal text-muted-foreground"> (opsional)</span>}
+                          </label>
+                          {kolom.type === "select" ? (
+                            <select
+                              {...umum}
+                              value={nilai}
+                              onChange={(e) => ubahTambahan(raw.key, kolom, e.target.value)}
+                              onBlur={(e) => blurTambahan(raw.key, kolom, e.target.value)}
+                            >
+                              <option value="">{kolom.placeholder || `Pilih ${kolom.label}`}</option>
+                              {kolom.options.map((o) => (
+                                <option key={o} value={o}>{o}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              {...umum}
+                              type={kolom.type === "birthdate" ? "date" : kolom.type === "tel" ? "tel" : kolom.type === "email" ? "email" : "text"}
+                              inputMode={kolom.type === "tel" ? "tel" : kolom.type === "number" ? "decimal" : undefined}
+                              min={kolom.type === "birthdate" ? tanggalLahir.min : undefined}
+                              max={kolom.type === "birthdate" ? tanggalLahir.max : undefined}
+                              maxLength={kolom.type === "birthdate" ? undefined : kolom.maxLength}
+                              autoComplete="off"
+                              value={nilai}
+                              onChange={(e) => ubahTambahan(raw.key, kolom, e.target.value)}
+                              onBlur={(e) => blurTambahan(raw.key, kolom, e.target.value)}
+                              placeholder={kolom.placeholder || undefined}
+                            />
+                          )}
+                          <FieldError id={`${id}-error`} message={pesan} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </section>
+
+            {/* LANGKAH 3 — TINJAU & BAYAR */}
+            <section className={bagian(3)} aria-label="Tinjau dan bayar">
+              <div>
+                <h2 className={kelasJudul}>Tinjau pesanan</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Periksa kembali data setiap peserta sebelum membayar.</p>
+              </div>
+
+              <div className="rounded-card border border-border p-5">{RincianBiaya}</div>
+
+              <div className="space-y-3">
                 <div
-                  className={`flex items-start gap-3 rounded-field border p-4 ${
-                    consentErrors.health ? "border-danger bg-danger-surface" : "border-border bg-surface-sunken"
+                  className={`flex items-start gap-3 rounded-card border p-4 ${
+                    consentErrors.health ? "border-danger bg-danger-surface" : "border-border"
                   }`}
                 >
                   <input
@@ -1243,13 +1411,11 @@ export default function DaftarForm({
                     }}
                     aria-invalid={!!consentErrors.health}
                     aria-describedby={consentErrors.health ? "health-error" : undefined}
-                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary"
+                    className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-border accent-primary"
                   />
                   <div>
-                    <label htmlFor="healthDeclaration" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
-                      Saya dan{" "}
-                      <span className="font-bold text-foreground">seluruh peserta dalam pesanan ini</span> menyatakan{" "}
-                      <span className="font-bold text-foreground">sehat dan bertanggung jawab penuh</span> atas
+                    <label htmlFor="healthDeclaration" className="cursor-pointer text-sm leading-relaxed text-foreground-accent">
+                      Saya dan seluruh peserta dalam pesanan ini menyatakan sehat dan bertanggung jawab penuh atas
                       keselamatan masing-masing selama SMADARUN 2027.
                     </label>
                     <FieldError id="health-error" message={consentErrors.health} />
@@ -1257,8 +1423,8 @@ export default function DaftarForm({
                 </div>
 
                 <div
-                  className={`flex items-start gap-3 rounded-field border p-4 ${
-                    consentErrors.privacy ? "border-danger bg-danger-surface" : "border-border bg-surface-sunken"
+                  className={`flex items-start gap-3 rounded-card border p-4 ${
+                    consentErrors.privacy ? "border-danger bg-danger-surface" : "border-border"
                   }`}
                 >
                   <input
@@ -1271,87 +1437,81 @@ export default function DaftarForm({
                     }}
                     aria-invalid={!!consentErrors.privacy}
                     aria-describedby={consentErrors.privacy ? "privacy-error" : undefined}
-                    className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-border accent-primary"
+                    className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-border accent-primary"
                   />
                   <div>
-                    <label htmlFor="privacyConsent" className="cursor-pointer text-xs font-medium leading-relaxed text-foreground-accent">
-                      Saya menyetujui{" "}
-                      <span className="font-bold text-foreground">Kebijakan Privasi</span> atas data pribadi seluruh
-                      peserta yang saya daftarkan.
+                    <label htmlFor="privacyConsent" className="cursor-pointer text-sm leading-relaxed text-foreground-accent">
+                      Saya menyetujui Kebijakan Privasi atas data pribadi seluruh peserta yang saya daftarkan.
                     </label>
                     {/* Dialog di halaman yang sama — dulu kebijakan hanya bisa dibuka dari footer. */}
                     <button
                       type="button"
                       onClick={() => setIsPrivasiOpen(true)}
-                      className="mt-1 block rounded text-xs font-bold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                      className="mt-1.5 block rounded text-xs font-semibold text-foreground underline underline-offset-4 hover:text-foreground-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     >
                       Baca Kebijakan Privasi
                     </button>
                     <FieldError id="privacy-error" message={consentErrors.privacy} />
                   </div>
                 </div>
-              </section>
-            </fieldset>
-          </form>
-
-          {/* KOLOM RINGKASAN — sticky di desktop */}
-          <aside className="hidden lg:block">
-            <div className="sticky top-28 rounded-panel border border-border bg-card p-6">
-              <div className="mb-4 flex items-baseline justify-between gap-2">
-                <p className="text-sm font-semibold text-foreground">Ringkasan pesanan</p>
-                {PENDAFTARAN_DIBUKA && (
-                  <span className="text-xs font-bold text-foreground-accent">
-                    {pesertaList.length} tiket
-                  </span>
-                )}
               </div>
-              {PENDAFTARAN_DIBUKA ? (
-                <>
-                  {RincianBiaya}
-                  {ringkasanError && <div className="mt-4">{KotakRingkasanError}</div>}
-                  <div className="mt-6">{submitButton("Lanjut ke pembayaran", "min-h-11 w-full px-5")}</div>
-                  <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-                    Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Anda akan diarahkan ke halaman pembayaran resmi.
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Rincian biaya akan muncul setelah pendaftaran dibuka panitia.
-                </p>
-              )}
+
+            </section>
+          </div>
+
+          {ringkasanError && <div className="mt-6">{KotakRingkasanError}</div>}
+
+          {/* Navigasi. Di ponsel tombol maju ada di bar bawah; di desktop di sini, bersama total. */}
+          <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-6">
+            {langkah > 1 ? (
+              <button
+                type="button"
+                onClick={mundur}
+                disabled={loading}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-foreground-accent transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+              >
+                <FiArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Kembali
+              </button>
+            ) : (
+              <span />
+            )}
+            <div className="hidden items-center gap-5 lg:flex">
+              <p className="text-right text-sm text-muted-foreground">
+                Total · {pesertaList.length} tiket
+                <span className="block text-base font-semibold tabular-nums text-foreground">{harga(totalAmount)}</span>
+              </p>
+              {tombolUtama(false, "min-h-12 px-8")}
             </div>
-          </aside>
+          </div>
+          <p className="mt-3 hidden text-right text-[11px] leading-relaxed text-muted-foreground lg:block">
+            Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Kamu akan diarahkan ke halaman pembayaran resmi.
+          </p>
+        </form>
         </div>
       </div>
 
-      {/* Bar aksi sticky (mobile & tablet). Disembunyikan selama dropdown wilayah terbuka:
-          di browser yang mengecilkan halaman saat keyboard muncul, bar ini naik ke atas
-          keyboard dan menutup daftar pilihan. */}
-      {PENDAFTARAN_DIBUKA && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md group-has-[[role=listbox]]/daftar:hidden lg:hidden">
-          <div className="mx-auto flex max-w-xl items-center gap-4 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
-            <div className="min-w-0">
-              <div className="text-xs text-muted-foreground">
-                Total · {pesertaList.length} tiket
-              </div>
-              <div className="text-lg font-semibold leading-none tracking-tight text-foreground tabular-nums">
-                {harga(totalAmount)}
-              </div>
-              {ringkasanError && (
-                <div className="mt-1 text-[11px] font-bold text-danger">
-                  {ringkasanError.jumlah} isian belum benar
-                </div>
-              )}
+      {/* Bar aksi sticky (ponsel & tablet): total di kiri, tombol maju di kanan. Disembunyikan selama
+          dropdown wilayah terbuka: di browser yang mengecilkan halaman saat keyboard muncul, bar ini
+          naik ke atas keyboard dan menutup daftar pilihan. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md group-has-[[role=listbox]]/daftar:hidden lg:hidden">
+        <div className="mx-auto flex max-w-xl items-center gap-4 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">
+              Total · {pesertaList.length} tiket
             </div>
-            <div className="ml-auto flex w-36 shrink-0 flex-col items-center gap-1.5 sm:w-44">
-              <div className="w-full">{submitButton("Bayar", "min-h-11 w-full px-5")}</div>
-              <div className="text-center text-[9px] leading-tight text-muted-foreground">
-                Powered by <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-foreground">PT KEMBAR INOVASI</a>
-              </div>
+            <div className="text-lg font-semibold leading-none tracking-tight text-foreground tabular-nums">
+              {harga(totalAmount)}
+            </div>
+          </div>
+          <div className="ml-auto flex w-36 shrink-0 flex-col items-center gap-1.5 sm:w-44">
+            <div className="w-full">{tombolUtama(true, "min-h-11 w-full px-5")}</div>
+            <div className="text-center text-[9px] leading-tight text-muted-foreground">
+              Powered by <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-foreground">PT KEMBAR INOVASI</a>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/*
          Lapisan status pengiriman. Sebelumnya satu-satunya tanda bahwa tombol sudah
@@ -1403,6 +1563,32 @@ export default function DaftarForm({
             )}
           </div>
         </div>
+      )}
+
+      {/* Flyer utama diperbesar */}
+      {flyerPendaftaran.src && (
+        <Dialog open={isFlyerOpen} onClose={() => setIsFlyerOpen(false)} className="relative z-50">
+          <div className="fixed inset-0 bg-overlay backdrop-blur-sm" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <DialogPanel className="relative w-full max-w-2xl">
+              <DialogTitle className="sr-only">{flyerPendaftaran.title}</DialogTitle>
+              <button
+                onClick={() => setIsFlyerOpen(false)}
+                className="absolute -top-11 right-0 rounded-full px-3 text-3xl font-bold text-on-secondary/80 transition hover:text-on-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span aria-hidden="true">&times;</span>
+                <span className="sr-only">Tutup</span>
+              </button>
+              <Image
+                src={flyerPendaftaran.src}
+                alt={flyerPendaftaran.alt ?? flyerPendaftaran.title}
+                width={flyerPendaftaran.width ?? 1080}
+                height={flyerPendaftaran.height ?? 1350}
+                className="max-h-[80vh] w-full rounded-card object-contain shadow-hover"
+              />
+            </DialogPanel>
+          </div>
+        </Dialog>
       )}
 
       {/* Lightbox panduan ukuran */}

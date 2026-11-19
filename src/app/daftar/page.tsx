@@ -39,6 +39,14 @@ export const metadata: Metadata = {
   },
 };
 
+// Tanggal hari-H untuk ringkasan event (WIB, tanpa jam).
+function formatTanggalEvent(iso: string | null): string | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime();
+  if (Number.isNaN(ms)) return null;
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeZone: "Asia/Jakarta" }).format(ms);
+}
+
 export default async function DaftarPage() {
   const live = await getLiveEventData();
 
@@ -50,6 +58,9 @@ export default async function DaftarPage() {
       adminFee={live.adminFee}
       adminFeeLabel={live.adminFeeLabel}
       opensAtLabel={formatJadwalBuka(live.opensAt)}
+      // Seperti seksi jadwal di beranda: tanggal & lokasi hanya dari core, dan belum tampil saat Coming Soon.
+      tanggalEvent={live.comingSoon ? null : formatTanggalEvent(live.eventDate)}
+      lokasi={live.comingSoon ? null : live.location}
       multiTicketEnabled={live.multiTicketEnabled}
       maxTicketsPerOrder={live.maxTicketsPerOrder}
       wilayahDropdown={live.wilayahDropdown}

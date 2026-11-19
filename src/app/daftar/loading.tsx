@@ -1,9 +1,9 @@
 import { Baris, Blok } from "@/components/Kerangka";
 
 /**
- * Kerangka portal pendaftaran. Meniru DaftarForm: latar + grid halus, kepala (label, judul besar,
- * pengantar, caption), kartu formulir tiga tahap di kiri, ringkasan pesanan di kanan (desktop),
- * dan bar bayar bawah di ponsel — supaya tidak ada lompatan tata letak begitu data live selesai.
+ * Kerangka halaman pendaftaran. Meniru DaftarForm: latar + grid halus, judul, ringkasan event
+ * (flyer, keterangan; di atas formulir di ponsel, di kiri di desktop), satu kartu formulir bertahap
+ * (penanda tiga langkah, penghitung tiket, tiga isian pemesan, navigasi), dan bar bawah di ponsel — supaya tidak ada lompatan tata letak begitu data live selesai.
  * Pembungkus & jarak harus tetap sama dengan DaftarForm.tsx.
  */
 const BlokIsian = () => (
@@ -13,79 +13,57 @@ const BlokIsian = () => (
   </div>
 );
 
-const Tahap = ({ children }: { children: React.ReactNode }) => (
-  <div className="space-y-5">
-    <div className="flex items-center gap-3">
-      <div className="h-8 w-8 animate-pulse rounded-full bg-surface-sunken" aria-hidden="true" />
-      <Baris className="h-4 w-40" />
-    </div>
-    {children}
-  </div>
-);
-
 export default function LoadingDaftar() {
   return (
     <div className="registration-atmosphere relative min-h-screen px-5 pb-40 pt-28 lg:pb-24" aria-busy="true" aria-live="polite">
       <span className="sr-only">Memuat formulir pendaftaran…</span>
       <div className="registration-grid pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
 
-      <div className="mx-auto w-full max-w-6xl">
-        {/* Kepala: label, judul, pengantar, caption */}
-        <div className="mb-10 max-w-2xl">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="h-px w-8 bg-border-strong" aria-hidden="true" />
-            <Baris className="h-3 w-52" />
+      <div className="mx-auto w-full max-w-2xl lg:max-w-5xl">
+        <Blok className="mb-7 h-9 w-72 sm:h-10 sm:w-96" />
+
+        <div className="lg:grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
+        <div className="mb-6 rounded-panel border border-border bg-card p-5 lg:mb-0" aria-hidden="true">
+          <div className="space-y-2.5">
+            <Baris className="h-3 w-48" />
+            <Baris className="h-3 w-40" />
+            <Baris className="h-3 w-36" />
           </div>
-          <Blok className="h-9 w-72 sm:h-12 sm:w-[30rem]" />
-          <Baris className="mt-4 h-3 w-full max-w-md" />
-          <Baris className="mt-3 h-3 w-48" />
+          <Baris className="mt-4 h-3 w-full" />
         </div>
 
-        <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="space-y-8 rounded-panel border border-border bg-card p-5 sm:p-8 lg:p-10">
-            <Tahap>
-              <BlokIsian />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <BlokIsian />
-                <BlokIsian />
+        <div className="min-w-0 rounded-panel border border-border bg-card p-5 sm:p-8">
+          {/* Penanda tiga langkah */}
+          <div className="grid grid-cols-3 gap-3" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <div key={i}>
+                <div className="h-1 animate-pulse rounded-full bg-surface-sunken" />
+                <Baris className="mt-2 h-3 w-20" />
               </div>
-              <Blok className="h-12 w-full" />
-            </Tahap>
-            <div className="border-t border-border" aria-hidden="true" />
-            <Tahap>
-              <div className="space-y-4 rounded-card border border-border bg-surface-sunken/55 p-5 sm:p-6">
-                <BlokIsian />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <BlokIsian />
-                  <BlokIsian />
-                </div>
-                <BlokIsian />
-              </div>
-              <Blok className="h-11 w-44 !rounded-full" />
-            </Tahap>
-            <div className="border-t border-border" aria-hidden="true" />
-            <Tahap>
-              <Blok className="h-20 w-full" />
-              <Blok className="h-20 w-full" />
-            </Tahap>
+            ))}
           </div>
 
-          <aside className="hidden lg:block" aria-hidden="true">
-            <div className="rounded-panel border border-border bg-card p-6">
-              <Baris className="h-3 w-32" />
-              <div className="mt-5 space-y-3">
-                <Baris className="h-3 w-full" />
-                <Baris className="h-3 w-4/5" />
-                <Baris className="h-3 w-full" />
-                <Baris className="h-4 w-2/3" />
-              </div>
-              <Blok className="mt-6 h-11 w-full !rounded-full" />
+          <div className="mt-8 space-y-6">
+            <Blok className="h-[4.25rem] w-full" />
+            <div className="space-y-2">
+              <Baris className="h-5 w-36" />
+              <Baris className="h-3 w-64 max-w-full" />
             </div>
-          </aside>
+            <BlokIsian />
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <BlokIsian />
+              <BlokIsian />
+            </div>
+          </div>
+
+          <div className="mt-8 flex justify-end border-t border-border pt-6">
+            <Blok className="hidden h-12 w-64 !rounded-full lg:block" />
+          </div>
+        </div>
         </div>
       </div>
 
-      {/* Bar bayar ponsel — sama bentuknya dengan bar aslinya (total kiri, tombol pendek kanan) */}
+      {/* Bar bawah ponsel — sama bentuknya dengan bar aslinya (total kiri, tombol pendek kanan) */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 lg:hidden" aria-hidden="true">
         <div className="mx-auto flex max-w-xl items-center gap-4 px-5 py-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="space-y-2">

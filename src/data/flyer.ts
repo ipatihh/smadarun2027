@@ -32,6 +32,22 @@ export const flyerIntro = {
     title: "Jersey, Medali & String Bag",
 };
 
+// ============================================================================
+// FLYER UTAMA — satu-satunya gambar di ringkasan event halaman /daftar.
+// ============================================================================
+// Keputusan pemilik (19 Nov 2026): halaman pendaftaran hanya menampilkan SATU flyer event (bukan tiga
+// mockup di atas), dan benefit cukup teks "Termasuk …" (`fasilitasSemuaKategori` di tiket.ts).
+// Cara memasang: taruh file di public/images/flyer/ (mis. flyer-utama.jpg), lalu buka tiga baris
+// `src`, `width`, `height` di bawah. Klik gambar membuka tampilan besar. Selama `src` kosong, ringkasan
+// event hanya berisi teks (tanpa kotak kosong), jadi aman dibiarkan sampai flyernya jadi.
+export const flyerPendaftaran: IFlyer = {
+    title: "Flyer SMADARUN 2027",
+    alt: "Flyer SMADARUN 2027",
+    // src: "/images/flyer/flyer-utama.jpg",
+    // width: 1080,
+    // height: 1350,
+};
+
 export const flyerItems: IFlyer[] = [
     {
         title: "Jersey",
