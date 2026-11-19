@@ -5,6 +5,17 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 19 November 2026 — Flyer utama dipasang di /daftar
+
+- Flyer dari panitia (`public/images/flyer/flyer-utama.webp`, 1414×2000) dipasang lewat `flyerPendaftaran`
+  di `src/data/flyer.ts`. Hanya halaman `/daftar` yang menampilkannya (ringkasan event di kiri/atas
+  formulir); beranda tetap memakai mockup jersey, medali, dan string bag.
+- Skeleton `src/app/daftar/loading.tsx` kini punya blok setinggi flyer supaya layar tidak melompat.
+- Isi flyer memuat akun Instagram `@smadanganjuk_` dan `@osissmadangk`, berbeda dari keputusan pemilik
+  (situs hanya `@smada.run_`). Itu gambar dari panitia, tidak diubah di sini.
+
+---
+
 ## 19 November 2026 — Nama pendaftar otomatis kapital dan rapi
 
 - Nama pemesan, peserta, dan kontak darurat menjadi kapital saat diketik; spasi awal/akhir dan spasi

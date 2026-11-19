@@ -17,9 +17,10 @@ Cek ukuran file di Mac: `sips -g pixelWidth -g pixelHeight <file>`.
 ## Flyer utama di halaman /daftar
 Halaman pendaftaran hanya menampilkan SATU flyer event, bukan tiga mockup beranda; benefit cukup teks
 "Termasuk …" (diatur di `fasilitasSemuaKategori`, `src/data/tiket.ts`). Pasang flyer: taruh file di
-`public/images/flyer/`, lalu buka tiga baris `src`/`width`/`height` pada `flyerPendaftaran`
-(`src/data/flyer.ts`). Selama kosong tidak ada kotak apa pun. Setelah terpasang, tambahkan juga blok gambar
-ke skeleton `src/app/daftar/loading.tsx` agar layar tidak melompat.
+`public/images/flyer/`, lalu isi `src`/`width`/`height` pada `flyerPendaftaran`
+(`src/data/flyer.ts`). Selama kosong tidak ada kotak apa pun. Sudah terpasang (`flyer-utama.webp`, 19 Nov 2026)
+dan skeleton `src/app/daftar/loading.tsx` sudah punya blok gambarnya; untuk mengganti flyer cukup timpa file
+atau ubah tiga baris itu (ukuran asli: `sips -g pixelWidth -g pixelHeight <file>`).
 
 ## Flyer dan logo
 Petunjuk lengkap ada di komentar kepala `src/data/flyer.ts` dan `src/data/logo.ts`. Selama `src`

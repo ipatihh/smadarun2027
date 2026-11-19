@@ -43,9 +43,9 @@ export const flyerIntro = {
 export const flyerPendaftaran: IFlyer = {
     title: "Flyer SMADARUN 2027",
     alt: "Flyer SMADARUN 2027",
-    // src: "/images/flyer/flyer-utama.jpg",
-    // width: 1080,
-    // height: 1350,
+    src: "/images/flyer/flyer-utama.webp",
+    width: 1414,
+    height: 2000,
 };
 
 export const flyerItems: IFlyer[] = [

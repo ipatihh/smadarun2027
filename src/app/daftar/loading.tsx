@@ -24,6 +24,8 @@ export default function LoadingDaftar() {
 
         <div className="lg:grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
         <div className="mb-6 rounded-panel border border-border bg-card p-5 lg:mb-0" aria-hidden="true">
+          {/* Flyer utama (tinggi sama dengan gambar aslinya di DaftarForm) */}
+          <Blok className="mb-5 h-[28rem] w-full lg:h-[min(24rem,calc(100dvh-24rem))]" />
           <div className="space-y-2.5">
             <Baris className="h-3 w-48" />
             <Baris className="h-3 w-40" />
