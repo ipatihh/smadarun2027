@@ -266,6 +266,9 @@ export default function DaftarForm({
     [ticketTypes]
   );
   const KATEGORI_KEYS = Object.keys(KATEGORI_TIKET);
+  // Seperti kembar.in: bila ada lebih dari satu kategori, peserta HARUS memilihnya sendiri di langkah 2
+  // (tidak ada yang terpilih diam-diam); dengan satu kategori, itu yang terpilih sejak awal.
+  const kategoriAwal = KATEGORI_KEYS.length > 1 ? "" : KATEGORI_KEYS[0] || "";
   const PENDAFTARAN_DIBUKA = isOpen && KATEGORI_KEYS.length > 0;
   const isFormClosed = !PENDAFTARAN_DIBUKA;
   // Coming Soon: harga disembunyikan sampai pendaftaran dibuka.
@@ -283,7 +286,7 @@ export default function DaftarForm({
   // Tanpa kaitan otomatis pemesan→peserta (pemesanKey null): seperti di kembar.in, pemesan menekan
   // "Gunakan data pemesan" bila ia sendiri ikut lari, dan datanya disalin (bukan ditautkan).
   const [pesanan, setPesanan] = useState<KeadaanPesanan>(() => ({
-    pesertaList: [pesertaBaru("peserta-0", KATEGORI_KEYS[0] || "")],
+    pesertaList: [pesertaBaru("peserta-0", kategoriAwal)],
     pemesanKey: null,
   }));
   const pesertaList = pesanan.pesertaList;
@@ -400,7 +403,7 @@ export default function DaftarForm({
     const target = Math.min(Math.max(1, n), batasTiket);
     const selisih = target - pesertaList.length;
     if (selisih > 0) {
-      const baru = Array.from({ length: selisih }, () => pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || ""));
+      const baru = Array.from({ length: selisih }, () => pesertaBaru(keyPesertaBaru(), kategoriAwal));
       setPesanan((prev) => baru.reduce((acc, peserta) => tambahPesertaKePesanan(acc, peserta, batasTiket), prev));
     } else if (selisih < 0) {
       pesertaList.slice(target).forEach((peserta) => hapusPeserta(peserta.key));
@@ -694,7 +697,7 @@ export default function DaftarForm({
             kode: hasil.kode,
           });
           setBuyer({ nama: "", email: "", whatsapp: "" });
-          setPesanan({ pesertaList: [pesertaBaru(keyPesertaBaru(), KATEGORI_KEYS[0] || "")], pemesanKey: null });
+          setPesanan({ pesertaList: [pesertaBaru(keyPesertaBaru(), kategoriAwal)], pemesanKey: null });
           setLangkah(1);
           setPesertaAktif(0);
           sesiPengiriman.current = null;
@@ -861,6 +864,12 @@ export default function DaftarForm({
     );
 
   const hargaMin = Math.min(...KATEGORI_KEYS.map((k) => KATEGORI_TIKET[k].price));
+  const hargaMaks = Math.max(...KATEGORI_KEYS.map((k) => KATEGORI_TIKET[k].price));
+  // Harga satuan (rentang bila kategori berbeda harga), BUKAN total.
+  const hargaSatuan = hargaMin === hargaMaks ? harga(hargaMin) : `${harga(hargaMin)} – ${harga(hargaMaks)}`;
+  // Seperti kembar.in: total belum disebut sebelum langkah 2 dan sebelum tiap peserta memilih kategorinya —
+  // angka total sebelum itu terbaca seperti kategori sudah ditentukan.
+  const totalTertunda = langkah === 1 || pesertaList.some((p) => !p.kategori);
 
   // ── Pendaftaran belum dibuka: tidak ada formulir mati berisi kolom abu-abu. ─────────────
   if (isFormClosed) {
@@ -948,7 +957,7 @@ export default function DaftarForm({
             {KATEGORI_KEYS.length > 0 && (
               <div className="flex gap-3">
                 <dt className="w-16 shrink-0 text-muted-foreground">Harga</dt>
-                <dd className="font-medium tabular-nums text-foreground">{harga(hargaMin)} / tiket</dd>
+                <dd className="font-medium tabular-nums text-foreground">{hargaSatuan} / tiket</dd>
               </div>
             )}
           </dl>
@@ -979,7 +988,7 @@ export default function DaftarForm({
                   <div>
                     <p className="text-sm font-semibold text-foreground">Jumlah tiket</p>
                     <p className="mt-0.5 text-sm tabular-nums text-muted-foreground">
-                      {harga(hargaMin)} per tiket · maks. {batasTiket}
+                      {hargaSatuan} per tiket · maks. {batasTiket}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1271,8 +1280,8 @@ export default function DaftarForm({
                       <FieldError id={`peserta-${index}-wilayah-error`} message={errs.wilayah} />
                     </div>
 
-                    {/* Satu kategori saja: tidak perlu dipilih. Lebih dari satu: dropdown. */}
-                    {KATEGORI_KEYS.length > 1 && (
+                    {/* Kategori selalu dipilih di langkah ini (harga baru dihitung sesudahnya), seperti di kembar.in. */}
+                    {KATEGORI_KEYS.length > 0 && (
                       <div>
                         <label htmlFor={`peserta-${index}-kategori`} className={labelClass}>Kategori lomba</label>
                         <select
@@ -1284,6 +1293,7 @@ export default function DaftarForm({
                           aria-describedby={errs.kategori ? `peserta-${index}-kategori-error` : undefined}
                           className={fieldClass(!!errs.kategori)}
                         >
+                          <option value="">Pilih kategori</option>
                           {Object.entries(KATEGORI_TIKET).map(([key, cat]) => (
                             <option key={key} value={key}>
                               {cat.label} — {harga(cat.price)}
@@ -1479,7 +1489,11 @@ export default function DaftarForm({
             <div className="hidden items-center gap-5 lg:flex">
               <p className="text-right text-sm text-muted-foreground">
                 Total · {pesertaList.length} tiket
-                <span className="block text-base font-semibold tabular-nums text-foreground">{harga(totalAmount)}</span>
+                {totalTertunda ? (
+                  <span className="block text-sm font-medium text-muted-foreground">Pilih kategori</span>
+                ) : (
+                  <span className="block text-base font-semibold tabular-nums text-foreground">{harga(totalAmount)}</span>
+                )}
               </p>
               {tombolUtama(false, "min-h-12 px-8")}
             </div>
@@ -1500,9 +1514,13 @@ export default function DaftarForm({
             <div className="text-xs text-muted-foreground">
               Total · {pesertaList.length} tiket
             </div>
-            <div className="text-lg font-semibold leading-none tracking-tight text-foreground tabular-nums">
-              {harga(totalAmount)}
-            </div>
+            {totalTertunda ? (
+              <div className="whitespace-nowrap text-sm font-medium leading-tight text-muted-foreground">Pilih kategori</div>
+            ) : (
+              <div className="text-lg font-semibold leading-none tracking-tight text-foreground tabular-nums">
+                {harga(totalAmount)}
+              </div>
+            )}
           </div>
           <div className="ml-auto flex w-36 shrink-0 flex-col items-center gap-1.5 sm:w-44">
             <div className="w-full">{tombolUtama(true, "min-h-11 w-full px-5")}</div>

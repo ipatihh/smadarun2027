@@ -174,7 +174,10 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   Begitu flyer dipasang, tambahkan blok gambarnya ke `loading.tsx` (skeleton). Tombol maju: bar bawah di ponsel, kaki kartu di desktop. JANGAN menambah keterangan, subjudul kelompok, atau kotak info
   — pemilik menilai itu membingungkan. Pemesan TIDAK lagi ditautkan otomatis ke Peserta 1 (`pemesanKey`
   null; datanya disalin lewat tombol). Email/WhatsApp peserta tidak ditanyakan (core memakai kontak pemesan).
-  Kategori hanya muncul bila ada lebih dari satu. Saat pendaftaran ditutup tidak ada formulir mati.
+  Kategori SELALU dipilih di langkah 2 (select + placeholder "Pilih kategori"; dengan satu kategori ia
+  terpilih sejak awal, dengan lebih dari satu kosong dan wajib dipilih). TOTAL tidak ditampilkan di langkah 1 dan
+  selama ada peserta belum memilih kategori — bar/kaki kartu menulis "Pilih kategori" (`totalTertunda`), seperti
+  core; harga satuan boleh tampil (rentang bila kategori beda harga). Saat pendaftaran ditutup tidak ada formulir mati.
   "Lanjut" hanya memvalidasi langkah/tiketnya; "Bayar" memvalidasi semuanya lalu melompat ke isian bermasalah
   (`langkahDariId` memetakan id ke langkah). Referensi: kembarin-v2 `app/events/[slug]/EventRegisterClient.tsx`.
 - **Mobile `/daftar`**: isian form harus ≥16px di ponsel (kalau tidak, iOS zoom saat fokus); bar bayar

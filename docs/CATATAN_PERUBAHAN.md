@@ -26,7 +26,9 @@ Percobaan pertama (stepper + kelompok isian dua lajur) dinilai terlalu banyak in
 - Langkah 1: penghitung tiket (menggantikan "Tambah peserta") + nama/email/WhatsApp pemesan.
 - Langkah 2: satu tiket per layar, pemilih tiket bila lebih dari satu, tombol "Gunakan data pemesan" (menyalin,
   tidak menautkan — `pemesanKey` kini selalu null), "Lanjut" membuka tiket berikutnya. Email/WhatsApp peserta
-  dihapus dari UI; kategori hanya tampil bila ada lebih dari satu; ukuran jersey/jenis kelamin berupa tombol pilih.
+  dihapus dari UI; ukuran jersey/jenis kelamin berupa tombol pilih. Kategori dipilih di langkah 2 (select; kosong
+  bila kategori lebih dari satu) dan total BARU tampil setelah itu — di langkah 1 bar menulis "Pilih kategori",
+  sama dengan core (perbaikan 19 Nov 2026 atas temuan pemilik).
 - Langkah 3: daftar ringkas dengan "Ubah" per tiket, dua persetujuan, tombol Bayar.
 - Ringkasan event ala kembar.in: tanggal, lokasi, harga, dan "Termasuk …" di kiri (menempel) pada desktop, di atas
   formulir pada ponsel. **Keputusan pemilik: gambar cukup SATU flyer utama** (`flyerPendaftaran` di
