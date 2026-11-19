@@ -311,7 +311,6 @@ export default function DaftarForm({
    */
   const [status, setStatus] = useState<"idle" | "submitting" | "redirecting">("idle");
   const loading = status !== "idle";
-  const [ringkasanError, setRingkasanError] = useState<{ jumlah: number; targetId: string } | null>(null);
   const [langkah, setLangkah] = useState<LangkahForm>(1);
   // Tiket (peserta) yang sedang diisi di langkah 2 — satu tiket per layar.
   const [pesertaAktif, setPesertaAktif] = useState(0);
@@ -362,7 +361,6 @@ export default function DaftarForm({
   const handleBuyerChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setBuyer((prev) => ({ ...prev, [name]: value }));
-    setRingkasanError(null);
     if (buyerErrors[name as BuyerField]) {
       setBuyerErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -375,7 +373,6 @@ export default function DaftarForm({
 
   const handlePesertaChange = (key: string, field: PesertaField, value: any) => {
     setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, [field]: value } : p)));
-    setRingkasanError(null);
     if (pesertaErrors[key]?.[field]) {
       setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], [field]: undefined } }));
     }
@@ -403,7 +400,6 @@ export default function DaftarForm({
     const peserta = pesertaList.find((p) => p.key === key);
     if (!peserta || peserta.jenisIdentitas === jenis) return;
     setPesertaList((prev) => prev.map((p) => (p.key === key ? { ...p, jenisIdentitas: jenis } : p)));
-    setRingkasanError(null);
     const message = peserta.nik.trim() ? validasiIdentitas(jenis, peserta.nik) : null;
     setPesertaErrors((prev) => ({ ...prev, [key]: { ...prev[key], nik: message ?? undefined } }));
   };
@@ -419,7 +415,6 @@ export default function DaftarForm({
       pesertaList.slice(target).forEach((peserta) => hapusPeserta(peserta.key));
     }
     setPesertaAktif((a) => Math.min(a, target - 1));
-    setRingkasanError(null);
   };
 
   // "Gunakan data pemesan": menyalin nama/email/WhatsApp pemesan ke tiket yang sedang diisi.
@@ -457,7 +452,6 @@ export default function DaftarForm({
     setPesertaList((prev) =>
       prev.map((p) => (p.key === key ? { ...p, tambahan: { ...p.tambahan, [kolom.name]: value } } : p))
     );
-    setRingkasanError(null);
     if (tambahanErrors[key]?.[kolom.name]) {
       setTambahanErrors((prev) => ({ ...prev, [key]: { ...prev[key], [kolom.name]: undefined } }));
     }
@@ -487,7 +481,6 @@ export default function DaftarForm({
   // "Ubah" di ringkasan: kembali ke langkah 2 pada tiket yang dimaksud.
   const ubahPeserta = (_key: string, index: number) => {
     setPesertaAktif(index);
-    setRingkasanError(null);
     pindahLangkah(2);
   };
 
@@ -579,7 +572,6 @@ export default function DaftarForm({
   };
 
   const tampilkanMasalah = (ids: string[]) => {
-    setRingkasanError({ jumlah: ids.length, targetId: ids[0] });
     // Isian bermasalah bisa ada di tiket lain: tampilkan tiket itu dulu.
     const cocok = /^peserta-(\d+)-/.exec(ids[0]);
     if (cocok) setPesertaAktif(Number(cocok[1]));
@@ -598,7 +590,6 @@ export default function DaftarForm({
       if (pesertaAktif < pesertaList.length - 1) {
         masalah = periksaPeserta(pesertaAktif);
         if (masalah.length === 0) {
-          setRingkasanError(null);
           setPesertaAktif(pesertaAktif + 1);
           gulirKeAtas();
           return;
@@ -611,13 +602,11 @@ export default function DaftarForm({
       tampilkanMasalah(masalah);
       return;
     }
-    setRingkasanError(null);
     if (langkah < 3) pindahLangkah((langkah + 1) as LangkahForm);
   };
 
   // Di langkah 2 pada tiket kedua dst., "Kembali" membuka tiket sebelumnya; selain itu langkah sebelumnya.
   const mundur = () => {
-    setRingkasanError(null);
     if (langkah === 2 && pesertaAktif > 0) {
       setPesertaAktif(pesertaAktif - 1);
       gulirKeAtas();
@@ -641,7 +630,6 @@ export default function DaftarForm({
       tampilkanMasalah(daftarMasalah);
       return;
     }
-    setRingkasanError(null);
 
     setStatus("submitting");
     let sedangDialihkan = false;
@@ -716,7 +704,6 @@ export default function DaftarForm({
           setIsHealthyChecked(false);
           setIsConsentChecked(false);
           setConsentErrors({});
-          setRingkasanError(null);
           return;
         case "ditolak":
           // Core pasti tidak membuat tagihan BARU. Isian dipertahankan untuk diperbaiki.
@@ -746,27 +733,6 @@ export default function DaftarForm({
       if (!sedangDialihkan) setStatus("idle");
     }
   };
-
-  // Ringkasan kesalahan: menjelaskan APA yang terjadi saat "Lanjut"/"Bayar" ditekan tapi
-  // isian belum lengkap. Tanpa ini, halaman hanya melompat ke isian pertama dan
-  // pengguna tidak tahu kenapa layarnya tiba-tiba berpindah.
-  const KotakRingkasanError = ringkasanError ? (
-    <div role="alert" className="rounded-card border border-danger/40 bg-danger-surface p-4 text-left">
-      <p className="text-sm font-semibold text-danger">
-        Ada {ringkasanError.jumlah} isian yang perlu dilengkapi
-      </p>
-      <p className="mt-1 text-xs leading-relaxed text-danger">
-        Bagian yang bertanda merah belum sesuai. Perbaiki dulu, lalu lanjutkan lagi.
-      </p>
-      <button
-        type="button"
-        onClick={() => focusField(ringkasanError.targetId)}
-        className="mt-2 text-xs font-semibold text-danger underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
-      >
-        Tunjukkan isian pertama
-      </button>
-    </div>
-  ) : null;
 
   // Ringkasan pesanan — dipakai dua kali: inline di langkah 3 (ponsel) & di kartu samping (desktop).
   // Tiap peserta menampilkan nama, kategori, dan ukuran jersey supaya bisa dicek ulang
@@ -1497,7 +1463,6 @@ export default function DaftarForm({
             </section>
           </div>
 
-          {ringkasanError && <div className="mt-6">{KotakRingkasanError}</div>}
 
           {/* Navigasi. Di ponsel tombol maju ada di bar bawah; di desktop di sini, bersama total. */}
           <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-6">

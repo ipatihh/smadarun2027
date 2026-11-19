@@ -7,6 +7,8 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ## 19 November 2026 — Ukuran jersey dan biaya tambahan dari core
 
+- Atas permintaan pemilik, kotak ringkasan kesalahan "Ada … isian yang perlu dilengkapi" beserta
+  tombol "Tunjukkan isian pertama" dihapus. Pesan per isian, fokus ke isian bermasalah, dan validasi tetap berlaku.
 - Pilihan ukuran dan `size_surcharges` dibaca dari kolom `semantic: "size"` pada form schema core.
   Tombol ukuran menampilkan biaya tambahan; ringkasan dan validasi server menambahkannya per peserta
   ke subtotal. Biaya layanan tetap per tiket. Tanpa kolom ukuran, daftar cadangan tanpa biaya tetap berlaku.
