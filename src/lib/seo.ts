@@ -25,7 +25,7 @@ export const orgSekolah = {
 
 export const orgPengembang = {
   "@type": "Organization",
-  "@id": `${URL_PENGEMBANG}/#organisasi`,
+  "@id": `${URL_PENGEMBANG}/#organization`,
   name: NAMA_PENGEMBANG,
   legalName: NAMA_PENGEMBANG,
   alternateName: ["Kembar.in", "PT KEMBAR INOVASI"],
