@@ -24,10 +24,9 @@ export const kelompokPeserta: { nama: string; lencana: string; podium: boolean }
   { nama: 'Kelompok Umum', lencana: 'Non-Podium', podium: false },
 ];
 
-// Catatan kecil di bawah kelompok pada kartu tiket beranda. Di ringkasan /daftar dicabut atas permintaan
-// pemilik (19 Nov 2026: "menganggu"); jangan dipasang lagi di sana.
-export const catatanPodium =
-  'Podium hanya untuk pelajar berdomisili Kab. Nganjuk. Event ini terbuka untuk umum, siapa pun boleh mendaftar.';
+// Catatan "Podium hanya untuk pelajar berdomisili Kab. Nganjuk. Event ini terbuka untuk umum…" sudah
+// dicabut dari semua tempat atas permintaan pemilik (ringkasan /daftar 19 Nov 2026; kartu tiket 20 Nov 2026).
+// Jangan dipasang lagi tanpa permintaan pemilik.
 
 // categoryKey HARUS persis sama (case-insensitive) dengan category_name dari
 // kembarin-v2 untuk nama tampilan dan fasilitas KHUSUS kategori. Kategori baru

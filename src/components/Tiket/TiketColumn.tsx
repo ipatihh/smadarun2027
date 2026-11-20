@@ -3,7 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { FiCheck } from "react-icons/fi";
 import { ResolvedTicketTier } from "@/lib/kembarinEvents";
-import { catatanPodium, kelompokPeserta } from "@/data/tiket";
+import { kelompokPeserta } from "@/data/tiket";
 import { isKategoriPelajar } from "@/lib/kategoriIdentitas";
 
 interface PricingColumnProps {
@@ -66,10 +66,6 @@ const PricingColumn: React.FC<PricingColumnProps> = ({ tier, adminFee, adminFeeL
                 </li>
               ))}
             </ul>
-            {/* Kartu umum (saat kategori dipisah) tidak memuat catatan ini; kartu pelajar dan kartu tunggal tetap. */}
-            {!(pisahKelompok && !isKategoriPelajar(tier.categoryKey)) && (
-              <p className="mx-auto mt-3 max-w-sm text-center text-xs leading-relaxed text-muted-foreground">{catatanPodium}</p>
-            )}
             {!tier.comingSoon && (
               <span className="mt-6 block font-display text-4xl font-medium tracking-[-0.02em] text-foreground sm:text-5xl">
                 {rupiah(tier.price)}

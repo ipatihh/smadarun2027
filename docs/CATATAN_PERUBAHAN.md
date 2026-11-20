@@ -10,8 +10,8 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 - Saat core punya kategori pelajar (nama memuat "pelajar") DAN kategori lain, kartu "5KM Pelajar" hanya
   menampilkan Kelompok U-18 (Podium) dan kartu "5KM Umum" hanya Kelompok Umum (Non-Podium). Aturannya sama
   dengan `src/lib/kategoriIdentitas.ts`; bila hanya satu kategori, kedua kelompok tetap tampil.
-- Catatan podium ("Podium hanya untuk pelajar berdomisili Kab. Nganjuk …") dihapus dari kartu umum atas
-  permintaan pemilik; tetap ada di kartu pelajar, dan di kartu tunggal bila core hanya punya satu kategori.
+- Catatan podium ("Podium hanya untuk pelajar berdomisili Kab. Nganjuk …") dihapus dari SEMUA kartu atas
+  permintaan pemilik (kartu umum dulu, lalu kartu pelajar); konstanta `catatanPodium` ikut dihapus.
 
 ---
 
