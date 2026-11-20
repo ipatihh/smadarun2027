@@ -12,7 +12,6 @@ import {
   rapikanNomorIdentitas,
   validasiIdentitas,
 } from "@/lib/identitas";
-import { validasiKategoriIdentitas } from "@/lib/kategoriIdentitas";
 import {
   klasifikasiPenolakanCore,
   PESAN_BELUM_PASTI,
@@ -360,11 +359,7 @@ export async function POST(req: NextRequest) {
       if (!tiket) {
         return gagal(`Kategori lomba peserta ${nomor} tidak valid atau sedang tidak aktif.`);
       }
-      // Kartu Pelajar = kategori pelajar, NIK = umum (`@/lib/kategoriIdentitas`); penentu akhir di sini.
-      const pesanKategori = validasiKategoriIdentitas([...tarifPerKategori.keys()], jenisIdentitas, kategori);
-      if (pesanKategori) {
-        return gagal(`Peserta ${nomor}: ${pesanKategori}`);
-      }
+      // Kategori TIDAK dikunci ke jenis identitas (20 Nov 2026): panitia memeriksa kartu pelajar saat racepack.
 
       // Email & WhatsApp peserta bersifat opsional: kalau kosong, core memakai data
       // pemesan (lihat resolveParticipantEmail di kembarin-v2).

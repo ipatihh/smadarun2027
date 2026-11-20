@@ -1,6 +1,6 @@
 import { FiCheck } from "react-icons/fi";
 import { ResolvedTicketTier } from "@/lib/kembarinEvents";
-import { kategoriMengikutiIdentitas } from "@/lib/kategoriIdentitas";
+import { adaKategoriPelajarDanUmum } from "@/lib/kategoriPelajar";
 import PricingColumn from "./TiketColumn";
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
 
 const TiketGrid: React.FC<Props> = ({ tiers, sharedFeatures, adminFee, adminFeeLabel }) => {
   // Core punya kategori pelajar DAN umum: tiap kartu hanya menampilkan kelompoknya sendiri.
-  const pisahKelompok = kategoriMengikutiIdentitas(tiers.map((t) => t.categoryKey));
+  const pisahKelompok = adaKategoriPelajarDanUmum(tiers.map((t) => t.categoryKey));
   return (
     <div
       className="mx-auto w-full max-w-md md:max-w-4xl"

@@ -5,6 +5,19 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 20 November 2026 — Kategori tidak lagi dikunci ke jenis identitas
+
+- Masalah: pelajar tetap memilih NIK, lalu dropdown otomatis memilih/mengunci "5KM Umum" padahal mereka
+  pelajar. Keputusan pemilik: pilihan NIK/kartu pelajar tidak menentukan kategori; dropdown selalu memuat
+  kedua kategori dan peserta memilih sendiri (kosong sampai dipilih, seperti kembar.in).
+- `api/daftar` tidak lagi menolak pasangan identitas-kategori; `src/lib/kategoriIdentitas.ts` diganti
+  `src/lib/kategoriPelajar.ts` (hanya `isKategoriPelajar` dan `adaKategoriPelajarDanUmum`).
+- Kategori pelajar memunculkan pengingat kecil "Bawa kartu pelajar saat mengambil racepack." Pemeriksaan
+  sebenarnya oleh panitia saat racepack; kategori bisa dipindah di dasbor core bila tidak cocok.
+- Opsional untuk panitia: tambah kolom "Asal sekolah" lewat Form Builder core (muncul otomatis, tanpa kode).
+
+---
+
 ## 20 November 2026 — SEO: PT KEMBAR INOVASI INDONESIA terbaca sebagai pengembang & mitra pendaftaran
 
 - `src/lib/seo.ts` jadi sumber tunggal entitas schema.org. `layout.tsx` kini memasang JSON-LD `@graph`

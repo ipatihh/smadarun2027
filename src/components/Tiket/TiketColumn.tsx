@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FiCheck } from "react-icons/fi";
 import { ResolvedTicketTier } from "@/lib/kembarinEvents";
 import { kelompokPeserta } from "@/data/tiket";
-import { isKategoriPelajar } from "@/lib/kategoriIdentitas";
+import { isKategoriPelajar } from "@/lib/kategoriPelajar";
 
 interface PricingColumnProps {
   tier: ResolvedTicketTier;

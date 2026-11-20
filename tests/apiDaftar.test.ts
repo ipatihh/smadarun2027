@@ -512,7 +512,7 @@ describe("biaya tambahan ukuran jersey dari core", () => {
   });
 });
 
-describe("kategori mengikuti jenis nomor identitas", () => {
+describe("kategori tidak dikunci ke jenis nomor identitas", () => {
   const DUA_KATEGORI = {
     ...LIVE,
     ticketTypes: [
@@ -523,7 +523,7 @@ describe("kategori mengikuti jenis nomor identitas", () => {
   const peserta = (jenisIdentitas: string, kategori: string, nik: string) =>
     payloadValid({ participants: [{ ...payloadValid().participants[0], jenisIdentitas, kategori, nik }] });
 
-  it("Kartu Pelajar ke kategori pelajar dan NIK ke umum diterima dengan id tiketnya", async () => {
+  it("semua pasangan identitas-kategori diterima dengan id tiket kategorinya", async () => {
     vi.mocked(getLiveEventData).mockResolvedValue(DUA_KATEGORI);
     expect((await POST(permintaan(peserta("kartu_pelajar", "5KM Pelajar", "123456789"))))).toHaveProperty("status", 200);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).participants[0].ticketTypeId).toBe(23);
@@ -531,10 +531,11 @@ describe("kategori mengikuti jenis nomor identitas", () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).participants[0].ticketTypeId).toBe(37);
   });
 
-  it("pasangan silang ditolak sebelum core dihubungi", async () => {
+  it("pelajar ber-NIK boleh memilih kategori pelajar (dan sebaliknya), id tiket mengikuti kategori", async () => {
     vi.mocked(getLiveEventData).mockResolvedValue(DUA_KATEGORI);
-    expect((await POST(permintaan(peserta("kartu_pelajar", "5KM Umum", "123456789")))).status).toBe(400);
-    expect((await POST(permintaan(peserta("nik", "5KM Pelajar", PII.nik)))).status).toBe(400);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect((await POST(permintaan(peserta("nik", "5KM Pelajar", PII.nik)))).status).toBe(200);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).participants[0].ticketTypeId).toBe(23);
+    expect((await POST(permintaan(peserta("kartu_pelajar", "5KM Umum", "123456789")))).status).toBe(200);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).participants[0].ticketTypeId).toBe(37);
   });
 });
