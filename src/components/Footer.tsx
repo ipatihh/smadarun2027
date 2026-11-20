@@ -116,7 +116,7 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                             rel="noopener noreferrer"
                             className="font-medium text-foreground hover:underline underline-offset-4"
                         >
-                            PT KEMBAR INOVASI INDONESIA
+                            PT KEMBAR INOVASI
                         </a>
                     </p>
                 </div>

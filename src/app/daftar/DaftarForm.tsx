@@ -1533,7 +1533,7 @@ export default function DaftarForm({
             </div>
           </div>
           <p className="mt-3 hidden text-right text-[11px] leading-relaxed text-muted-foreground lg:block">
-            Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a>. Kamu akan diarahkan ke halaman pembayaran resmi.
+            Pembayaran diproses oleh <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Kamu akan diarahkan ke halaman pembayaran resmi.
           </p>
         </form>
         </div>
@@ -1587,7 +1587,7 @@ export default function DaftarForm({
             </p>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               {status === "redirecting"
-                ? <>Anda sedang dibawa ke halaman pembayaran resmi <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a>. Jangan tutup halaman ini.</>
+                ? <>Anda sedang dibawa ke halaman pembayaran resmi <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a>. Jangan tutup halaman ini.</>
                 : "Mohon tunggu sebentar dan jangan tutup halaman ini."}
             </p>
             {/* Pengalihan bisa tertahan (pemblokir, koneksi lambat). Pesanan sudah ada,

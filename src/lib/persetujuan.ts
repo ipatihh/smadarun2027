@@ -12,7 +12,7 @@
 //      sebelum deploy masih menampilkan (dan mengirim) teks versi lama, dan catatannya
 //      harus menyebut versi yang benar-benar dibaca pendaftar itu.
 
-export const VERSI_PERSETUJUAN = "smadarun-2026-11b";
+export const VERSI_PERSETUJUAN = "smadarun-2026-11";
 
 /** Semua label yang pernah dipakai. Urutan: yang tertua di depan. */
 export const VERSI_PERSETUJUAN_DIKENAL: readonly string[] = ["smadarun-2026-10", "smadarun-2026-11", "smadarun-2026-11b"];

@@ -27,7 +27,7 @@ const langkah = [
     judul: "Bila pembayaran sudah selesai",
     isi: (
       <>
-        <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a> mengonfirmasi transaksi ke sistem pendaftaran secara otomatis.
+        <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">PT KEMBAR INOVASI</a> mengonfirmasi transaksi ke sistem pendaftaran secara otomatis.
       </>
     ),
   },
