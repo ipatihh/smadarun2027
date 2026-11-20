@@ -1559,7 +1559,7 @@ export default function DaftarForm({
           <div className="ml-auto flex w-36 shrink-0 flex-col items-center gap-1.5 sm:w-44">
             <div className="w-full">{tombolUtama(true, "min-h-11 w-full px-5")}</div>
             <div className="text-center text-[9px] leading-tight text-muted-foreground">
-              Powered by <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-foreground">PT KEMBAR INOVASI INDONESIA</a>
+              Powered by <a href="https://kembar.in" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:text-foreground">PT KEMBAR INOVASI</a>
             </div>
           </div>
         </div>
