@@ -10,6 +10,7 @@ import Container from "@/components/Container";
 import CTA from "@/components/CTA";
 import { getLiveEventData } from "@/lib/kembarinEvents";
 import { siteDetails } from "@/data/siteDetails";
+import { orgSekolah, orgPengembang, serialisasiJsonLd } from "@/lib/seo";
 
 /**
  * Urutan seksi mengikuti pertanyaan pengunjung: ini lomba apa & kapan (Hero, panel hari
@@ -39,7 +40,9 @@ const HomePage = async () => {
     inLanguage: "id-ID",
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    organizer: { "@type": "Organization", name: "SMA Negeri 2 Nganjuk", url: siteDetails.siteUrl },
+    // Mitra resmi pendaftaran & ticketing; sekolah tetap penyelenggara utama.
+    organizer: orgSekolah,
+    contributor: orgPengembang,
     // Harga hanya dari core dan hanya saat pendaftaran benar-benar buka (bukan Coming Soon/tutup).
     ...(live.isOpen && live.ticketTypes.length > 0 && {
       offers: live.ticketTypes.map((t) => ({
@@ -49,6 +52,7 @@ const HomePage = async () => {
         priceCurrency: "IDR",
         availability: "https://schema.org/InStock",
         url: `${siteDetails.siteUrl}daftar`,
+        seller: orgPengembang,
       })),
     }),
     ...(mulai && { startDate: mulai }),
@@ -61,7 +65,7 @@ const HomePage = async () => {
       {/* "<" di-escape supaya teks dari core tidak bisa menutup tag script. */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: serialisasiJsonLd(jsonLd) }}
       />
       <Hero />
       <EventInfo />

@@ -12,10 +12,10 @@
 //      sebelum deploy masih menampilkan (dan mengirim) teks versi lama, dan catatannya
 //      harus menyebut versi yang benar-benar dibaca pendaftar itu.
 
-export const VERSI_PERSETUJUAN = "smadarun-2026-11";
+export const VERSI_PERSETUJUAN = "smadarun-2026-11b";
 
 /** Semua label yang pernah dipakai. Urutan: yang tertua di depan. */
-export const VERSI_PERSETUJUAN_DIKENAL: readonly string[] = ["smadarun-2026-10", "smadarun-2026-11"];
+export const VERSI_PERSETUJUAN_DIKENAL: readonly string[] = ["smadarun-2026-10", "smadarun-2026-11", "smadarun-2026-11b"];
 
 /**
  * Tab yang dibuka sebelum label ini ada tidak mengirim `consent_policy_version`. Teks yang

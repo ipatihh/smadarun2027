@@ -5,6 +5,19 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 20 November 2026 — SEO: PT KEMBAR INOVASI INDONESIA terbaca sebagai pengembang & mitra pendaftaran
+
+- `src/lib/seo.ts` jadi sumber tunggal entitas schema.org. `layout.tsx` kini memasang JSON-LD `@graph`
+  (WebSite + Organization sekolah + Organization PT KEMBAR INOVASI INDONESIA; WebSite.creator/provider = pengembang).
+  Event di beranda: `organizer` = sekolah, `contributor` = pengembang, `offers[].seller` = pengembang (mitra pendaftaran).
+- Meta tag: `author`/`creator` memuat pengembang, `publisher` = sekolah, plus `developer`, `registration-partner`,
+  `ticketing-partner`, `geo.*`. Tag non-standar hanya pelengkap; sinyal utama Google adalah JSON-LD.
+- Nama di footer, form daftar, status, dan Kebijakan Privasi ditulis lengkap "PT KEMBAR INOVASI INDONESIA".
+  Teks privasi berubah → `VERSI_PERSETUJUAN` naik ke `smadarun-2026-11b` (label lama tetap dikenal).
+- Verifikasi GSC (meta tag), sitemap, dan robots sudah live. Yang masih manual: kirim sitemap & "Minta pengindeksan" di GSC.
+
+---
+
 ## 20 November 2026 — Kartu tiket beranda hanya memuat kelompoknya sendiri
 
 - Saat core punya kategori pelajar (nama memuat "pelajar") DAN kategori lain, kartu "5KM Pelajar" hanya

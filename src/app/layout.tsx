@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import { getLiveEventData } from "@/lib/kembarinEvents";
 import FooterLive from "@/components/FooterLive";
 import { siteDetails } from '@/data/siteDetails';
+import { jsonLdSitus, serialisasiJsonLd, NAMA_PENGEMBANG, URL_PENGEMBANG } from '@/lib/seo';
 
 import "./globals.css";
 
@@ -22,8 +23,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   applicationName: siteDetails.siteName,
-  authors: [{ name: "SMA Negeri 2 Nganjuk" }],
-  creator: "SMA Negeri 2 Nganjuk",
+  authors: [{ name: "SMA Negeri 2 Nganjuk" }, { name: NAMA_PENGEMBANG, url: URL_PENGEMBANG }],
+  creator: NAMA_PENGEMBANG,
+  publisher: "SMA Negeri 2 Nganjuk",
   category: "sports",
   formatDetection: { telephone: false, email: false, address: false },
   // Izinkan Google memakai gambar besar & cuplikan penuh di hasil pencarian.
@@ -62,6 +64,16 @@ export const metadata: Metadata = {
   verification: {
     google: 'E-ajJkGSPmaPXLEWIkmpT2A9eDR76DEmry5JYmqlZZo',
   },
+  // Meta tambahan: sinyal utama untuk Google tetap JSON-LD (lib/seo.ts); tag ini pelengkap
+  // bagi crawler lain. Peran PT KEMBAR INOVASI INDONESIA: pengembang situs & mitra pendaftaran.
+  other: {
+    developer: NAMA_PENGEMBANG,
+    "registration-partner": NAMA_PENGEMBANG,
+    "ticketing-partner": NAMA_PENGEMBANG,
+    "geo.region": "ID-JI",
+    "geo.placename": "Nganjuk",
+    "content-language": "id",
+  },
 };
 
 export default async function RootLayout({
@@ -75,6 +87,10 @@ export default async function RootLayout({
       <body
         className={`${plusJakartaSans.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serialisasiJsonLd(jsonLdSitus) }}
+        />
         {siteDetails.googleAnalyticsId && <GoogleAnalytics gaId={siteDetails.googleAnalyticsId} />}
         {/* Skip link: pengguna keyboard/pembaca layar langsung ke konten tanpa melewati menu. */}
         <a

@@ -109,14 +109,14 @@ const Footer: React.FC<FooterProps> = ({ adminFee }) => {
                     </div>
 
                     <p>
-                        Dikembangkan Oleh{' '}
+                        Dikembangkan oleh{' '}
                         <a
                             href="https://kembar.in"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-medium text-foreground hover:underline underline-offset-4"
                         >
-                            PT KEMBAR INOVASI
+                            PT KEMBAR INOVASI INDONESIA
                         </a>
                     </p>
                 </div>
