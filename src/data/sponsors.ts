@@ -42,6 +42,10 @@ export interface ISponsor {
   /** Situs atau Instagram sponsor. Kosongkan kalau belum ada. */
   url?: string;
   tier: SponsorTier;
+  /** true = logo sangat memanjang (mis. teks + alamat): kotaknya dilebarkan agar teks kecil tetap terbaca. */
+  wide?: boolean;
+  /** true = file PNG/SVG berlatar transparan: tampil tanpa kotak putih, menyatu dengan latar seksi. */
+  blend?: boolean;
 }
 
 export interface ISponsorTierConfig {
@@ -67,7 +71,7 @@ export const sponsorTiers: ISponsorTierConfig[] = [
   },
   {
     tier: "community",
-    label: "Mitra Komunitas",
+    label: "Mitra / Partner",
     boxHeight: "h-14 sm:h-16 md:h-20",
     boxWidth: "w-28 sm:w-36 md:w-48",
     muted: false,
@@ -81,10 +85,14 @@ export const sponsorTiers: ISponsorTierConfig[] = [
   },
 ];
 
-// Sengaja kosong untuk sementara (permintaan pemilik, Oktober 2026): selama array ini kosong,
-// seluruh seksi sponsor (`Logos.tsx`) tidak tampil. Isi lagi lewat petunjuk di atas bila ada
-// sponsor/mitra nyata. Berkas contoh di public/images/sponsors/ boleh dihapus.
-export const sponsors: ISponsor[] = [];
+// Selama array ini kosong, seksi sponsor (`Logos.tsx`) menampilkan slot "Logo di sini" per tier.
+// Berkas contoh lain di public/images/sponsors/ (kembarin*.png, nganjuk-runners.png) belum dipakai.
+export const sponsors: ISponsor[] = [
+  // Logo memanjang (±7:1) dengan teks alamat kecil → `wide` melebarkan kotaknya agar terbaca.
+  // File sudah dibersihkan: latar hitam asli dibuang jadi transparan, outline putih stiker dipertahankan
+  // agar teks navy terbaca di atas latar terang maupun gelap.
+  { name: "Sate Sor Nongko", logo: "sate-sor-nongko.png", tier: "community", wide: true, blend: true },
+];
 
 /** Path lengkap file logo. Menerima nama file maupun path absolut (untuk fleksibilitas). */
 export function sponsorLogoPath(logo: string): string {

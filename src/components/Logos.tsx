@@ -14,7 +14,17 @@ import Eyebrow from "./Eyebrow";
 
 const SponsorLogo: React.FC<{ sponsor: ISponsor; tier: ISponsorTierConfig }> = ({ sponsor, tier }) => {
   // bg-logo-surface tetap terang di mode gelap — logo sponsor hampir selalu dibuat untuk latar putih.
-  const boxClass = `flex ${tier.boxHeight} ${tier.boxWidth} items-center justify-center rounded-field border border-border bg-logo-surface px-4 py-2 transition-colors hover:border-border-strong`;
+  // Logo `wide`: kotak melebar (maks. 22rem) supaya teks kecil di dalam logo tetap terbaca, tetapi
+  // tingginya tetap di bawah kotak tier "title" agar sponsor utama selalu yang terbesar.
+  const ukuranKotak = sponsor.wide
+    ? "h-16 w-full max-w-[22rem] sm:h-20 px-3"
+    : `${tier.boxHeight} ${tier.boxWidth} px-4`;
+  // Logo `blend` (PNG latar transparan): tanpa kotak putih/garis, menyatu dengan latar seksi. Outline
+  // putih stiker pada gambarnya yang menjaga teks tetap terbaca di mode terang maupun gelap.
+  const gayaKotak = sponsor.blend
+    ? "py-1"
+    : "rounded-field border border-border bg-logo-surface py-2 transition-colors hover:border-border-strong";
+  const boxClass = `flex ${ukuranKotak} items-center justify-center ${gayaKotak}`;
 
   // Belum ada file logonya → tampilkan nama sponsor supaya barisnya tetap rapi.
   if (!sponsor.logo) {
@@ -38,11 +48,11 @@ const SponsorLogo: React.FC<{ sponsor: ISponsor; tier: ISponsorTierConfig }> = (
       <Image
         src={src}
         alt={sponsor.name}
-        width={240}
-        height={96}
-        sizes="240px"
+        width={sponsor.wide ? 658 : 240}
+        height={sponsor.wide ? 105 : 96}
+        sizes={sponsor.wide ? "(min-width: 768px) 480px, 90vw" : "240px"}
         unoptimized={isSvg}
-        className={`max-h-full w-auto object-contain ${
+        className={`max-h-full object-contain ${sponsor.wide ? "h-auto w-full" : "w-auto"} ${
           tier.muted ? "opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0" : ""
         }`}
       />
