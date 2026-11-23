@@ -205,6 +205,17 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   yang tidak ada membuat pratinjau tautan rusak tanpa error.
 - **Logo sekolah & event**: isi hanya lewat `src/data/logo.ts` (komponen `BrandLogo`), jangan taruh
   `<img>` logo langsung di Header/Hero/Footer. Tidak ada placeholder bila kosong; wajib diisi sebelum go-live.
+- **Aturan memasang sponsor/mitra** (keputusan pemilik, 23 Nov 2026; seksi `Logos.tsx`, data `src/data/sponsors.ts`):
+  1. Logo masuk ke `public/images/sponsors/` + satu baris di array `sponsors`; komponen tidak disentuh.
+  2. **Latar logo WAJIB transparan** (PNG/SVG), bukan putih polos — supaya menyatu dengan tema. Kalau yang
+     dikirim berlatar hitam/putih, olah dengan `node scripts/transparan-logo.mjs <asli> <nama.png>`
+     (outline putih stiker dipertahankan agar teks gelap terbaca di mode terang & gelap), lalu cek di
+     atas latar lavender dan gelap. Logo transparan memakai `blend: true` → tampil tanpa kotak putih/garis.
+  3. **Tier = hierarki ukuran: Sponsor Utama (`title`) HARUS selalu yang terbesar**, lalu "Mitra / Partner"
+     (`community`; judul ini permintaan pemilik, jangan kembali ke "Mitra Komunitas"), lalu `media`.
+  4. Logo memanjang (rasio > ±4:1, mis. nama + alamat) pakai `wide: true`: kotak dilebarkan (maks. 22rem) agar
+     teks kecilnya terbaca, tetapi tingginya TETAP di bawah kotak `title`. Jangan membesarkannya melebihi itu.
+  5. Setelah memasang: lihat di desktop dan ponsel 375px (teks terkecil harus terbaca, tanpa overflow).
 - **Mockup jersey/medali/string bag** (seksi `Flyer`): isi hanya lewat `src/data/flyer.ts` (petunjuk di komentar kepalanya);
   jangan hardcode gambar di `Flyer.tsx`. Kotak "Mockup segera hadir" (bila ada slot kosong) termasuk konten SAMPLE yang wajib
   diisi atau dihapus sebelum go-live. Teks seksi Tiket menyesuaikan jumlah kategori live (1 vs banyak).

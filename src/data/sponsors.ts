@@ -20,6 +20,12 @@
 //   Kosongkan `logo` (atau hapus field-nya). Nama sponsor akan tampil sebagai teks
 //   di kotak yang sama, jadi daftar sponsor tetap rapi sambil menunggu aset dikirim.
 //
+// ATURAN PEMASANGAN (ringkasan; rincian di CLAUDE.md):
+//   - Latar logo WAJIB transparan. Kalau berlatar hitam/putih: node scripts/transparan-logo.mjs <asli> <nama.png>
+//     lalu beri `blend: true` agar tampil tanpa kotak putih dan menyatu dengan tema.
+//   - Sponsor Utama (`title`) selalu yang terbesar; "Mitra / Partner" (`community`) di bawahnya.
+//   - Logo memanjang (rasio > ±4:1) beri `wide: true` — kotak lebih lebar tapi tidak melebihi tinggi `title`.
+//
 // SPESIFIKASI ASET (kirimkan ini ke calon sponsor):
 //   - Format PNG latar transparan (paling aman), WebP, atau SVG.
 //   - Tinggi minimal 200px, idealnya 400px, supaya tajam di layar retina.
