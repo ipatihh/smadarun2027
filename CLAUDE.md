@@ -211,10 +211,13 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
      dikirim berlatar hitam/putih, olah dengan `node scripts/transparan-logo.mjs <asli> <nama.png>`
      (outline putih stiker dipertahankan agar teks gelap terbaca di mode terang & gelap), lalu cek di
      atas latar lavender dan gelap. Logo transparan memakai `blend: true` → tampil tanpa kotak putih/garis.
-  3. **Tier = hierarki ukuran: Sponsor Utama (`title`) HARUS selalu yang terbesar**, lalu "Mitra / Partner"
-     (`community`; judul ini permintaan pemilik, jangan kembali ke "Mitra Komunitas"), lalu `media`.
+  3. **Tidak ada tier** (23 Nov 2026, permintaan pemilik): semua sponsor & mitra satu kelompok di bawah judul
+     "Didukung oleh", satu ukuran kotak (`sponsorBox`), tanpa label "Sponsor Utama"/"Mitra". JANGAN menambah tier
+     atau subjudul kelompok lagi tanpa permintaan pemilik.
   4. Logo memanjang (rasio > ±4:1, mis. nama + alamat) pakai `wide: true`: kotak dilebarkan (maks. 22rem) agar
-     teks kecilnya terbaca, tetapi tingginya TETAP di bawah kotak `title`. Jangan membesarkannya melebihi itu.
+     teks kecilnya terbaca. Di ponsel kotaknya selebar kolom penuh tanpa padding (itu batas terbesar yang mungkin).
+     **JANGAN mengubah/menyusun ulang isi logo** (teks, proporsi antar-baris) — pemilik hanya mengizinkan
+     penyesuaian UKURAN. Kotak logo biasa juga sengaja lebih besar di ponsel (`sponsorBox`).
   5. Setelah memasang: lihat di desktop dan ponsel 375px (teks terkecil harus terbaca, tanpa overflow).
 - **Mockup jersey/medali/string bag** (seksi `Flyer`): isi hanya lewat `src/data/flyer.ts` (petunjuk di komentar kepalanya);
   jangan hardcode gambar di `Flyer.tsx`. Kotak "Mockup segera hadir" (bila ada slot kosong) termasuk konten SAMPLE yang wajib
