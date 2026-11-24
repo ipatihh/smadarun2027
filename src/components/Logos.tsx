@@ -42,7 +42,7 @@ const SponsorLogo: React.FC<{ sponsor: ISponsor }> = ({ sponsor }) => {
   const isSvg = src.toLowerCase().endsWith(".svg");
 
   const kelas = `max-h-full object-contain ${sponsor.wide ? "h-auto w-full" : "w-auto"}`;
-  const dimensi = { width: sponsor.wide ? 658 : 240, height: sponsor.wide ? 105 : 96 };
+  const dimensi = sponsor.dimensi ?? { width: sponsor.wide ? 658 : 240, height: sponsor.wide ? 105 : 96 };
   const sizes = sponsor.wide ? "(min-width: 768px) 480px, 90vw" : "240px";
 
   return (

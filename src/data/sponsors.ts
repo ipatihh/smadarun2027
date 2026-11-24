@@ -46,6 +46,8 @@ export interface ISponsor {
   url?: string;
   /** true = logo sangat memanjang (mis. teks + alamat): kotaknya dilebarkan agar teks kecil tetap terbaca. */
   wide?: boolean;
+  /** Dimensi asli file (px) agar rasio gambar benar sebelum dimuat. Bila kosong dipakai ukuran bawaan. */
+  dimensi?: { width: number; height: number };
   /** true = file PNG/SVG berlatar transparan: tampil tanpa kotak putih, menyatu dengan latar seksi. */
   blend?: boolean;
 }
@@ -57,10 +59,12 @@ export const sponsorBox = { height: "h-16 md:h-20", width: "w-36 md:w-48" };
 // Selama array ini kosong, seksi sponsor (`Logos.tsx`) menampilkan beberapa slot "Logo di sini".
 // Berkas contoh lain di public/images/sponsors/ (kembarin*.png, nganjuk-runners.png) belum dipakai.
 export const sponsors: ISponsor[] = [
+  // Urutan array = urutan tampil dari atas ke bawah (logo `wide` masing-masing satu baris sendiri).
+  { name: "Reza.Photowork", logo: "reza-photowork.png", wide: true, blend: true, dimensi: { width: 910, height: 136 } },
   // Logo memanjang (±7:1) dengan teks alamat kecil → `wide` melebarkan kotaknya agar terbaca.
   // File sudah dibersihkan: latar hitam asli dibuang jadi transparan, outline putih stiker dipertahankan
   // agar teks navy terbaca di atas latar terang maupun gelap.
-  { name: "Sate Sor Nongko", logo: "sate-sor-nongko.png", wide: true, blend: true },
+  { name: "Sate Sor Nongko", logo: "sate-sor-nongko.png", wide: true, blend: true, dimensi: { width: 658, height: 105 } },
 ];
 
 /** Path lengkap file logo. Menerima nama file maupun path absolut (untuk fleksibilitas). */
