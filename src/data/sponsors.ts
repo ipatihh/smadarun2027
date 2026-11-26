@@ -54,7 +54,7 @@ export interface ISponsor {
 
 /** Kotak logo: satu ukuran untuk semua sponsor & mitra (tanpa tier). */
 // Di ponsel kotaknya sengaja lebih besar (dua logo per baris) — bukan sekadar versi susut dari desktop.
-export const sponsorBox = { height: "h-16 md:h-20", width: "w-36 md:w-48" };
+export const sponsorBox = { height: "h-28 md:h-32", width: "w-40 md:w-52" };
 
 // Selama array ini kosong, seksi sponsor (`Logos.tsx`) menampilkan beberapa slot "Logo di sini".
 // Berkas contoh lain di public/images/sponsors/ (kembarin*.png, nganjuk-runners.png) belum dipakai.
@@ -65,6 +65,9 @@ export const sponsors: ISponsor[] = [
   // File sudah dibersihkan: latar hitam asli dibuang jadi transparan, outline putih stiker dipertahankan
   // agar teks navy terbaca di atas latar terang maupun gelap.
   { name: "Sate Sor Nongko", logo: "sate-sor-nongko.png", wide: true, blend: true, dimensi: { width: 658, height: 105 } },
+  // Lambang/logo bertumpuk (bukan `wide`) berjajar dalam satu baris.
+  { name: "PASI (Persatuan Atletik Seluruh Indonesia)", logo: "pasi.png", blend: true, dimensi: { width: 429, height: 501 } },
+  { name: "Havor Jersey", logo: "havor-jersey.png", blend: true, dimensi: { width: 600, height: 342 } },
 ];
 
 /** Path lengkap file logo. Menerima nama file maupun path absolut (untuk fleksibilitas). */

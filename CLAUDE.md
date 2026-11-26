@@ -210,7 +210,8 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
   2. **Latar logo WAJIB transparan** (PNG/SVG), bukan putih polos — supaya menyatu dengan tema. Kalau yang
      dikirim berlatar hitam/putih, olah dengan `node scripts/transparan-logo.mjs <asli> <nama.png>`
      (latar HITAM) atau `scripts/transparan-logo-putih.mjs` (latar PUTIH; menambah outline putih tipis) — outline putih agar teks gelap terbaca di mode terang & gelap, lalu cek di
-     atas latar lavender dan gelap. Logo transparan memakai `blend: true` → tampil tanpa kotak putih/garis.
+     atas latar lavender dan gelap. Logo perak/putih di latar hitam: `scripts/transparan-logo-terang.mjs` (outline
+     gelap). Latar kotak-kotak palsu (JPG unduhan): `scripts/transparan-logo-kotak.mjs`. Logo transparan memakai `blend: true` → tampil tanpa kotak putih/garis.
   3. **Tidak ada tier** (23 Nov 2026, permintaan pemilik): semua sponsor & mitra satu kelompok di bawah judul
      "Didukung oleh", satu ukuran kotak (`sponsorBox`), tanpa label "Sponsor Utama"/"Mitra". JANGAN menambah tier
      atau subjudul kelompok lagi tanpa permintaan pemilik.

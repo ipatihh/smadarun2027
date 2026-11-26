@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Image from "next/image";
 import { sponsors, sponsorBox, sponsorLogoPath, ISponsor } from "@/data/sponsors";
 import Eyebrow from "./Eyebrow";
@@ -86,22 +87,31 @@ const Logos: React.FC = () => {
         {/* flex-wrap: berapa pun jumlah logonya otomatis turun baris, tetap rata tengah */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6">
           {belumAdaSponsor && Array.from({ length: JUMLAH_SLOT_KOSONG }, (_, i) => <SlotKosong key={i} />)}
-          {sponsors.map((sponsor) =>
-            sponsor.url ? (
+          {sponsors.map((sponsor) => {
+            const logo = sponsor.url ? (
               <a
-                key={sponsor.name}
                 href={sponsor.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={sponsor.name}
-                className="rounded-field focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className={`rounded-field focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  sponsor.wide ? "flex w-full justify-center" : ""
+                }`}
               >
                 <SponsorLogo sponsor={sponsor} />
               </a>
             ) : (
-              <SponsorLogo key={sponsor.name} sponsor={sponsor} />
-            )
-          )}
+              <SponsorLogo sponsor={sponsor} />
+            );
+            // Logo `wide` selalu menempati satu baris sendiri di semua lebar layar (urutan array = atas ke bawah).
+            return sponsor.wide ? (
+              <div key={sponsor.name} className="flex basis-full justify-center">
+                {logo}
+              </div>
+            ) : (
+              <Fragment key={sponsor.name}>{logo}</Fragment>
+            );
+          })}
         </div>
 
         <p className="mt-10 text-center text-sm text-muted-foreground">
