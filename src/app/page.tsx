@@ -28,8 +28,6 @@ const HomePage = async () => {
   // Tanggal & lokasi HANYA dari core; tidak diisi kalau belum ada atau masih Coming Soon,
   // supaya Google tidak menampilkan tanggal karangan.
   const mulai = !live.comingSoon && live.eventDate && !Number.isNaN(Date.parse(live.eventDate)) ? live.eventDate : null;
-  // Kapan tiket mulai dijual (registration_open_at dari core); dilewati bila kosong/tidak valid.
-  const mulaiJual = live.opensAt && !Number.isNaN(Date.parse(live.opensAt)) ? new Date(live.opensAt).toISOString() : null;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
@@ -55,7 +53,8 @@ const HomePage = async () => {
         availability: "https://schema.org/InStock",
         url: `${siteDetails.siteUrl}daftar`,
         seller: orgPengembang,
-        ...(mulaiJual && { validFrom: mulaiJual }),
+        // registration_open_at dari core; dilewati bila panitia tidak mengisinya.
+        ...(live.saleStartsAt && { validFrom: live.saleStartsAt }),
       })),
     }),
     ...(mulai && { startDate: mulai }),

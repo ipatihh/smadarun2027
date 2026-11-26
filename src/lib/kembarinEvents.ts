@@ -89,6 +89,8 @@ export interface LiveEventData {
   // Diisi hanya kalau tanggalnya masih di masa depan — dipakai UI untuk memberi tahu
   // pengunjung KAPAN bisa daftar, bukan sekadar "belum dibuka".
   opensAt: string | null;
+  // Kapan penjualan dibuka (ISO UTC), TERISI juga setelah dibuka — dipakai `validFrom` di JSON-LD.
+  saleStartsAt: string | null;
   // Kolom Nama BIB, dibaca dari form_schema kembarin-v2 (field bertipe `name_on_bib`).
   // null = panitia tidak memasang kolom itu; form tidak menampilkannya dan api/daftar
   // tidak mengirimnya. Lihat src/lib/namaBib.ts.
@@ -126,6 +128,7 @@ const CLOSED: LiveEventData = {
   maxTicketsPerOrder: 1,
   wilayahDropdown: false,
   opensAt: null,
+  saleStartsAt: null,
   namaBib: null,
   kolomTambahan: [],
   ukuranJersey: null,
@@ -247,14 +250,18 @@ export async function getLiveEventData(): Promise<LiveEventData> {
 
     let opensAt: string | null = null;
     let notYetOpen = false;
+    let saleStartsAt: string | null = null;
     if (rawOpenAt) {
       // Jadwal tanpa offset adalah WIB (kontrak core, parseWibDateTimeToUtc); server Vercel berjalan di UTC.
       const openAtMs = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(rawOpenAt.trim()) ? rawOpenAt : `${rawOpenAt.trim().replace(" ", "T")}+07:00`).getTime();
       if (Number.isNaN(openAtMs)) {
         console.warn("[kembarinEvents] registration_open_at tidak bisa diparse, gerbang jadwal diabaikan:", rawOpenAt);
-      } else if (openAtMs > Date.now()) {
-        notYetOpen = true;
-        opensAt = rawOpenAt;
+      } else {
+        saleStartsAt = new Date(openAtMs).toISOString();
+        if (openAtMs > Date.now()) {
+          notYetOpen = true;
+          opensAt = rawOpenAt;
+        }
       }
     }
 
@@ -276,6 +283,7 @@ export async function getLiveEventData(): Promise<LiveEventData> {
       wilayahDropdown,
       timeline,
       opensAt,
+      saleStartsAt,
       namaBib: bacaKolomNamaBib(event.form_schema),
       kolomTambahan: bacaKolomTambahan(event.form_schema),
       ukuranJersey: bacaKolomUkuran(event.form_schema),

@@ -5,6 +5,17 @@ Detail teknis ada di pesan commit (`git show <hash>`) dan di `INTEGRASI_CORE.md`
 
 ---
 
+## 26 November 2026 — SEO: gambar pratinjau /daftar dan `validFrom`
+
+- `/daftar` tidak punya `og:image`/`twitter:image` karena `openGraph` halaman menggantikan milik layout.
+  Gambarnya kini disebut eksplisit di `daftar/page.tsx` (`/opengraph-image.jpg`).
+- `validFrom` (perbaikan 20 Nov) ternyata tidak pernah terkirim: `opensAt` hanya terisi sebelum dibuka,
+  sedangkan `offers` hanya tampil sesudahnya. Kini memakai `saleStartsAt` (`kembarinEvents.ts`, jadwal
+  tanpa offset dibaca WIB). Setelah deploy, klik "Validate fix" di GSC.
+- Belum dikerjakan (opsional): `endDate`/`performer`, dan jam 00.00 UTC pada `startDate`.
+
+---
+
 ## 20 November 2026 — Kategori tidak lagi dikunci ke jenis identitas
 
 - Masalah: pelajar tetap memilih NIK, lalu dropdown otomatis memilih/mengunci "5KM Umum" padahal mereka

@@ -20,6 +20,7 @@ const LIVE: LiveEventData = {
   maxTicketsPerOrder: 5,
   wilayahDropdown: true,
   opensAt: null,
+  saleStartsAt: null,
   namaBib: null,
   kolomTambahan: [],
   ukuranJersey: null,

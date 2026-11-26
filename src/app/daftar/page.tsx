@@ -15,6 +15,10 @@ function formatJadwalBuka(iso: string | null): string | null {
   }).format(ms) + " WIB";
 }
 
+// openGraph halaman ini menggantikan milik layout, termasuk gambar otomatis dari src/app/ —
+// jadi gambarnya harus disebut lagi di sini.
+const gambarPratinjau = { url: "/opengraph-image.jpg", width: 1200, height: 630, alt: "SMADARUN 2027 — run event SMA Negeri 2 Nganjuk" };
+
 export const metadata: Metadata = {
   title: "Daftar SMADARUN 2027 — Siap Start Bareng? | SMAN 2 Nganjuk",
   description:
@@ -30,9 +34,11 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "SMADARUN 2027",
     locale: "id_ID",
+    images: [gambarPratinjau],
   },
   twitter: {
     card: "summary_large_image",
+    images: [gambarPratinjau],
     title: "Daftar SMADARUN 2027 — Siap Start Bareng? | SMAN 2 Nganjuk",
     description:
       "Pilih kategori, isi data peserta, bayar online: tiga langkah dan kamu resmi jadi bagian dari cerita baru di garis start SMADARUN 2027.",
