@@ -1,4 +1,4 @@
-// Mengubah logo TERANG (perak/putih) berlatar HITAM menjadi PNG berlatar TRANSPARAN dengan outline
+// Mengubah logo TERANG (perak/putih) berlatar HITAM atau gelap polos menjadi PNG berlatar TRANSPARAN dengan outline
 // gelap di sekelilingnya, dipangkas rapat, lalu disimpan ke public/images/sponsors/. Jalankan:
 //   node scripts/transparan-logo-terang.mjs <berkas-asli> <nama-keluaran.png> [lebar-maks=600]
 //
@@ -20,16 +20,25 @@ if (!fs.existsSync(asal)) {
 }
 
 const LEBAR_MAKS = Number(lebarArg) || 600;
-const HITAM = 10; // kecerahan latar
-const PENUH = 60; // mulai kecerahan ini piksel dianggap tinta penuh
 const GELAP = [14, 9, 30]; // warna outline
 
-// 1) Pangkas latar hitam, lalu kecilkan, lalu beri ruang untuk outline.
-const rapat = await sharp(asal).removeAlpha().trim({ background: "#000000", threshold: 30 }).toBuffer();
+// 1) Buang tepi 3 px (sering ada garis bingkai ekspor), baca warna latar dari pojok, pangkas, kecilkan,
+//    lalu beri ruang untuk outline.
+const meta = await sharp(asal).metadata();
+const inti = await sharp(asal)
+  .removeAlpha()
+  .extract({ left: 3, top: 3, width: meta.width - 6, height: meta.height - 6 })
+  .png()
+  .toBuffer();
+const pojok = await sharp(inti).extract({ left: 0, top: 0, width: 1, height: 1 }).raw().toBuffer();
+const latar = { r: pojok[0], g: pojok[1], b: pojok[2] };
+const HITAM = Math.max(latar.r, latar.g, latar.b) + 8; // kecerahan latar (+ toleransi)
+const PENUH = HITAM + 50; // mulai kecerahan ini piksel dianggap tinta penuh
+const rapat = await sharp(inti).trim({ background: latar, threshold: 30 }).toBuffer();
 const R = Math.max(3, Math.round(LEBAR_MAKS / 75)); // tebal outline
 const kecil = await sharp(rapat).resize({ width: LEBAR_MAKS - 2 * (R + 2), withoutEnlargement: true }).toBuffer();
 const { data, info } = await sharp(kecil)
-  .extend({ top: R + 2, bottom: R + 2, left: R + 2, right: R + 2, background: "#000000" })
+  .extend({ top: R + 2, bottom: R + 2, left: R + 2, right: R + 2, background: latar })
   .removeAlpha()
   .raw()
   .toBuffer({ resolveWithObject: true });

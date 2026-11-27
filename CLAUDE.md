@@ -212,6 +212,8 @@ lanjutan untuk agent (kontrak core, cara menguji aman, catatan perubahan): **`do
      (latar HITAM) atau `scripts/transparan-logo-putih.mjs` (latar PUTIH; menambah outline putih tipis) — outline putih agar teks gelap terbaca di mode terang & gelap, lalu cek di
      atas latar lavender dan gelap. Logo perak/putih di latar hitam: `scripts/transparan-logo-terang.mjs` (outline
      gelap). Latar kotak-kotak palsu (JPG unduhan): `scripts/transparan-logo-kotak.mjs`. Logo transparan memakai `blend: true` → tampil tanpa kotak putih/garis.
+     Pengecualian atas permintaan pemilik: **Havor Jersey mempertahankan latar gelap aslinya** — dipotong rata,
+     sudut membulat ditanam di file (`blend: true` agar tanpa kotak putih). JANGAN membuang latarnya lagi.
   3. **Tidak ada tier** (23 Nov 2026, permintaan pemilik): semua sponsor & mitra satu kelompok di bawah judul
      "Didukung oleh", satu ukuran kotak (`sponsorBox`), tanpa label "Sponsor Utama"/"Mitra". JANGAN menambah tier
      atau subjudul kelompok lagi tanpa permintaan pemilik.

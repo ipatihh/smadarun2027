@@ -67,7 +67,9 @@ export const sponsors: ISponsor[] = [
   { name: "Sate Sor Nongko", logo: "sate-sor-nongko.png", wide: true, blend: true, dimensi: { width: 658, height: 105 } },
   // Lambang/logo bertumpuk (bukan `wide`) berjajar dalam satu baris.
   { name: "PASI (Persatuan Atletik Seluruh Indonesia)", logo: "pasi.png", blend: true, dimensi: { width: 429, height: 501 } },
-  { name: "Havor Jersey", logo: "havor-jersey.png", blend: true, dimensi: { width: 600, height: 342 } },
+  // Havor: latar gelap aslinya SENGAJA dipertahankan (permintaan pemilik); sudut membulat sudah ada di file,
+  // jadi `blend: true` agar tidak dibungkus kotak putih lagi.
+  { name: "Havor Jersey", logo: "havor-jersey-gelap.png", blend: true, dimensi: { width: 600, height: 400 } },
 ];
 
 /** Path lengkap file logo. Menerima nama file maupun path absolut (untuk fleksibilitas). */
